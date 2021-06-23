@@ -8,7 +8,7 @@ pacman::p_load(tidyverse,
 # TODO - Erin - name all files like as you name functions (good practice)
 # TODO - Erin about the directions of effects and expectations
 # TODO - tell Erin about why we you do not want to name things with function names
-dat_full <- read_csv(here("Data","Pilot_data.csv"))
+dat <- read_csv(here("Data","Pilot_data.csv"))
 
 # Load custom function to extract data 
 source(here("R/functions.R"))
@@ -85,6 +85,7 @@ dat$ES_ID <- 1:dimentions[1]
 
 # TODO - need to think about VCV??
 # TODO - need to do something about Strain
+# TODO - talk Erin about the direction - this is super importnat (not quite sure - what to do with the interaction - think about this a bit later)
 # modeling with lnRR
 # enviroment
 mod_E0 <- rma.mv(yi = lnRR_E, V = lnRRV_E, random = list(~1|Study_ID, 
@@ -113,3 +114,7 @@ mod_ES0 <- rma.mv(yi = lnRR_ES, V = lnRRV_ES, random = list(~1|Study_ID,
                  data = dat)
 summary(mod_ES0)
 funnel(mod_ES0)
+
+
+# TODO Try SMD
+# TODO Try key modeators (meta-regression)
