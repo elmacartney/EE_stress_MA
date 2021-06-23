@@ -19,40 +19,18 @@ pacman::p_load(tidyverse,
 # TODO - Erin - name all files like as you name functions (good practice)
 # TODO - Erin about the directions of effects and expectations
 # TODO - tell Erin about why we you do not want to name things with function names
-dat_full <- read_csv(here("Data","Pilot_data.csv"))
+dat <- read_csv(here("Data","Pilot_data.csv"))
 
 # Load custom function to extract data 
-source(here("R/functions.R"))
+source(here("R/functions.R")) # this has all the function used to calculate effect sizes
 
 # I do not seem to have this issue
 # data1 <- data %>% 
 #   rename(
 #     Study_ID = ï..Study_ID
 #   )
-#checking for outliers/potential typos---
-#note that it very hard to check for typos/incorrect entries when there is a range of traits etc that are not directly comparable. Will need to re-do when effect sizes are calculated but all data looks correct at this stage
-# TODO ask Erin for the rationale for this - also the naming?? why EC and CS???? 
+#checking for outliers/potential typos----
 
-# par(mfrow = c(3,1))
-# boxplot(CC_mean ~ Study_ID, data = data)
-# boxplot(CC_SD ~ Study_ID, data = data)
-# boxplot(CC_n ~ Study_ID, data = data)
-# 
-# boxplot(EC_mean ~ Study_ID, data = data) 
-# boxplot(EC_SD ~ Study_ID, data = data)
-# boxplot(EC_n ~ Study_ID, data = data)
-# 
-# boxplot(CS_mean ~ Study_ID, data = data) 
-# boxplot(CS_SD ~ Study_ID, data = data1)
-# boxplot(CS_n ~ Study_ID, data = data1)
-# 
-# boxplot(ES_mean ~ Study_ID, data = data1)  
-# boxplot(ES_SD ~ Study_ID, data = data1)
-# boxplot(ES_n ~ Study_ID, data = data1)
-
-# this may not be that useful as means and SD are measured on the same scale - maybe looking at CV (or z value) is more useful (i.e. )
-
-# alternative
 # this looks good
 # CV: CC
 qplot(factor(Study_ID), CC_SD/CC_mean, geom = "boxplot", data = dat_full)
@@ -69,7 +47,7 @@ qplot(CS_SD/CS_mean, CS_n, data = data)
 qplot(factor(Study_ID), ES_SD/ES_mean, geom = "boxplot", data = dat_full)
 qplot(ES_SD/ES_mean, ES_n, data = data)
 
-# getting effect size
+# getting effect size----
 
 effect_size <- effect_set(CC_n = "CC_n", CC_mean = "CC_mean", CC_SD = "CC_SD",
                           EC_n = "EC_n", EC_mean = "EC_mean" , EC_SD ="EC_SD",
@@ -78,12 +56,11 @@ effect_size <- effect_set(CC_n = "CC_n", CC_mean = "CC_mean", CC_SD = "CC_SD",
                           data = dat_full)
 
 # which one has all the data avaiable
-full_info <- which(complete.cases(effect_size) == TRUE)
+full_info <- which(complete.cases(effect_size) == TRUE) #removing missing effect sizes
 
-dat_effect <- cbind(dat_full, effect_size)
+dat_effect <- cbind(dat, effect_size)
 names(dat_effect)
 
-# delete all the ones without complete data sets 
 # TODO - we need to sort this out a bit more later
 dat <- dat_effect[full_info, ]
 
@@ -92,47 +69,53 @@ dimentions <- dim(dat) # 7 less
 
 # TODO - NA for all at the moment  - FIX
 dat$ES_ID <- 1:dimentions[1]
-dat$lnRR_Ea <- ifelse(dat$Response_direction == 2, dat$lnRR_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E)) # currently NAswhich causes error
 
 # TODO - need to think about VCV??
-# TODO - need to do something about Strain
-# TODO - talk Erin about the direction - this is super importnat (not quite sure - what to do with the interaction - think about this a bit later)
+# TODO - need to do something about Strain - probably include as a random effect
 # TODO need to flip lower is better values on lnRR 
 
+#flipping lnRR for values where higher = worse
+
+dat$lnRR_Ea <- ifelse(dat$Response_direction == 2, dat$lnRR_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E)) # currently NAswhich causes error
+dat$lnRR_Sa  <- ifelse(dat$Response_direction == 2, dat$lnRR_S*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_S)) # currently NAswhich causes error
+dat$lnRR_ESa <-  ifelse(dat$Response_direction == 2, dat$lnRR_ES*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_ES)) # currently NAswhich causes error
+
 # modeling with lnRR
-# enviroment
+# environment
 
 mod_E0 <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, random = list(~1|Study_ID, 
                                                         # ~ 1|Strain, does not run as we have NA
                                                          ~1|ES_ID),
                  test = "t",
                  data = dat)
-summary(mod_E0)
+summary(mod_E0) #learning and memory significnatly better when enrichment
 
 funnel(mod_E0)
 
-i2_ml(mod_E0)
+#heterogeneity
+i2_ml(mod_E0) #high hetero
 
 #use r2_ml for meta-regression
 
 # stress
-mod_S0 <- rma.mv(yi = lnRR_S, V = lnRRV_S, random = list(~1|Study_ID, 
+mod_S0 <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, random = list(~1|Study_ID, 
                                                          # ~ 1|Strain, does not run as we have NA
                                                          ~1|ES_ID),
                  test = "t",
                  data = dat)
-summary(mod_S0)
+summary(mod_S0) #learning and memory significantly worse when stressed
 funnel(mod_S0)
+i2_ml(mod_S0) #high hetero
 
 # interaction
-mod_ES0 <- rma.mv(yi = lnRR_ES, V = lnRRV_ES, random = list(~1|Study_ID, 
+mod_ES0 <- rma.mv(yi = lnRR_ESa, V = lnRRV_ES, random = list(~1|Study_ID, 
                                                          # ~ 1|Strain, does not run as we have NA
                                                          ~1|ES_ID),
                  test = "t",
                  data = dat)
-summary(mod_ES0)
+summary(mod_ES0) #significantly positive- seems like SE is better than just E by itself
 funnel(mod_ES0)
-
+i2_ml(mod_ES0) #high hetero
 
 # TODO Try SMD
-# TODO Try key modeators (meta-regression)
+# TODO Try key moderators (meta-regression)
