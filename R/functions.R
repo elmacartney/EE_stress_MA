@@ -13,7 +13,7 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
   
   # lnRR
   # main effect Environment enrichment
-  lnRR_E <- as.numeric(0.5 * log((data[[ES_mean]]*data[[EC_mean]]) / (data[[CS_mean]]*data[[CC_mean]])))
+  lnRR_E <- as.numeric(0.5 * log((data[[ES_mean]]*data[[EC_mean]]) / (data[[CS_mean]]*data[[CC_mean]]))) #checked and seems correct
   
   # the error has 1/4 
   lnRRV_E <-  as.numeric(0.25 * (((data[[ES_SD]])^2 / ((data[[ES_mean]])^2*data[[ES_n]])) + 
@@ -21,8 +21,26 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
                                    ((data[[CS_SD]])^2 / ((data[[CS_mean]])^2*data[[CS_n]])) +
                                    ((data[[CC_SD]])^2 / ((data[[CC_mean]])^2*data[[CC_n]]))))
   
-  # main effect Stress
+  #testing 
+  #(0.25 * (((3.29)^2 / ((13.57)^2*10)) + 
+             #((7.43)^2 / ((15.83)^2*10)) + 
+             #((4.11)^2 / ((20.09)^2*10)) +
+             #((4.46)^2 / ((10.5)^2*10))))
+  
+  #(0.25 * ((10.48 / 1841.449) + 
+             #(55.2049 / 2505.889) + 
+             #(16.8921/ 4036.081) +
+             #(19.8916 / 1102.5)))
+  #checked and seems correct: number can vary after four decimals
+  
+# main effect Stress
   lnRR_S <- as.numeric( 0.5 * log((data[[ES_mean]]*data[[CS_mean]]) / (data[[EC_mean]]*data[[CC_mean]])))
+  
+  #testing
+  
+#( 0.5 * log((13.57*20.09) / (15.83*10.5)))
+#( 0.5 * log((272.6213) / (166.215)))
+# seems correct
   
   lnRRV_S <- lnRRV_E
   
@@ -30,27 +48,83 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
   lnRR_ES <-   as.numeric((log(data[[ES_mean]]) - log(data[[CS_mean]])) - 
                            (log(data[[EC_mean]]) - log(data[[CC_mean]])))
   
+  #testing
+  #((log(13.57) - log(20.09)) - 
+      #(log(15.83) - log(10.5)))
   
+  #((2.607861 - 3.000222) - 
+      #(2.761907 - 2.351375))
+#seems correct  
+
   lnRRV_ES <- 
     as.numeric((((data[[ES_SD]])^2 / ((data[[ES_mean]])^2*data[[ES_n]])) + 
                   ((data[[EC_SD]])^2 / ((data[[EC_mean]])^2*data[[EC_n]])) + 
                   ((data[[CS_SD]])^2 / ((data[[CS_mean]])^2*data[[CS_n]])) +
                   ((data[[CC_SD]])^2 / ((data[[CC_mean]])^2*data[[CC_n]]))))
   
- 
+ #testing
+  #((((3.29)^2 / ((13.57)^2*10)) + 
+   #   ((7.43)^2 / ((15.83)^2*10)) + 
+    #  ((4.11)^2 / ((20.09)^2*10)) +
+     # ((4.46)^2 / ((10.5)^2*10))))
+  
+ # ((10.8241 / 1841.449) + 
+  #    (55.2049 / 2505.889) + 
+   #   (16.8921 / 4036.081) +
+    #  (19.8916/ 1102.5))
+  #seems correct
+  
   # lnVR
   # main effect Environment enrichment
+  
+  #TODO I think there may be an issue with the forumla for lnVR_E: I can't get the formular to be consistent when entering actual values. The formula also differs from lnVR_S 
+  
   lnVR_E <- as.numeric(0.5 * log((data[[ES_SD]]*data[[EC_SD]]) / (data[[CS_SD]]*data[[CC_SD]])) + 
-                                     0.5 * ( (1/(2*(data[[ES_n]] -1))) + (1/(2*(data[[EC_n]] -1))) -
-                                               (1/(2*(data[[CS_n]] -1))) - (1/(2*(data[[CC_n]] -1)))))
+                         0.5 * ( (1/(2*(data[[ES_n]] -1))) + (1/(2*(data[[EC_n]] -1))) -
+                                   (1/(2*(data[[CS_n]] -1))) - (1/(2*(data[[CC_n]] -1)))))
+  
+  #testing
+  
+  #(0.5 * log((3.21*7.43) / (4.11*4.46)) + 
+   #0.5 * ( (1/(2*(10 -1))) + (1/(2*(10 -1))) -
+    #        (1/(2*(10 -1))) - (1/(2*(10 -1)))))
+  
+  
+#  (0.5 * log((23.8503) / (18.3306)) + 
+ #   0.5 * ( (1/18) + (1/18)) -
+  #            (1/18) - (1/18))
+  
+  # I can't get the same results... I think the issue is with the first line.
   
   lnVRV_E <- as.numeric(0.25 * ( (1/(2*(data[[ES_n]] -1))) + (1/(2*(data[[EC_n]] -1))) +
                                     (1/(2*(data[[CS_n]] -1))) + (1/(2*(data[[CC_n]] -1))) ))
+  
+  #testing
+ # (0.25 * ( (1/(2*(10 -1))) + (1/(2*(10 -1))) +
+  #                                 (1/(2*(10 -1))) + (1/(2*(10 -1))) ))
+  
+  
+  #(0.25 * ( (1/18) + (1/18) +
+   #           (1/18) + (1/18)))
+  # seems correct
+  
   
   # main effect Stress
   lnVR_S <- as.numeric(0.5 * log((data[[ES_SD]]*data[[CS_SD]]) / (data[[EC_SD]]*data[[CC_SD]])) + 
                          0.5 * ( (1/(2*(data[[ES_n]] -1))) - (1/(2*(data[[EC_n]] -1))) +
                                    (1/(2*(data[[CS_n]] -1))) - (1/(2*(data[[CC_n]] -1)))))
+  
+  #testing
+  
+  #(0.5 * log((3.09*20.29) / (7.43*4.46)) + 
+   #   0.5 * ( (1/(2*(10 -1))) - (1/(2*(10 -1))) +
+    #            (1/(2*(10 -1))) - (1/(2*(10 -1)))))
+  
+  #(0.5 * log(62.6961 / 33.1378) + 
+   #   0.5 * ( (1/18) - (1/18) +
+    #            (1/18) - (1/18)))
+  # seems correct
+  
   
   lnVRV_S <- lnVRV_E
   

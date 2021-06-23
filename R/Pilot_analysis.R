@@ -6,7 +6,7 @@ install.packages("patchwork")
 install.packages("R.rsp")
 install.packages("Rtools")
 
-devtools::install_github("itchyshin/orchard_plot", subdir = "orchaRd", force = TRUE, build_vignettes = TRUE)
+devtools::install_github("itchyshin/orchard_plot", subdir = "orchaRd", force = TRUE, build_vignettes = TRUE) #need this to get orchaRD package
 
 pacman::p_load(tidyverse, 
                here,
@@ -33,19 +33,19 @@ source(here("R/functions.R")) # this has all the function used to calculate effe
 
 # this looks good
 # CV: CC
-qplot(factor(Study_ID), CC_SD/CC_mean, geom = "boxplot", data = dat_full)
+qplot(factor(Study_ID), CC_SD/CC_mean, geom = "boxplot", data = dat)
 # funnel-like plots
-qplot(CC_SD/CC_mean, CC_n, data = data)
+qplot(CC_SD/CC_mean, CC_n, data = dat)
 
-qplot(factor(Study_ID), EC_SD/EC_mean, geom = "boxplot", data = dat_full)
-qplot(EC_SD/CC_mean, EC_n, data = data)
+qplot(factor(Study_ID), EC_SD/EC_mean, geom = "boxplot", data = dat)
+qplot(EC_SD/CC_mean, EC_n, data = dat)
 
 # TODO Study 16 is a problem for us - look at this study 
-qplot(factor(Study_ID), CS_SD/CS_mean, geom = "boxplot", data = dat_full)
-qplot(CS_SD/CS_mean, CS_n, data = data)
+qplot(factor(Study_ID), CS_SD/CS_mean, geom = "boxplot", data = dat)
+qplot(CS_SD/CS_mean, CS_n, data = dat)
 
-qplot(factor(Study_ID), ES_SD/ES_mean, geom = "boxplot", data = dat_full)
-qplot(ES_SD/ES_mean, ES_n, data = data)
+qplot(factor(Study_ID), ES_SD/ES_mean, geom = "boxplot", data = dat)
+qplot(ES_SD/ES_mean, ES_n, data = dat)
 
 # getting effect size----
 
@@ -53,7 +53,7 @@ effect_size <- effect_set(CC_n = "CC_n", CC_mean = "CC_mean", CC_SD = "CC_SD",
                           EC_n = "EC_n", EC_mean = "EC_mean" , EC_SD ="EC_SD",
                           CS_n = "CS_n", CS_mean = "CS_mean", CS_SD = "CS_SD",
                           ES_n = "ES_n", ES_mean = "ES_mean", ES_SD = "ES_SD",
-                          data = dat_full)
+                          data = dat) #this is running the function that we have already loaded
 
 # which one has all the data avaiable
 full_info <- which(complete.cases(effect_size) == TRUE) #removing missing effect sizes
@@ -72,8 +72,8 @@ dat$ES_ID <- 1:dimentions[1]
 
 # TODO - need to think about VCV??
 # TODO - need to do something about Strain - probably include as a random effect
-# TODO need to flip lower is better values on lnRR 
 
+# flipping effect sizes ----
 #flipping lnRR for values where higher = worse
 
 dat$lnRR_Ea <- ifelse(dat$Response_direction == 2, dat$lnRR_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E)) # currently NAswhich causes error
