@@ -1,14 +1,25 @@
 #checks for installation and loads packages
+install.packages("devtools")
+install.packages("tidyverse")
+install.packages("metafor")
+install.packages("patchwork")
+install.packages("R.rsp")
+install.packages("Rtools")
+
+devtools::install_github("itchyshin/orchard_plot", subdir = "orchaRd", force = TRUE, build_vignettes = TRUE)
+
 pacman::p_load(tidyverse, 
                here,
                metafor,
-               emmeans)
+               emmeans,
+               orchaRd) #orchardRD is used to calculate I2 and R2 
+
 
 #loading data----
 # TODO - Erin - name all files like as you name functions (good practice)
 # TODO - Erin about the directions of effects and expectations
 # TODO - tell Erin about why we you do not want to name things with function names
-dat <- read_csv(here("Data","Pilot_data.csv"))
+dat_full <- read_csv(here("Data","Pilot_data.csv"))
 
 # Load custom function to extract data 
 source(here("R/functions.R"))
@@ -81,7 +92,7 @@ dimentions <- dim(dat) # 7 less
 
 # TODO - NA for all at the moment  - FIX
 dat$ES_ID <- 1:dimentions[1]
-
+dat$lnRR_Ea <- ifelse(dat$Response_direction == 2, dat$lnRR_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E)) # currently NAswhich causes error
 
 # TODO - need to think about VCV??
 # TODO - need to do something about Strain
@@ -91,7 +102,7 @@ dat$ES_ID <- 1:dimentions[1]
 # modeling with lnRR
 # enviroment
 
-mod_E0 <- rma.mv(yi = lnRR_E, V = lnRRV_E, random = list(~1|Study_ID, 
+mod_E0 <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, random = list(~1|Study_ID, 
                                                         # ~ 1|Strain, does not run as we have NA
                                                          ~1|ES_ID),
                  test = "t",
@@ -99,6 +110,10 @@ mod_E0 <- rma.mv(yi = lnRR_E, V = lnRRV_E, random = list(~1|Study_ID,
 summary(mod_E0)
 
 funnel(mod_E0)
+
+i2_ml(mod_E0)
+
+#use r2_ml for meta-regression
 
 # stress
 mod_S0 <- rma.mv(yi = lnRR_S, V = lnRRV_S, random = list(~1|Study_ID, 
