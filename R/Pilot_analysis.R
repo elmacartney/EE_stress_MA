@@ -40,7 +40,16 @@ qplot(CC_SD/CC_mean, CC_n, data = dat)
 qplot(factor(Study_ID), EC_SD/EC_mean, geom = "boxplot", data = dat)
 qplot(EC_SD/CC_mean, EC_n, data = dat)
 
-# TODO Study 16 is a problem for us - look at this study 
+#modifying study 16 that has negative values: shifting everything up by the lowest value
+
+dat1 <- dat %>%
+  rowwise() %>%
+  mutate(min.mean = select(., ends_with("_mean")) %>% min()) %>%
+  ungroup() %>%
+  mutate(CC_mean = case_when(First_author == "Wang" ~ CC_mean+abs(min.mean))) %>%
+           mutate(EC_mean = case_when(First_author == "Wang" ~ EC_mean +abs(min.mean)))
+#changing everything into NAs
+
 qplot(factor(Study_ID), CS_SD/CS_mean, geom = "boxplot", data = dat)
 qplot(CS_SD/CS_mean, CS_n, data = dat)
 
@@ -79,6 +88,7 @@ dat$ES_ID <- 1:dimentions[1]
 dat$lnRR_Ea <- ifelse(dat$Response_direction == 2, dat$lnRR_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E)) # currently NAswhich causes error
 dat$lnRR_Sa  <- ifelse(dat$Response_direction == 2, dat$lnRR_S*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_S)) # currently NAswhich causes error
 dat$lnRR_ESa <-  ifelse(dat$Response_direction == 2, dat$lnRR_ES*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_ES)) # currently NAswhich causes error
+
 
 # modeling with lnRR
 # environment
