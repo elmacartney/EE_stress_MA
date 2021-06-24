@@ -47,6 +47,10 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
   lnRR_ES <-   as.numeric((log(data[[ES_mean]]) - log(data[[CS_mean]])) - 
                            (log(data[[EC_mean]]) - log(data[[CC_mean]])))
   
+  #no interaction should be 0 (i.e., lnRR_E + lnRR_S effect would cancel each other out)- this would be a pure additive effect
+  #positive means environment and stress is better
+
+  
   #testing
   #((log(13.57) - log(20.09)) - 
       #(log(15.83) - log(10.5)))
@@ -230,11 +234,11 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
   lnCVRV_ES <- lnRRV_ES + lnVRV_ES
   
   # SMD
-  SD_pool <- sqrt(as.numeric(sqrt(((data[[ES_n]]-1)*data[[ES_SD]]^2 + 
+  SD_pool <- as.numeric(sqrt(((data[[ES_n]]-1)*data[[ES_SD]]^2 + 
                                 (data[[EC_n]]-1)*data[[EC_SD]]^2 + 
                                 (data[[CS_n]]-1)*data[[CS_SD]]^2 +
                                 (data[[CC_n]]-1)*data[[CC_SD]]^2) / 
-                               (data[[ES_n]] + data[[EC_n]] + data[[CS_n]] + data[[CC_n]] - 4))))
+                               (data[[ES_n]] + data[[EC_n]] + data[[CS_n]] + data[[CC_n]] - 4)))
   
   #testing
   
