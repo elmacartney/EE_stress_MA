@@ -266,11 +266,21 @@ mod_S4 <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Type_stress_exposure-1, rando
                  test = "t",
                  data = dat5)
 summary(mod_S4) #restraint has highest effect on learning and memory
+r2_ml(mod_S4)
 
 #age of stress
+count(dat, Age_stress_exposure) #need to sort out all the unclear ones
+dat$Age_stress_exposure <-as.factor(dat$Age_stress_exposure)
 
+mod_S5 <-rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Age_stress_exposure-1, random = list(~1|Study_ID, 
+                                                                                        # ~ 1|Strain, does not run as we have NA
+                                                                                        ~1|ES_ID),
+                test = "t",
+                data = dat)
+summary(mod_S5) #unclear is significant. Need to sort out all the ages
+r2_ml(mod_S5) #marginal R2 is very high
 
-# interaction
+# interaction----
 mod_ES0 <- rma.mv(yi = lnRR_ESa, V = lnRRV_ES, random = list(~1|Study_ID, 
                                                          # ~ 1|Strain, does not run as we have NA
                                                          ~1|ES_ID),
@@ -280,5 +290,107 @@ summary(mod_ES0) #significantly positive- seems like SE is better than just E by
 funnel(mod_ES0)
 i2_ml(mod_ES0) #high hetero
 
+#moderators
+#TODO should we include multiple moderators (i.e., stress and enrichment) into the interaction model?
+dat$Type_learning<-as.factor(dat$Type_learning)
+
+mod_ES1 <- rma.mv(yi = lnRR_ESa, V = lnRRV_E, mod = ~Type_learning-1, random = list(~1|Study_ID, 
+                                                                                   # ~ 1|Strain, does not run as we have NA
+                                                                                   ~1|ES_ID),
+                  test = "t",
+                  data = dat)
+
+summary(mod_ES1) #enriched animals do much better at conditioning 
+r2_ml(mod_ES1) #conditioning significantly increases, same strength as habituation.
+
+#learning vs memory
+dat1<-dat %>% subset(Learning_vs_memory < 3) #remove 3 = unclear
+
+dat1$Learning_vs_memory<-as.factor(dat1$Learning_vs_memory)
+
+mod_ES2 <-  rma.mv(yi = lnRR_ESa, V = lnRRV_E, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID, 
+                                                                                        # ~ 1|Strain, does not run as we have NA
+                                                                                        ~1|ES_ID),
+                  test = "t",
+                  data = dat1)
+
+summary(mod_ES2) #learning and memory are important
+r2_ml(mod_ES2) #marginal R2 is low
+
+#appetitive_vs_aversive
+dat2<-  dat %>% subset(Appetitive_vs_aversive < 3) #remove 3 = unclear
+
+dat2$Appetitive_vs_aversive <- as.factor(dat2$Appetitive_vs_aversive)
+
+mod_ES3 <- rma.mv(yi = lnRR_ESa, V = lnRRV_E, mod = ~Appetitive_vs_aversive-1, random = list(~1|Study_ID, 
+                                                                                           # ~ 1|Strain, does not run as we have NA
+                                                                                           ~1|ES_ID),
+                 test = "t",
+                 data = dat2)
+
+summary(mod_ES3) #aversive but not appetitive is significantly increased
+r2_ml(mod_ES3) #marginal R2 is low
+count(dat2, Appetitive_vs_aversive)
+
+#social enrichment
+dat3<-  dat %>% subset(EE_social < 3) #remove 3 = unclear
+dat3$EE_social <- as.factor(dat3$EE_social)
+
+mod_ES4 <- rma.mv(yi = lnRR_ESa, V = lnRRV_E, mod = ~EE_social-1, random = list(~1|Study_ID, 
+                                                                                # ~ 1|Strain, does not run as we have NA
+                                                                                ~1|ES_ID),
+                 test = "t",
+                 data = dat3)
+
+summary(mod_ES4) #social enrichment
+Sr2_ml(mod_ES4) 
+
+#exercise enrichment
+dat$EE_exercise<-as.factor(dat$EE_exercise)
+
+mod_ES5 <- rma.mv(yi = lnRR_ESa, V = lnRRV_E, mod = ~EE_exercise-1, random = list(~1|Study_ID, 
+                                                                                # ~ 1|Strain, does not run as we have NA
+                                                                                ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+
+summary(mod_ES5) #not really any difference in exercise
+r2_ml(mod_ES5) #marginal R2 is very low
+
+#age of enrichment
+dat4<-  dat %>% subset(Age_EE_exposure < 4) #remove 3 = unclear
+dat4$Age_EE_exposure <- as.factor(dat4$Age_EE_exposure)
+
+mod_ES6 <- rma.mv(yi = lnRR_ESa, V = lnRRV_E, mod = ~Age_EE_exposure-1, random = list(~1|Study_ID, 
+                                                                                    # ~ 1|Strain, does not run as we have NA
+                                                                                    ~1|ES_ID),
+                 test = "t",
+                 data = dat4)
+
+summary(mod_ES6) #no significance but adult exposure is stronger effect
+r2_ml(mod_ES6) #high R2
+count(dat4, Age_EE_exposure) #9 studies of juvenile, 21 on adults
+
+#type of stress
+count(dat, Type_stress_exposure) #need to remove exposure 3 and 9
+dat$Type_stress_exposure <- as.factor(dat$Type_stress_exposure)
+dat5 <- filter(dat, Type_stress_exposure %in% c("5", "6", "8","10"))
+
+mod_ES7 <- rma.mv(yi = lnRR_ESa, V = lnRRV_S, mod = ~Type_stress_exposure-1, random = list(~1|Study_ID, 
+                                                                                         # ~ 1|Strain, does not run as we have NA
+                                                                                         ~1|ES_ID),
+                 test = "t",
+                 data = dat5)
+summary(mod_ES7) #Maternal separation are the ones that do significantly better with enrichment
+r2_ml(mod_ES7)
+
+#age of stress
+dat$Age_stress_exposure <-as.factor(dat$Age_stress_exposure)
+mod_ES8 <-rma.mv(yi = lnRR_ESa, V = lnRRV_S, mod = ~Age_stress_exposure-1, random = list(~1|Study_ID, 
+                                                                                       # ~ 1|Strain, does not run as we have NA
+                                                                                       ~1|ES_ID),
+                test = "t",
+                data = dat)
+summary(mod_ES8) #pre natal stress is the highest
+r2_ml(mod_ES8) 
 # TODO Try SMD
-# TODO Try key moderators (meta-regression)
