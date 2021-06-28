@@ -182,6 +182,10 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
   CV_CC <- 4.46/10.5
   
   # main effect Environment enrichment
+  lnCVR_E <- as.numeric(0.5 * log((CV_ES*CV_EC) / (CV_CS*CV_CC)) + 
+                          0.5 * ( (1/(2*(data[[ES_n]] -1))) - (1/(2*(data[[CS_n]] -1))) +
+                                    (1/(2*(data[[EC_n]] -1))) - (1/(2*(data[[CC_n]] -1)))) )
+  
  # (0.5 * log((0.2424466*0.469362) / (0.2045794*0.4247619)) + 
   #                       0.5 * ( (1/(2*(10 -1))) + (1/(2*(10 -1))) -
    #                                (1/(2*(10 -1))) - (1/(2*(10 -1)))) )
