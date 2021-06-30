@@ -110,6 +110,20 @@ summary(mod_E0) #learning and memory significantly better when enrichment
 
 funnel(mod_E0)
 
+#trying orchard plot
+
+orchard_plot(mod_E0, mod = "Int", xlab = "lnRR", alpha=0.4) +  # Orchard plot 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5)+ # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2)+ # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_colour_manual(values = "darkorange")+ # change colours
+  scale_fill_manual(values="darkorange")+ 
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+
 #heterogeneity
 i2_ml(mod_E0) #high hetero
 
@@ -125,22 +139,25 @@ i2_ml(mod_E0) #high hetero
 #type of learning
 dat$Type_learning<-as.factor(dat$Type_learning)
 
-mod_E1 <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, mod = ~Type_learning, random = list(~1|Study_ID, 
-                                                          # ~ 1|Strain, does not run as we have NA
-                                                          ~1|ES_ID),
-                 test = "t",
-                 data = dat)
-
-summary(mod_E1)
-
-mod_E1a <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, mod = ~Type_learning-1, random = list(~1|Study_ID, 
+mod_E1 <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, mod = ~Type_learning-1, random = list(~1|Study_ID, 
                                                                                 # ~ 1|Strain, does not run as we have NA
                                                                                 ~1|ES_ID),
                  test = "t",
                  data = dat)
 
-summary(mod_E1a) #enriched animals do much better at conditioning 
-r2_ml(mod_E1a) 
+summary(mod_E1) #enriched animals do much better at conditioning 
+r2_ml(mod_E1) 
+
+#orchard plot
+orchard_plot(mod_E1, mod = "Type_learning", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
 
 #learning vs memory
 dat1<-dat %>% subset(Learning_vs_memory < 3) #remove 3 = unclear
@@ -156,6 +173,16 @@ mod_E2 <-  rma.mv(yi = lnRR_Ea, V = lnRRV_E, mod = ~Learning_vs_memory-1, random
 summary(mod_E2) #learning and memory are important: need to remove category 3 = unclear
 r2_ml(mod_E2) #marginal R2 is low
 
+orchard_plot(mod_E2, mod = "Type_vs_memory", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+
 #appetitive_vs_aversive
 dat2<-  dat %>% subset(Appetitive_vs_aversive < 3) #remove 3 = unclear
 
@@ -170,6 +197,17 @@ mod_E3 <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, mod = ~Appetitive_vs_aversive-1, ran
 summary(mod_E3)
 r2_ml(mod_E3) #marginal R2 is low
 
+# Orchard plot 
+orchard_plot(mod_E3, mod = "Appetitive_vs_aversive", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+
 #social enrichment
 dat3<-  dat %>% subset(EE_social < 3) #remove 3 = unclear
 dat3$EE_social <- as.factor(dat3$EE_social)
@@ -183,6 +221,17 @@ mod_E4<- rma.mv(yi = lnRR_Ea, V = lnRRV_E, mod = ~EE_social-1, random = list(~1|
 summary(mod_E4)
 r2_ml(mod_E4) #social enrichment does slightly better
 
+# Orchard plot 
+orchard_plot(mod_E4, mod = "EE_social", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+
 #exercise enrichment
 dat$EE_exercise<-as.factor(dat$EE_exercise)
 
@@ -194,6 +243,17 @@ mod_E5 <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, mod = ~EE_exercise-1, random = list(
 
 summary(mod_E5) #not really any difference in exercise
 r2_ml(mod_E5) #marginal R2 is very low
+
+# Orchard plot 
+orchard_plot(mod_E5, mod = "EE_exercise", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
 
 #age of enrichment
 dat4<-  dat %>% subset(Age_EE_exposure < 4) #remove 3 = unclear
@@ -209,8 +269,19 @@ summary(mod_E6) #adult but not juvenile age of enrichment increases learning and
 r2_ml(mod_E6) #high R2
 count(dat4, Age_EE_exposure) #9 studies of juvenile, 21 on adults
 
+# Orchard plot 
+orchard_plot(mod_E6, mod = "Age_E_exposure", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+
 # stress----
-mod_S <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, random = list(~1|Study_ID, 
+mod_S0 <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, random = list(~1|Study_ID, 
                                                          # ~ 1|Strain, does not run as we have NA
                                                          ~1|ES_ID),
                  test = "t",
@@ -218,6 +289,17 @@ mod_S <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, random = list(~1|Study_ID,
 summary(mod_S0) #learning and memory significantly worse when stressed
 funnel(mod_S0)
 i2_ml(mod_S0) #high hetero
+
+# Orchard plot 
+orchard_plot(mod_S0, mod = "Int", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
 
 #moderators
 
@@ -234,6 +316,17 @@ mod_S1 <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Type_learning-1, random = lis
 summary(mod_S1) #Habituation and condition most strongly affected by stress
 r2_ml(mod_S1) 
 
+# Orchard plot 
+orchard_plot(mod_S1, mod = "Type_learning", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+
 #learning vs memory
 dat1<-dat %>% subset(Learning_vs_memory < 3) #remove 3 = unclear
 
@@ -247,6 +340,17 @@ mod_S2 <-  rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Learning_vs_memory-1, random
 
 summary(mod_S2) #memory but nor learning affected
 r2_ml(mod_S2) #marginal R2 is low
+
+# Orchard plot 
+orchard_plot(mod_S2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
 
 #appetitive_vs_aversive
 dat2<-  dat %>% subset(Appetitive_vs_aversive < 3) #remove 3 = unclear
@@ -262,6 +366,17 @@ mod_S3 <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Appetitive_vs_aversive-1, ran
 summary(mod_S3)
 r2_ml(mod_S3) #marginal R2 is low
 
+# Orchard plot 
+orchard_plot(mod_S3, mod = "Appetitive_vs_aversive", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+
 #type of stress
 count(dat, Type_stress_exposure) #need to remove exposure 3 and 9
 dat$Type_stress_exposure <- as.factor(dat$Type_stress_exposure)
@@ -275,6 +390,17 @@ mod_S4 <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Type_stress_exposure-1, rando
 summary(mod_S4) #restraint has highest effect on learning and memory
 r2_ml(mod_S4)
 
+# Orchard plot 
+orchard_plot(mod_S4, mod = "Type_stress_exposure", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+
 #age of stress
 count(dat, Age_stress_exposure) #need to sort out all the unclear ones
 dat$Age_stress_exposure <-as.factor(dat$Age_stress_exposure)
@@ -287,6 +413,17 @@ mod_S5 <-rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Age_stress_exposure-1, random 
 summary(mod_S5) #unclear is significant. Need to sort out all the ages
 r2_ml(mod_S5) #marginal R2 is very high
 
+# Orchard plot 
+orchard_plot(mod_S5, mod = "Age_stress_exposure", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+
 # interaction----
 mod_ES0 <- rma.mv(yi = lnRR_ESa, V = lnRRV_ES, random = list(~1|Study_ID, 
                                                          # ~ 1|Strain, does not run as we have NA
@@ -296,6 +433,17 @@ mod_ES0 <- rma.mv(yi = lnRR_ESa, V = lnRRV_ES, random = list(~1|Study_ID,
 summary(mod_ES0) #significantly positive- seems like SE is better than just E by itself
 funnel(mod_ES0)
 i2_ml(mod_ES0) #high hetero
+
+# Orchard plot 
+orchard_plot(mod_ES0, mod = "Int", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
 
 #moderators
 #TODO should we include multiple moderators (i.e., stress and enrichment) into the interaction model?
@@ -310,6 +458,17 @@ mod_ES1 <- rma.mv(yi = lnRR_ESa, V = lnRRV_E, mod = ~Type_learning-1, random = l
 summary(mod_ES1) #enriched animals do much better at conditioning 
 r2_ml(mod_ES1) #conditioning significantly increases, same strength as habituation.
 
+# Orchard plot 
+orchard_plot(mod_ES1, mod = "Type_learning", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+
 #learning vs memory
 dat1<-dat %>% subset(Learning_vs_memory < 3) #remove 3 = unclear
 
@@ -323,6 +482,17 @@ mod_ES2 <-  rma.mv(yi = lnRR_ESa, V = lnRRV_E, mod = ~Learning_vs_memory-1, rand
 
 summary(mod_ES2) #learning and memory are important
 r2_ml(mod_ES2) #marginal R2 is low
+
+# Orchard plot 
+orchard_plot(mod_ES2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
 
 #appetitive_vs_aversive
 dat2<-  dat %>% subset(Appetitive_vs_aversive < 3) #remove 3 = unclear
@@ -339,6 +509,18 @@ summary(mod_ES3) #aversive but not appetitive is significantly increased
 r2_ml(mod_ES3) #marginal R2 is low
 count(dat2, Appetitive_vs_aversive)
 
+# Orchard plot 
+orchard_plot(mod_ES3, mod = "Appetitive_vs_aversive", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+
+
 #social enrichment
 dat3<-  dat %>% subset(EE_social < 3) #remove 3 = unclear
 dat3$EE_social <- as.factor(dat3$EE_social)
@@ -350,7 +532,18 @@ mod_ES4 <- rma.mv(yi = lnRR_ESa, V = lnRRV_E, mod = ~EE_social-1, random = list(
                  data = dat3)
 
 summary(mod_ES4) #social enrichment
-Sr2_ml(mod_ES4) 
+r2_ml(mod_ES4) 
+
+# Orchard plot 
+orchard_plot(mod_ES4, mod = "EE_social", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
 
 #exercise enrichment
 dat$EE_exercise<-as.factor(dat$EE_exercise)
@@ -363,6 +556,17 @@ mod_ES5 <- rma.mv(yi = lnRR_ESa, V = lnRRV_E, mod = ~EE_exercise-1, random = lis
 
 summary(mod_ES5) #not really any difference in exercise
 r2_ml(mod_ES5) #marginal R2 is very low
+
+# Orchard plot 
+orchard_plot(mod_ES5, mod = "EE_exercise", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
 
 #age of enrichment
 dat4<-  dat %>% subset(Age_EE_exposure < 4) #remove 3 = unclear
@@ -378,28 +582,64 @@ summary(mod_ES6) #no significance but adult exposure is stronger effect
 r2_ml(mod_ES6) #high R2
 count(dat4, Age_EE_exposure) #9 studies of juvenile, 21 on adults
 
+# Orchard plot 
+orchard_plot(mod_ES6, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+
+#age stress exposure
+
+count(dat, Age_stress_exposure) #need to sort out all the unclear ones
+dat$Age_stress_exposure <-as.factor(dat$Age_stress_exposure)
+
+mod_ES7 <-rma.mv(yi = lnRR_ESa, V = lnRRV_ES, mod = ~Age_stress_exposure-1, random = list(~1|Study_ID, 
+                                                                                       # ~ 1|Strain, does not run as we have NA
+                                                                                       ~1|ES_ID),
+                test = "t",
+                data = dat)
+summary(mod_ES7) #unclear is significant. Need to sort out all the ages
+r2_ml(mod_ES7) #marginal R2 is very high
+
+# Orchard plot 
+orchard_plot(mod_ES7, mod = "Age_stress_exposure", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+
 #type of stress
 count(dat, Type_stress_exposure) #need to remove exposure 3 and 9
 dat$Type_stress_exposure <- as.factor(dat$Type_stress_exposure)
 dat5 <- filter(dat, Type_stress_exposure %in% c("5", "6", "8","10"))
 
-mod_ES7 <- rma.mv(yi = lnRR_ESa, V = lnRRV_S, mod = ~Type_stress_exposure-1, random = list(~1|Study_ID, 
+mod_ES8 <- rma.mv(yi = lnRR_ESa, V = lnRRV_S, mod = ~Type_stress_exposure-1, random = list(~1|Study_ID, 
                                                                                          # ~ 1|Strain, does not run as we have NA
                                                                                          ~1|ES_ID),
                  test = "t",
                  data = dat5)
-summary(mod_ES7) #Maternal separation are the ones that do significantly better with enrichment
-r2_ml(mod_ES7)
+summary(mod_ES8) #Maternal separation are the ones that do significantly better with enrichment
+r2_ml(mod_ES8)
 
-#age of stress
-dat$Age_stress_exposure <-as.factor(dat$Age_stress_exposure)
-mod_ES8 <-rma.mv(yi = lnRR_ESa, V = lnRRV_S, mod = ~Age_stress_exposure-1, random = list(~1|Study_ID, 
-                                                                                       # ~ 1|Strain, does not run as we have NA
-                                                                                       ~1|ES_ID),
-                test = "t",
-                data = dat)
-summary(mod_ES8) #pre natal stress is the highest
-r2_ml(mod_ES8) 
+# Orchard plot 
+orchard_plot(mod_ES8, mod = "Type_stress_exposure", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
 
 #modelling with SMD ----
 
