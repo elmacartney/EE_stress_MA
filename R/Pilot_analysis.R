@@ -16,19 +16,15 @@ pacman::p_load(tidyverse,
 
 
 #loading data----
-# TODO - Erin - name all files like as you name functions (good practice)
 # TODO - Erin about the directions of effects and expectations
-# TODO - tell Erin about why we you do not want to name things with function names
+# TODO - shifting up negative values of study 16 results in inf value of effect size because  cant divide my 0
+# TODO - funnel plots look very strange with SMD
 dat <- read_csv(here("Data","Pilot_data.csv"))
+# TODO - what to do about outliers: one very high put low precision effect size
 
 # Load custom function to extract data 
 source(here("R/functions.R")) # this has all the function used to calculate effect sizes
 
-# I do not seem to have this issue
-# data1 <- data %>% 
-#   rename(
-#     Study_ID = ï..Study_ID
-#   )
 #checking for outliers/potential typos----
 
 # this looks good
@@ -95,6 +91,11 @@ dimentions <- dim(dat) # 7 less
 dat$lnRR_Ea <- ifelse(dat$Response_direction == 2, dat$lnRR_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E)) # currently NAswhich causes error
 dat$lnRR_Sa  <- ifelse(dat$Response_direction == 2, dat$lnRR_S*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_S)) # currently NAswhich causes error
 dat$lnRR_ESa <-  ifelse(dat$Response_direction == 2, dat$lnRR_ES*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_ES)) # currently NAswhich causes error
+
+dat$SMD_Ea <- ifelse(dat$Response_direction == 2, dat$SMD_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_E)) # currently NAswhich causes error
+dat$SMD_Sa  <- ifelse(dat$Response_direction == 2, dat$SMD_S*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_S)) # currently NAswhich causes error
+dat$SMD_ESa <-  ifelse(dat$Response_direction == 2, dat$SMD_ES*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_ES)) # currently NAswhich causes error
+
 
 # modeling with lnRR----
 
@@ -172,6 +173,12 @@ r2_ml(mod_E3) #marginal R2 is low
 #social enrichment
 dat3<-  dat %>% subset(EE_social < 3) #remove 3 = unclear
 dat3$EE_social <- as.factor(dat3$EE_social)
+
+mod_E4<- rma.mv(yi = lnRR_Ea, V = lnRRV_E, mod = ~EE_social-1, random = list(~1|Study_ID, 
+                                                                              # ~ 1|Strain, does not run as we have NA
+                                                                              ~1|ES_ID),
+                 test = "t",
+                 data = dat3)
 
 summary(mod_E4)
 r2_ml(mod_E4) #social enrichment does slightly better
@@ -393,4 +400,303 @@ mod_ES8 <-rma.mv(yi = lnRR_ESa, V = lnRRV_S, mod = ~Age_stress_exposure-1, rando
                 data = dat)
 summary(mod_ES8) #pre natal stress is the highest
 r2_ml(mod_ES8) 
-# TODO Try SMD
+
+#modelling with SMD ----
+
+# environment----
+
+mod_E0a <- rma.mv(yi = SMD_Ea, V = SMDV_E, random = list(~1|Study_ID, 
+                                                          # ~ 1|Strain, does not run as we have NA
+                                                          ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+summary(mod_E0a) #learning and memory significantly better when enrichment
+
+#TODO whats going on with the funnel plot?
+funnel(mod_E0a) #this doesn't look right...?
+
+#heterogeneity
+i2_ml(mod_E0a) #I2 is extremely high: 99.7
+
+#potentially important moderators:all meta-regression excludes intercept
+# Age exposures
+# Type exposure: Social, exercise
+# Type stressor
+# Stress duration
+# appetitve vs aversive
+# learning vs memory
+# Type learning
+
+#type of learning
+dat$Type_learning<-as.factor(dat$Type_learning)
+
+mod_E1a <- rma.mv(yi = SMD_Ea, V = SMDV_E, mod = ~Type_learning-1, random = list(~1|Study_ID, 
+                                                                                   # ~ 1|Strain, does not run as we have NA
+                                                                                   ~1|ES_ID),
+                  test = "t",
+                  data = dat)
+
+summary(mod_E1a) #enriched animals do much better at conditioning 
+r2_ml(mod_E1a) 
+
+#learning vs memory
+dat1<-dat %>% subset(Learning_vs_memory < 3) #remove 3 = unclear
+
+dat1$Learning_vs_memory<-as.factor(dat1$Learning_vs_memory)
+
+mod_E2a <-  rma.mv(yi = SMD_Ea, V = SMDV_E, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID, 
+                                                                                        # ~ 1|Strain, does not run as we have NA
+                                                                                        ~1|ES_ID),
+                  test = "t",
+                  data = dat1)
+
+summary(mod_E2a)
+r2_ml(mod_E2a) #marginal R2 is low
+
+#appetitive_vs_aversive
+dat2<-  dat %>% subset(Appetitive_vs_aversive < 3) #remove 3 = unclear
+
+dat2$Appetitive_vs_aversive <- as.factor(dat2$Appetitive_vs_aversive)
+
+mod_E3a <- rma.mv(yi = SMD_Ea, V = SMDV_E, mod = ~Appetitive_vs_aversive-1, random = list(~1|Study_ID, 
+                                                                                           # ~ 1|Strain, does not run as we have NA
+                                                                                           ~1|ES_ID),
+                 test = "t",
+                 data = dat2)
+
+summary(mod_E3a) #Enriched animals do much better with aversive conditioning
+r2_ml(mod_E3a) #marginal R2 is low
+
+#social enrichment
+dat3<-  dat %>% subset(EE_social < 3) #remove 3 = unclear
+dat3$EE_social <- as.factor(dat3$EE_social)
+
+mod_E4a<- rma.mv(yi = SMD_Ea, V = SMDV_E, mod = ~EE_social-1, random = list(~1|Study_ID, 
+                                                                                # ~ 1|Strain, does not run as we have NA
+                                                                                ~1|ES_ID),
+                 test = "t",
+                 data = dat3)
+
+summary(mod_E4)
+r2_ml(mod_E4) #social enrichment does slightly better
+
+#exercise enrichment
+dat$EE_exercise<-as.factor(dat$EE_exercise)
+
+mod_E5a <- rma.mv(yi = SMD_Ea, V = SMDV_E, mod = ~EE_exercise-1, random = list(~1|Study_ID, 
+                                                                                # ~ 1|Strain, does not run as we have NA
+                                                                                ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+
+summary(mod_E5a) #Stronger difference with exercise
+r2_ml(mod_E5a) 
+
+#age of enrichment
+dat4<-  dat %>% subset(Age_EE_exposure < 4) #remove 3 = unclear
+dat4$Age_EE_exposure <- as.factor(dat4$Age_EE_exposure)
+
+mod_E6a <- rma.mv(yi = SMD_Ea, V = SMDV_E, mod = ~Age_EE_exposure-1, random = list(~1|Study_ID, 
+                                                                                    # ~ 1|Strain, does not run as we have NA
+                                                                                    ~1|ES_ID),
+                 test = "t",
+                 data = dat4)
+
+summary(mod_E6a) #much stronger effect of adult enrichment
+r2_ml(mod_E6a) #high R2
+count(dat4, Age_EE_exposure) #9 studies of juvenile, 21 on adults
+
+
+# stress----
+mod_S0a <- rma.mv(yi = SMD_Sa, V = SMDV_S, random = list(~1|Study_ID, 
+                                                         # ~ 1|Strain, does not run as we have NA
+                                                         ~1|ES_ID),
+                test = "t",
+                data = dat)
+summary(mod_S0a) #learning and memory significantly worse when stressed
+funnel(mod_S0a) #very strange funnel plot with very low ES
+i2_ml(mod_S0a) #hetero = 99.8%
+
+#moderators
+
+#type of learning
+count(dat, Type_learning)
+dat$Type_learning<-as.factor(dat$Type_learning)
+
+mod_S1a <- rma.mv(yi = SMD_Sa, V = SMDV_S, mod = ~Type_learning-1, random = list(~1|Study_ID, 
+                                                                                  # ~ 1|Strain, does not run as we have NA
+                                                                                  ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+
+summary(mod_S1a) #Habituation and condition most strongly affected by stress
+r2_ml(mod_S1a) 
+
+#learning vs memory
+dat1<-dat %>% subset(Learning_vs_memory < 3) #remove 3 = unclear
+
+dat1$Learning_vs_memory<-as.factor(dat1$Learning_vs_memory)
+
+mod_S2a <-  rma.mv(yi = SMD_Sa, V = SMDV_S, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID, 
+                                                                                        # ~ 1|Strain, does not run as we have NA
+                                                                                        ~1|ES_ID),
+                  test = "t",
+                  data = dat1)
+
+summary(mod_S2a) #memory but not learning affected
+r2_ml(mod_S2a) #marginal R2 is low
+
+#appetitive_vs_aversive
+dat2<-  dat %>% subset(Appetitive_vs_aversive < 3) #remove 3 = unclear
+
+dat2$Appetitive_vs_aversive <- as.factor(dat2$Appetitive_vs_aversive)
+
+mod_S3a <- rma.mv(yi = SMD_Sa, V = SMDV_S, mod = ~Appetitive_vs_aversive-1, random = list(~1|Study_ID, 
+                                                                                           # ~ 1|Strain, does not run as we have NA
+                                                                                           ~1|ES_ID),
+                 test = "t",
+                 data = dat2)
+
+summary(mod_S3a)
+r2_ml(mod_S3) #marginal R2 is low
+
+#type of stress
+count(dat, Type_stress_exposure) #need to remove exposure 3 and 9
+dat$Type_stress_exposure <- as.factor(dat$Type_stress_exposure)
+dat5 <- filter(dat, Type_stress_exposure %in% c("5", "6", "8","10"))
+
+mod_S4a <- rma.mv(yi = SMD_Sa, V = SMDV_S, mod = ~Type_stress_exposure-1, random = list(~1|Study_ID, 
+                                                                                         # ~ 1|Strain, does not run as we have NA
+                                                                                         ~1|ES_ID),
+                 test = "t",
+                 data = dat5)
+summary(mod_S4a) #restraint has highest effect on learning and memory
+r2_ml(mod_S4a)
+
+#age of stress
+count(dat, Age_stress_exposure) #need to sort out all the unclear ones
+dat$Age_stress_exposure <-as.factor(dat$Age_stress_exposure)
+
+mod_S5a <-rma.mv(yi = SMD_Sa, V = SMDV_S, mod = ~Age_stress_exposure-1, random = list(~1|Study_ID, 
+                                                                                       # ~ 1|Strain, does not run as we have NA
+                                                                                       ~1|ES_ID),
+                test = "t",
+                data = dat)
+summary(mod_S5a) #adult stress has a much greater effect. Followed by prenatal (although non-significant)
+r2_ml(mod_S5a) #marginal R2 is very high
+
+#note that the importance of adult could be that the time to the assay is less (most assay were done as adults) - not enough data to test age at the time of the assay
+
+# interaction----
+mod_ES0a <- rma.mv(yi = SMD_ESa, V = SMDV_ES, random = list(~1|Study_ID, 
+                                                             # ~ 1|Strain, does not run as we have NA
+                                                             ~1|ES_ID),
+                  test = "t",
+                  data = dat)
+summary(mod_ES0a) #significantly positive- seems like SE is better than just E by itself
+funnel(mod_ES0a) #funnel plot doesn't look right
+i2_ml(mod_ES0a) #high hetero
+
+#moderators
+#TODO should we include multiple moderators (i.e., stress and enrichment) into the interaction model?
+dat$Type_learning<-as.factor(dat$Type_learning)
+
+mod_ES1a <- rma.mv(yi = SMD_ESa, V = SMDV_E, mod = ~Type_learning-1, random = list(~1|Study_ID, 
+                                                                                    # ~ 1|Strain, does not run as we have NA
+                                                                                    ~1|ES_ID),
+                  test = "t",
+                  data = dat)
+
+summary(mod_ES1a) #enriched animals do much better at conditioning and habituation 
+r2_ml(mod_ES1a) #conditioning significantly increases, same strength as habituation.
+
+#learning vs memory
+dat1<-dat %>% subset(Learning_vs_memory < 3) #remove 3 = unclear
+
+dat1$Learning_vs_memory<-as.factor(dat1$Learning_vs_memory)
+
+mod_ES2a <-  rma.mv(yi = SMD_ESa, V = SMDV_E, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID, 
+                                                                                          # ~ 1|Strain, does not run as we have NA
+                                                                                          ~1|ES_ID),
+                   test = "t",
+                   data = dat1)
+
+summary(mod_ES2a) #learning and memory are important but leanring is higher
+r2_ml(mod_ES2a) #marginal R2 is low
+
+#appetitive_vs_aversive
+dat2<-  dat %>% subset(Appetitive_vs_aversive < 3) #remove 3 = unclear
+
+dat2$Appetitive_vs_aversive <- as.factor(dat2$Appetitive_vs_aversive)
+
+mod_ES3a <- rma.mv(yi = SMD_ESa, V = SMDV_E, mod = ~Appetitive_vs_aversive-1, random = list(~1|Study_ID, 
+                                                                                             # ~ 1|Strain, does not run as we have NA
+                                                                                             ~1|ES_ID),
+                  test = "t",
+                  data = dat2)
+
+summary(mod_ES3a) #aversive but not appetitive is significantly increased
+r2_ml(mod_ES3a) #marginal R2 is low
+count(dat2, Appetitive_vs_aversive)
+
+#social enrichment
+dat3<-  dat %>% subset(EE_social < 3) #remove 3 = unclear
+dat3$EE_social <- as.factor(dat3$EE_social)
+
+mod_ES4a <- rma.mv(yi = SMD_ESa, V = SMDV_E, mod = ~EE_social-1, random = list(~1|Study_ID, 
+                                                                                # ~ 1|Strain, does not run as we have NA
+                                                                                ~1|ES_ID),
+                  test = "t",
+                  data = dat3)
+
+summary(mod_ES4a) #social enrichment does substantially more better when improving learning and memory
+r2_ml(mod_ES4a) 
+
+#exercise enrichment
+dat$EE_exercise<-as.factor(dat$EE_exercise)
+
+mod_ES5a <- rma.mv(yi = SMD_ESa, V = SMDV_E, mod = ~EE_exercise-1, random = list(~1|Study_ID, 
+                                                                                  # ~ 1|Strain, does not run as we have NA
+                                                                                  ~1|ES_ID),
+                  test = "t",
+                  data = dat)
+
+summary(mod_ES5a) #not really any difference in exercise
+r2_ml(mod_ES5a) #marginal R2 is very low
+
+#age of enrichment
+dat4<-  dat %>% subset(Age_EE_exposure < 4) #remove 3 = unclear
+dat4$Age_EE_exposure <- as.factor(dat4$Age_EE_exposure)
+
+mod_ES6a <- rma.mv(yi = SMD_ESa, V = SMDV_E, mod = ~Age_EE_exposure-1, random = list(~1|Study_ID, 
+                                                                                      # ~ 1|Strain, does not run as we have NA
+                                                                                      ~1|ES_ID),
+                  test = "t",
+                  data = dat4)
+
+summary(mod_ES6a) #no significance but adult exposure is stronger effect
+r2_ml(mod_ES6a) #high R2
+count(dat4, Age_EE_exposure) #9 studies of juvenile, 21 on adults
+
+#type of stress
+count(dat, Type_stress_exposure) #need to remove exposure 3 and 9
+dat$Type_stress_exposure <- as.factor(dat$Type_stress_exposure)
+dat5 <- filter(dat, Type_stress_exposure %in% c("5", "6", "8","10"))
+
+mod_ES7a <- rma.mv(yi = SMD_ESa, V = SMDV_S, mod = ~Type_stress_exposure-1, random = list(~1|Study_ID, 
+                                                                                           # ~ 1|Strain, does not run as we have NA
+                                                                                           ~1|ES_ID),
+                  test = "t",
+                  data = dat5)
+summary(mod_ES7a) #restrain and maternal separation are increased the most
+r2_ml(mod_ES7a)
+
+#age of stress
+dat$Age_stress_exposure <-as.factor(dat$Age_stress_exposure)
+mod_ES8a <-rma.mv(yi = SMD_ESa, V = SMDV_S, mod = ~Age_stress_exposure-1, random = list(~1|Study_ID, 
+                                                                                         # ~ 1|Strain, does not run as we have NA
+                                                                                         ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+summary(mod_ES8a) #pre natal and adult stress are recovered the most
+r2_ml(mod_ES8a) #moderate R2
