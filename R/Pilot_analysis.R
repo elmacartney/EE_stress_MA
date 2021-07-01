@@ -87,11 +87,11 @@ dimentions <- dim(dat) # 7 less
 
 # flipping effect sizes ----
 #flipping lnRR for values where higher = worse
-
 dat$lnRR_Ea <- ifelse(dat$Response_direction == 2, dat$lnRR_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E)) # currently NAswhich causes error
 dat$lnRR_Sa  <- ifelse(dat$Response_direction == 2, dat$lnRR_S*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_S)) # currently NAswhich causes error
 dat$lnRR_ESa <-  ifelse(dat$Response_direction == 2, dat$lnRR_ES*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_ES)) # currently NAswhich causes error
 
+#flipping SMD
 dat$SMD_Ea <- ifelse(dat$Response_direction == 2, dat$SMD_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_E)) # currently NAswhich causes error
 dat$SMD_Sa  <- ifelse(dat$Response_direction == 2, dat$SMD_S*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_S)) # currently NAswhich causes error
 dat$SMD_ESa <-  ifelse(dat$Response_direction == 2, dat$SMD_ES*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_ES)) # currently NAswhich causes error
@@ -397,7 +397,7 @@ orchard_plot(mod_S4, mod = "Type_stress_exposure", xlab = "lnRR", alpha=0.4) +
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
+        text = element_text(size = 15), # change font sizes
         legend.title = element_text(size = 15),
         legend.text = element_text(size = 13)) 
 
@@ -426,10 +426,10 @@ orchard_plot(mod_S5, mod = "Age_stress_exposure", xlab = "lnRR", alpha=0.4) +
 
 # interaction----
 mod_ES0 <- rma.mv(yi = lnRR_ESa, V = lnRRV_ES, random = list(~1|Study_ID, 
-                                                         # ~ 1|Strain, does not run as we have NA
-                                                         ~1|ES_ID),
-                 test = "t",
-                 data = dat)
+                                                             # ~ 1|Strain, does not run as we have NA
+                                                             ~1|ES_ID),
+                  test = "t",
+                  data = dat)
 summary(mod_ES0) #significantly positive- seems like SE is better than just E by itself
 funnel(mod_ES0)
 i2_ml(mod_ES0) #high hetero
