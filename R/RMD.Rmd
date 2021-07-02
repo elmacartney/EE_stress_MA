@@ -80,25 +80,70 @@ dat$SMD_Sa  <- ifelse(dat$Response_direction == 2, dat$SMD_S*-1,ifelse(is.na(dat
 dat$SMD_ESa <-  ifelse(dat$Response_direction == 2, dat$SMD_ES*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_ES))
 ```
 
+#### Assigning human readable words to moderators
+```{r, message = FALSE, warning = FALSE, results = 'hide'}
+dat <- dat %>% mutate(Type_learning = case_when(Type_learning == 1 ~ "Habituation",
+                                                Type_learning == 2 ~ "Conditioning",
+                                                Type_learning == 3 ~ "Recognition", 
+                                                Type_learning == 4 ~ "Unclear"),
+                      Learning_vs_memory = case_when(Learning_vs_memory == 1 ~ "Learning",
+                                                     Learning_vs_memory == 2 ~ "Memory", 
+                                                     Learning_vs_memory == 1 ~ "Unclear"),
+                      Appetitive_vs_aversive = case_when(Appetitive_vs_aversive == 1 ~"Appetitive",
+                                                         Appetitive_vs_aversive == 2 ~ "Aversive",
+                                                         Appetitive_vs_aversive == 3 ~ "Not applicable",
+                                                         Appetitive_vs_aversive == 4 ~ "Unclear"),
+                      Type_stress_exposure = case_when(Type_stress_exposure == 1 ~ "Density",
+                                                       Type_stress_exposure == 2 ~ "Scent",
+                                                       Type_stress_exposure == 3 ~ "Shock",
+                                                       Type_stress_exposure == 4 ~ "Exertion",
+                                                       Type_stress_exposure == 5 ~ "Restraint",
+                                                       Type_stress_exposure == 6 ~ "MS",
+                                                       Type_stress_exposure == 7 ~ "Circadian rhythm",
+                                                       Type_stress_exposure == 8 ~ "Noise",
+                                                       Type_stress_exposure == 9 ~ "Other",
+                                                       Type_stress_exposure == 10 ~ "Combination",
+                                                       Type_stress_exposure == 11 ~ "unclear"), 
+                      Age_stress_exposure = case_when(Age_stress_exposure == 1 ~ "Prenatal",
+                                                      Age_stress_exposure == 2 ~ "Juvenile",
+                                                      Age_stress_exposure == 3 ~ "Adult",
+                                                      Age_stress_exposure == 4 ~ "Unclear"),
+                      Stress_duration = case_when(Stress_duration == 1 ~ "Acute",
+                                                  Stress_duration == 2 ~ "Chronic",
+                                                  Stress_duration == 3 ~ "Intermittent",
+                                                  Stress_duration == 4 ~ "Unclear"),
+                      EE_social = case_when(EE_social == 1 ~ "Social",
+                                            EE_social== 2 ~ "Non-social", 
+                                            EE_social == 3 ~ "Unclear"), 
+                      EE_exercise = case_when(EE_exercise == 1 ~ "Exercise", 
+                                              EE_exercise == 2 ~ "No exercise"),
+                      Age_EE_exposure = case_when(Age_EE_exposure == 1 ~ "Prenatal", 
+                                                  Age_EE_exposure == 2 ~ "Juvenile",
+                                                  Age_EE_exposure == 3 ~ "Adult", 
+                                                  Age_EE_exposure == 4 ~ "Unclear"))
+
+```
+
 # Modelling with lnRR
+Things that remain to be done: 
+- Incorporate strain as random effect
+- Consider including VCV
+- Check study 82 as it seems to be an ourlier
 
 ## Stress
 
 ### Intercept model
-Things that remain to be done: 
-- Incorporate strain as random effect
-- Consider including VCV
-
 Learning and memory are significantly reduced due to stress. 
 High heterogeneity
+
 ``` {r, message = FALSE, warning = FALSE}
 mod_S0 <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, random = list(~1|Study_ID,
-                                                          ~1|ES_ID), test = "t", data = dat)
+                                                          ~1|ES_ID),
+                 test = "t", 
+                 data = dat)
 
 summary(mod_S0) 
-
 i2_ml(mod_S0) 
-
 funnel(mod_S0)
 
 orchard_plot(mod_S0, mod = "Int", xlab = "lnRR", alpha=0.4) + 
@@ -114,21 +159,17 @@ orchard_plot(mod_S0, mod = "Int", xlab = "lnRR", alpha=0.4) +
 
 ### Meta-regression
 #### Type of learning
+The type of learning/memory response 
 
 ``` {r, message = FALSE, warning = FALSE}
 dat$Type_learning<-as.factor(dat$Type_learning)
 
-dat <- dat %>% mutate(Type_learning = case_when(Type_learning == 1 ~ "Habituation",
-                                                Type_learning == 2 ~ "Conditioning",
-                                                Type_learning == 3 ~ "Recognition"))
-
-                               
-mod_S1 <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Type_learning-1, random = list(~1|Study_ID,                                                                          ~1|ES_ID),
+mod_S1 <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Type_learning-1, random =   list(~1|Study_ID,
+                                                                                    ~1|ES_ID),
                  test = "t",
                  data = dat)
 
 summary(mod_S1)
-
 r2_ml(mod_S1) 
 
 # Orchard plot 
@@ -144,20 +185,16 @@ orchard_plot(mod_S1, mod = "Type_learning", xlab = "lnRR", alpha=0.4) +
 ```
 
 #### Learning vs Memory
+Is the assay broadly measuring learning or memory? 
+
 ``` {r, message = FALSE, warning = FALSE}
-dat1<-dat %>% subset(Learning_vs_memory < 3) #remove 3 = unclear
-dat1$Learning_vs_memory<-as.factor(dat1$Learning_vs_memory)
 
-dat1 <- dat1 %>% mutate(Learning_vs_memory = case_when(Learning_vs_memory == 1 ~ "Learning",
-                                                Learning_vs_memory == 2 ~ "Memory"))
-
-mod_S2 <-  rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID,                                                                                       ~1|ES_ID),
+mod_S2 <-  rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID,                                                                               ~1|ES_ID),
                   test = "t",
-                  data = dat1)
+                  data = dat)
 
-summary(mod_S2) #memory but nor learning affected
-
-r2_ml(mod_S2) #marginal R2 is low
+summary(mod_S2) 
+r2_ml(mod_S2) 
 
 # Orchard plot 
 orchard_plot(mod_S2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) + 
@@ -172,18 +209,15 @@ orchard_plot(mod_S2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) +
 ```
 
 #### Appetitive vs aversive 
+The type of cue used 
 
 ``` {r, message = FALSE, warning = FALSE}
-dat2<-  dat %>% subset(Appetitive_vs_aversive < 3) #remove 3 = unclear
-dat2$Appetitive_vs_aversive <- as.factor(dat2$Appetitive_vs_aversive)
-dat2 <- dat2 %>% mutate(Appetitive_vs_aversive = case_when(Appetitive_vs_aversive == 1 ~ "Appetitive", Appetitive_vs_aversive== 2 ~ "Aversive"))
-
 mod_S3 <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~ Appetitive_vs_aversive-1, random = list(~1|Study_ID,                                                                              ~1|ES_ID),
                  test = "t",
-                 data = dat2)
+                 data = dat)
 
 summary(mod_S3)
-r2_ml(mod_S3) #marginal R2 is low
+r2_ml(mod_S3) 
 
 # Orchard plot 
 orchard_plot(mod_S3, mod = "Appetitive_vs_aversive", xlab = "lnRR", alpha=0.4) + 
@@ -198,15 +232,14 @@ orchard_plot(mod_S3, mod = "Appetitive_vs_aversive", xlab = "lnRR", alpha=0.4) +
 ````
 
 #### Type of stress
+The type of stress manipulation 
 
 ``` {r, message = FALSE, warning = FALSE}
-dat$Type_stress_exposure <- as.factor(dat$Type_stress_exposure)
-dat <- dat %>% mutate(Type_stress_exposure = case_when(Type_stress_exposure == 1 ~ "Density", Type_stress_exposure == 2 ~ "Scent", Type_stress_exposure == 3 ~ "Shock", Type_stress_exposure == 4 ~ "Exertion", Type_stress_exposure == 5 ~ "Restraint", Type_stress_exposure == 6 ~ "MS", Type_stress_exposure == 7 ~ "Circadian rhythm", Type_stress_exposure == 8 ~ "Noise", Type_stress_exposure == 9 ~ "Other", Type_stress_exposure == 10 ~ "Combination", Type_stress_exposure == 11 ~ "unclear"))
-
-mod_S4 <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Type_stress_exposure-1, random = list(~1|Study_ID, ~1|ES_ID),
+mod_S4 <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Type_stress_exposure-1, random = list(~1|Study_ID,
+                                                                                         ~1|ES_ID),
                  test = "t",
                  data = dat)
-summary(mod_S4) #restraint has highest effect on learning and memory
+summary(mod_S4) 
 r2_ml(mod_S4)
 
 # Orchard plot 
@@ -222,18 +255,16 @@ orchard_plot(mod_S4, mod = "Type_stress_exposure", xlab = "lnRR", alpha=0.4) +
 ````
 
 #### Age of stress
+The age at which the individuals were exposed to the stressor.
 Note there are a lot of 'unkown' age as authors only report PND which needs to be researched. I'm wondering if this also needs an 'adolescence' category as this seesm to be popular in rodent research
-``` {r, message = FALSE, warning = FALSE}
-dat$Age_stress_exposure <-as.factor(dat$Age_stress_exposure)
-dat <- dat %>% mutate(Age_stress_exposure = case_when(Age_stress_exposure == 1 ~ "Prenatal", Age_stress_exposure == 2 ~ "Juvenile", Age_stress_exposure == 3 ~ "Adult", Age_stress_exposure == 4 ~ "Unkown"))
 
-mod_S5 <-rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Age_stress_exposure-1, random = list(~1|Study_ID, 
-                                                                                        # ~ 1|Strain, does not run as we have NA
-                                                                                        ~1|ES_ID),
+``` {r, message = FALSE, warning = FALSE}
+mod_S5 <-rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Age_stress_exposure-1, random = list(~1|Study_ID,
+                                                                                       ~1|ES_ID),
                 test = "t",
                 data = dat)
-summary(mod_S5) #unclear is significant. Need to sort out all the ages
-r2_ml(mod_S5) #marginal R2 is very high
+summary(mod_S5) 
+r2_ml(mod_S5) 
 
 # Orchard plot 
 orchard_plot(mod_S5, mod = "Age_stress_exposure", xlab = "lnRR", alpha=0.4) + 
@@ -248,17 +279,16 @@ orchard_plot(mod_S5, mod = "Age_stress_exposure", xlab = "lnRR", alpha=0.4) +
 ```
 
 #### Acute vs chronic stress
+How long was the stress applied for (chronic = every day for 7 days or more)?
 This has the highest marginal R2
-``` {r, message = FALSE, warning = FALSE}
-dat3<-dat %>% subset(Stress_duration < 4) 
-dat3$Stress_duration<-as.factor(dat3$Stress_duration)
-dat3 <- dat3 %>% mutate(Stress_duration = case_when(Stress_duration == 1 ~ "Acute", Stress_duration == 2 ~ "Chronic", Stress_duration == 3 ~ "Intermittent", Stress_duration == 4 ~ "Unkown"))
 
-mod_S6 <-rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Stress_duration-1, random = list(~1|Study_ID,                                                                                 ~1|ES_ID),
+``` {r, message = FALSE, warning = FALSE}
+mod_S6 <-rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Stress_duration-1, random = list(~1|Study_ID,
+                                                                                   ~1|ES_ID),
                 test = "t",
-                data = dat3)
-summary(mod_S6) #unclear is significant. Need to sort out all the ages
-r2_ml(mod_S6) #marginal R2 is very high
+                data = dat)
+summary(mod_S6) 
+r2_ml(mod_S6) 
 
 # Orchard plot 
 orchard_plot(mod_S6, mod = "Stress_duration", xlab = "lnRR", alpha=0.4) + 
@@ -278,8 +308,8 @@ orchard_plot(mod_S6, mod = "Stress_duration", xlab = "lnRR", alpha=0.4) +
 Learning and memory are significantly improved when housed with environmnetal enrichment
 
 ``` {r, message = FALSE, warning = FALSE}
-mod_E0 <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, random = list(~1|Study_ID, 
-                                                         ~1|ES_ID),
+mod_E0 <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, random = list(~1|Study_ID,
+                                                          ~1|ES_ID),
                  test = "t",
                  data = dat)
 summary(mod_E0) 
@@ -303,21 +333,15 @@ orchard_plot(mod_E0, mod = "Int", xlab = "lnRR", alpha=0.4) +  # Orchard plot
 
 ### Meta-regression
 #### Type of learning
+The type of learning/memory response
 
 ``` {r, message = FALSE, warning = FALSE}
-#dat$Type_learning<-as.factor(dat$Type_learning) 
-
-#dat <- dat %>% mutate(Type_learning = case_when(Type_learning == 1 ~ "Habituation",
-                                                #Type_learning == 2 ~ "Conditioning",
-                                                #Type_learning == 3 ~ "Recognition"))
-
-                               
-mod_E1 <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, mod = ~Type_learning-1, random = list(~1|Study_ID,                                                                          ~1|ES_ID),
+mod_E1 <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, mod = ~Type_learning-1, random = list(~1|Study_ID,
+                                                                                  ~1|ES_ID),
                  test = "t",
                  data = dat)
 
 summary(mod_E1)
-
 r2_ml(mod_E1) 
 
 # Orchard plot 
@@ -333,19 +357,16 @@ orchard_plot(mod_E1, mod = "Type_learning", xlab = "lnRR", alpha=0.4) +
 ```
 
 #### Learning vs Memory
+Is the assay broadly measuring learning or memory? 
+
 ``` {r, message = FALSE, warning = FALSE}
-#dat1<-dat %>% subset(Learning_vs_memory < 3) #remove 3 = unclear
-#dat1$Learning_vs_memory<-as.factor(dat1$Learning_vs_memory)
-
-#dat1 <- dat1 %>% mutate(Learning_vs_memory = case_when(Learning_vs_memory == 1 ~ "Learning", Learning_vs_memory == 2 ~ "Memory"))
-
-mod_E2 <-  rma.mv(yi = lnRR_Ea, V = lnRRV_E, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID,                                                                                       ~1|ES_ID),
+mod_E2 <-  rma.mv(yi = lnRR_Ea, V = lnRRV_E, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID,
+                                                                                        ~1|ES_ID),
                   test = "t",
-                  data = dat1)
+                  data = dat)
 
-summary(mod_E2) #memory but nor learning affected
-
-r2_ml(mod_E2) #marginal R2 is low
+summary(mod_E2) 
+r2_ml(mod_E2) 
 
 # Orchard plot 
 orchard_plot(mod_E2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) + 
@@ -360,18 +381,16 @@ orchard_plot(mod_E2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) +
 ```
 
 #### Appetitive vs aversive 
+The type of cue used 
 
 ``` {r, message = FALSE, warning = FALSE}
-#dat2<-  dat %>% subset(Appetitive_vs_aversive < 3) #remove 3 = unclear
-#dat2$Appetitive_vs_aversive <- as.factor(dat2$Appetitive_vs_aversive)
-#dat2 <- dat2 %>% mutate(Appetitive_vs_aversive = case_when(Appetitive_vs_aversive == 1 ~ "Appetitive", Appetitive_vs_aversive== 2 ~ "Aversive"))
-
-mod_E3 <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, mod = ~ Appetitive_vs_aversive-1, random = list(~1|Study_ID,                                                                              ~1|ES_ID),
+mod_E3 <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, mod = ~ Appetitive_vs_aversive-1, random = list(~1|Study_ID,
+                                                                                            ~1|ES_ID),
                  test = "t",
-                 data = dat2)
+                 data = dat)
 
 summary(mod_E3)
-r2_ml(mod_E3) #marginal R2 is low
+r2_ml(mod_E3) 
 
 # Orchard plot 
 orchard_plot(mod_E3, mod = "Appetitive_vs_aversive", xlab = "lnRR", alpha=0.4) + 
@@ -385,3 +404,318 @@ orchard_plot(mod_E3, mod = "Appetitive_vs_aversive", xlab = "lnRR", alpha=0.4) +
         legend.text = element_text(size = 13)) 
 ````
 
+#### Social enrichment
+Does EE also include a manipulation of social environment? Note that we excluded any studies that exclusively used social enrichment.s
+
+``` {r, message = FALSE, warning = FALSE}
+mod_E4<- rma.mv(yi = lnRR_Ea, V = lnRRV_E, mod = ~EE_social-1, random = list(~1|Study_ID, 
+                                                                             ~1|ES_ID),
+                test = "t",data = dat)
+
+summary(mod_E4)
+r2_ml(mod_E4) 
+
+# Orchard plot 
+orchard_plot(mod_E4, mod = "EE_social", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+```
+
+#### Exercise enrichment
+Does the form of enrichment include exercise through a running wheel or treadmill?
+
+``` {r, message = FALSE, warning = FALSE}
+mod_E5<- rma.mv(yi = lnRR_Ea, V = lnRRV_E, mod = ~EE_exercise-1, random = list(~1|Study_ID,
+                                                                               ~1|ES_ID),
+                test = "t",
+                data = dat)
+
+summary(mod_E5)
+r2_ml(mod_E5) 
+
+# Orchard plot 
+orchard_plot(mod_E5, mod = "EE_exercise", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+```
+
+#### Age of enrichment
+The age at which the individuals were exposed to environmental enrichment.
+
+``` {r, message = FALSE, warning = FALSE}
+mod_E6 <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, mod = ~Age_EE_exposure-1, random = list(~1|Study_ID,
+                                                                                    ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+
+summary(mod_E6) 
+r2_ml(mod_E6) 
+
+# Orchard plot 
+orchard_plot(mod_E6, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+```
+
+## Interaction of stress and EE
+
+### Intercept
+Enriched and stress animals are better at learning and memory. 
+TODO: It looks like there is a large but low precision outlier. Should potentially remove?
+
+``` {r, message = FALSE, warning = FALSE}
+mod_ES0 <- rma.mv(yi = lnRR_ESa, V = lnRRV_ES, random = list(~1|Study_ID,
+                                                             ~1|ES_ID),
+                  test = "t", 
+                  data = dat)
+
+summary(mod_ES0) 
+i2_ml(mod_ES0) 
+funnel(mod_ES0)
+
+orchard_plot(mod_ES0, mod = "Int", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+```
+
+
+### Meta-regression
+#### Type of learning
+The type of learning/memory response 
+
+``` {r, message = FALSE, warning = FALSE}
+mod_ES1 <- rma.mv(yi = lnRR_ESa, V = lnRRV_E, mod = ~Type_learning-1, random = list(~1|Study_ID,
+                                                                                    ~1|ES_ID),
+                  test = "t",
+                  data = dat)
+
+summary(mod_ES1)
+r2_ml(mod_ES1) 
+
+# Orchard plot 
+orchard_plot(mod_ES1, mod = "Type_learning", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+```
+
+#### Learning vs Memory
+Is the assay broadly measuring learning or memory? 
+
+``` {r, message = FALSE, warning = FALSE}
+mod_ES2 <-  rma.mv(yi = lnRR_ESa, V = lnRRV_ES, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID, 
+                                                                                           ~1|ES_ID),
+                   test = "t",
+                   data = dat)
+
+summary(mod_ES2) 
+r2_ml(mod_ES2) 
+
+# Orchard plot 
+orchard_plot(mod_ES2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+```
+
+#### Appetitive vs aversive 
+The type of cue used 
+
+``` {r, message = FALSE, warning = FALSE}
+mod_ES3 <- rma.mv(yi = lnRR_ESa, V = lnRRV_ES, mod = ~ Appetitive_vs_aversive-1, random = list(~1|Study_ID,
+                                                                                               ~1|ES_ID),
+                  test = "t",
+                  data = dat)
+
+summary(mod_ES3)
+r2_ml(mod_ES3) 
+
+# Orchard plot 
+orchard_plot(mod_ES3, mod = "Appetitive_vs_aversive", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+````
+
+#### Type of stress
+The type of stress manipulation 
+
+``` {r, message = FALSE, warning = FALSE}
+mod_ES4 <- rma.mv(yi = lnRR_ESa, V = lnRRV_ES, mod = ~Type_stress_exposure-1, random = list(~1|Study_ID,
+                                                                                            ~1|ES_ID),
+                  test = "t",
+                  data = dat)
+summary(mod_ES4)
+r2_ml(mod_ES4)
+
+# Orchard plot 
+orchard_plot(mod_ES4, mod = "Type_stress_exposure", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+````
+
+#### Age of stress
+The age at which the individuals were exposed to the stressor.
+Note there are a lot of 'unkown' age as authors only report PND which needs to be researched. I'm wondering if this also needs an 'adolescence' category as this seesm to be popular in rodent research
+
+``` {r, message = FALSE, warning = FALSE}
+mod_ES5 <-rma.mv(yi = lnRR_ESa, V = lnRRV_ES, mod = ~Age_stress_exposure-1, random = list(~1|Study_ID,
+                                                                                          ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+summary(mod_ES5) 
+r2_ml(mod_ES5) 
+
+# Orchard plot 
+orchard_plot(mod_ES5, mod = "Age_stress_exposure", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+```
+
+#### Acute vs chronic stress
+How long was the stress applied for (chronic = every day for 7 days or more)?
+This has the highest marginal R2 (currentl nearly 43%) - need to redo without outlier (study 82)
+
+``` {r, message = FALSE, warning = FALSE}
+mod_ES6 <-rma.mv(yi = lnRR_ESa, V = lnRRV_ES, mod = ~Stress_duration-1, random = list(~1|Study_ID,
+                                                                                      ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+summary(mod_ES6) 
+r2_ml(mod_ES6) 
+
+# Orchard plot 
+orchard_plot(mod_ES6, mod = "Stress_duration", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+```
+
+#### Social enrichment
+Does EE also include a manipulation of social environment (i.e., number of individuals in EE relative to control)? 
+
+``` {r, message = FALSE, warning = FALSE}
+mod_ES7<- rma.mv(yi = lnRR_ESa, V = lnRRV_ES, mod = ~EE_social-1, random = list(~1|Study_ID,
+                                                                                ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+
+summary(mod_ES7)
+r2_ml(mod_ES7) 
+
+# Orchard plot 
+orchard_plot(mod_ES7, mod = "EE_social", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+```
+
+#### Exercise enrichment
+Does the form of enrichment include exercise through a running wheel or treadmill? 
+
+``` {r, message = FALSE, warning = FALSE}
+mod_ES8<- rma.mv(yi = lnRR_ESa, V = lnRRV_ES, mod = ~EE_exercise-1, random = list(~1|Study_ID, 
+    ~1|ES_ID),
+     test = "t",
+     data = dat)
+
+summary(mod_ES8)
+r2_ml(mod_ES8) 
+
+# Orchard plot 
+orchard_plot(mod_ES8, mod = "EE_exercise", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+```
+
+#### Age of enrichment
+The age at which the individuals were exposed to environmental enrichment.  
+
+``` {r, message = FALSE, warning = FALSE}
+mod_ES9 <- rma.mv(yi = lnRR_ESa, V = lnRRV_ES, mod = ~Age_EE_exposure-1, random = list(~1|Study_ID,
+                                                                                       ~1|ES_ID),
+                  test = "t",
+                  data = dat)
+
+summary(mod_ES9) 
+r2_ml(mod_ES9) 
+
+
+# Orchard plot 
+orchard_plot(mod_ES9, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+```
