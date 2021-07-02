@@ -29,7 +29,7 @@ pacman::p_load(tidyverse,
 #### Loading data and functions
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
-dat <- read_csv(here("Data","Pilot_data.csv"))
+dat <- read_csv(here("Data","Full_data.csv"))
 # Load custom function to extract data 
 source(here("R/functions.R")) 
 ```
@@ -125,10 +125,11 @@ dat <- dat %>% mutate(Type_learning = case_when(Type_learning == 1 ~ "Habituatio
 ```
 
 # Modelling with lnRR
-Things that remain to be done: 
+Things todo: 
 - Incorporate strain as random effect
 - Consider including VCV
-- Check study 82 as it seems to be an ourlier
+- Check  outlier
+- Remove moderator levels with k < 5
 
 ## Stress
 
@@ -625,7 +626,7 @@ orchard_plot(mod_ES5, mod = "Age_stress_exposure", xlab = "lnRR", alpha=0.4) +
 
 #### Acute vs chronic stress
 How long was the stress applied for (chronic = every day for 7 days or more)?
-This has the highest marginal R2 (currentl nearly 43%) - need to redo without outlier (study 82)
+This has the highest marginal R2 (currentl nearly 43%) - need to redo without outlier
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_ES6 <-rma.mv(yi = lnRR_ESa, V = lnRRV_ES, mod = ~Stress_duration-1, random = list(~1|Study_ID,
