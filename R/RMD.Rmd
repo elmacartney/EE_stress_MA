@@ -139,7 +139,8 @@ High heterogeneity
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_S0 <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, random = list(~1|Study_ID,
-                                                          ~1|ES_ID),
+                                                          ~1|ES_ID,
+                                                          ~1|Strain),
                  test = "t", 
                  data = dat)
 
@@ -157,6 +158,21 @@ orchard_plot(mod_S0, mod = "Int", xlab = "lnRR", alpha=0.4) +
         legend.title = element_text(size = 15),
         legend.text = element_text(size = 13)) 
 ```
+#### Examining the group of large/positive effect sizes
+
+``` {r, message = FALSE, warning = FALSE}
+largeES_S <- dat %>%
+  slice_max(lnRR_S, n = 10)
+
+largeES_E <- dat %>%
+  slice_max(lnRR_E, n = 10)
+
+largeES_ES <-dat %>%
+  slice_max(lnRR_ES, n = 10)
+
+#most of the largest effect sizes come from different papers
+
+````
 
 ### Meta-regression
 #### Type of learning
@@ -166,7 +182,8 @@ The type of learning/memory response
 dat$Type_learning<-as.factor(dat$Type_learning)
 
 mod_S1 <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Type_learning-1, random =   list(~1|Study_ID,
-                                                                                    ~1|ES_ID),
+                                                                                    ~1|ES_ID,
+                                                                                    ~1|Strain),
                  test = "t",
                  data = dat)
 
@@ -190,7 +207,9 @@ Is the assay broadly measuring learning or memory?
 
 ``` {r, message = FALSE, warning = FALSE}
 
-mod_S2 <-  rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID,                                                                               ~1|ES_ID),
+mod_S2 <-  rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID,
+                                                                                        ~1|ES_ID,
+                                                                                        ~1|Strain),
                   test = "t",
                   data = dat)
 
@@ -213,7 +232,9 @@ orchard_plot(mod_S2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) +
 The type of cue used 
 
 ``` {r, message = FALSE, warning = FALSE}
-mod_S3 <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~ Appetitive_vs_aversive-1, random = list(~1|Study_ID,                                                                              ~1|ES_ID),
+mod_S3 <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~ Appetitive_vs_aversive-1, random = list(~1|Study_ID,
+                                                                                            ~1|ES_ID,
+                                                                                            ~1|Strain),
                  test = "t",
                  data = dat)
 
@@ -237,7 +258,8 @@ The type of stress manipulation
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_S4 <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Type_stress_exposure-1, random = list(~1|Study_ID,
-                                                                                         ~1|ES_ID),
+                                                                                         ~1|ES_ID,
+                                                                                         ~1|Strain),
                  test = "t",
                  data = dat)
 summary(mod_S4) 
@@ -261,7 +283,8 @@ Note there are a lot of 'unkown' age as authors only report PND which needs to b
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_S5 <-rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Age_stress_exposure-1, random = list(~1|Study_ID,
-                                                                                       ~1|ES_ID),
+                                                                                       ~1|ES_ID,
+                                                                                       ~1|Strain),
                 test = "t",
                 data = dat)
 summary(mod_S5) 
@@ -285,7 +308,8 @@ This has the highest marginal R2
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_S6 <-rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Stress_duration-1, random = list(~1|Study_ID,
-                                                                                   ~1|ES_ID),
+                                                                                   ~1|ES_ID,
+                                                                                   ~1|Strain),
                 test = "t",
                 data = dat)
 summary(mod_S6) 
@@ -310,7 +334,8 @@ Learning and memory are significantly improved when housed with environmnetal en
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_E0 <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, random = list(~1|Study_ID,
-                                                          ~1|ES_ID),
+                                                          ~1|ES_ID,
+                                                          ~1|Strain),
                  test = "t",
                  data = dat)
 summary(mod_E0) 
@@ -338,7 +363,8 @@ The type of learning/memory response
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_E1 <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, mod = ~Type_learning-1, random = list(~1|Study_ID,
-                                                                                  ~1|ES_ID),
+                                                                                  ~1|ES_ID,
+                                                                                  ~1|Strain),
                  test = "t",
                  data = dat)
 
@@ -362,7 +388,8 @@ Is the assay broadly measuring learning or memory?
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_E2 <-  rma.mv(yi = lnRR_Ea, V = lnRRV_E, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID,
-                                                                                        ~1|ES_ID),
+                                                                                        ~1|ES_ID,
+                                                                                        ~1|Strain),
                   test = "t",
                   data = dat)
 
@@ -386,7 +413,8 @@ The type of cue used
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_E3 <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, mod = ~ Appetitive_vs_aversive-1, random = list(~1|Study_ID,
-                                                                                            ~1|ES_ID),
+                                                                                            ~1|ES_ID,
+                                                                                            ~1|Strain),
                  test = "t",
                  data = dat)
 
@@ -410,7 +438,8 @@ Does EE also include a manipulation of social environment? Note that we excluded
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_E4<- rma.mv(yi = lnRR_Ea, V = lnRRV_E, mod = ~EE_social-1, random = list(~1|Study_ID, 
-                                                                             ~1|ES_ID),
+                                                                             ~1|ES_ID,
+                                                                             ~1|Strain),
                 test = "t",data = dat)
 
 summary(mod_E4)
@@ -433,7 +462,8 @@ Does the form of enrichment include exercise through a running wheel or treadmil
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_E5<- rma.mv(yi = lnRR_Ea, V = lnRRV_E, mod = ~EE_exercise-1, random = list(~1|Study_ID,
-                                                                               ~1|ES_ID),
+                                                                               ~1|ES_ID,
+                                                                               ~1|Strain),
                 test = "t",
                 data = dat)
 
@@ -457,7 +487,8 @@ The age at which the individuals were exposed to environmental enrichment.
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_E6 <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, mod = ~Age_EE_exposure-1, random = list(~1|Study_ID,
-                                                                                    ~1|ES_ID),
+                                                                                    ~1|ES_ID,
+                                                                                    ~1|Strain),
                  test = "t",
                  data = dat)
 
@@ -484,7 +515,8 @@ TODO: It looks like there is a large but low precision outlier. Should potential
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_ES0 <- rma.mv(yi = lnRR_ESa, V = lnRRV_ES, random = list(~1|Study_ID,
-                                                             ~1|ES_ID),
+                                                             ~1|ES_ID,
+                                                             ~1|Strain),
                   test = "t", 
                   data = dat)
 
@@ -501,7 +533,12 @@ orchard_plot(mod_ES0, mod = "Int", xlab = "lnRR", alpha=0.4) +
         text = element_text(size = 24), # change font sizes
         legend.title = element_text(size = 15),
         legend.text = element_text(size = 13)) 
+
 ```
+Note that I checked the top four most positive ES and the data looks correct.
+Highest ES is study 27, effect size 88 where Maternally separated EE individuals freeze significantly more when given a cue from inhibitory avoidance. 
+Im not sure why the second highest one is like (ES 16) that as the control indivs do the best. EE indivs do best in the 3rd highest ES (ES 10). 
+The fourth highest (ES 12) seems correct
 
 
 ### Meta-regression
@@ -510,7 +547,8 @@ The type of learning/memory response
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_ES1 <- rma.mv(yi = lnRR_ESa, V = lnRRV_E, mod = ~Type_learning-1, random = list(~1|Study_ID,
-                                                                                    ~1|ES_ID),
+                                                                                    ~1|ES_ID,
+                                                                                    ~1|Strain),
                   test = "t",
                   data = dat)
 
@@ -534,7 +572,8 @@ Is the assay broadly measuring learning or memory?
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_ES2 <-  rma.mv(yi = lnRR_ESa, V = lnRRV_ES, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID, 
-                                                                                           ~1|ES_ID),
+                                                                                           ~1|ES_ID,
+                                                                                           ~1|Strain),
                    test = "t",
                    data = dat)
 
@@ -558,7 +597,8 @@ The type of cue used
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_ES3 <- rma.mv(yi = lnRR_ESa, V = lnRRV_ES, mod = ~ Appetitive_vs_aversive-1, random = list(~1|Study_ID,
-                                                                                               ~1|ES_ID),
+                                                                                               ~1|ES_ID,
+                                                                                               ~1|Strain),
                   test = "t",
                   data = dat)
 
@@ -582,7 +622,8 @@ The type of stress manipulation
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_ES4 <- rma.mv(yi = lnRR_ESa, V = lnRRV_ES, mod = ~Type_stress_exposure-1, random = list(~1|Study_ID,
-                                                                                            ~1|ES_ID),
+                                                                                            ~1|ES_ID,
+                                                                                            ~1|Strain),
                   test = "t",
                   data = dat)
 summary(mod_ES4)
@@ -606,7 +647,8 @@ Note there are a lot of 'unkown' age as authors only report PND which needs to b
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_ES5 <-rma.mv(yi = lnRR_ESa, V = lnRRV_ES, mod = ~Age_stress_exposure-1, random = list(~1|Study_ID,
-                                                                                          ~1|ES_ID),
+                                                                                          ~1|ES_ID,
+                                                                                          ~1|Strain),
                  test = "t",
                  data = dat)
 summary(mod_ES5) 
@@ -630,7 +672,8 @@ This has the highest marginal R2 (currentl nearly 43%) - need to redo without ou
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_ES6 <-rma.mv(yi = lnRR_ESa, V = lnRRV_ES, mod = ~Stress_duration-1, random = list(~1|Study_ID,
-                                                                                      ~1|ES_ID),
+                                                                                      ~1|ES_ID,
+                                                                                      ~1|Strain),
                  test = "t",
                  data = dat)
 summary(mod_ES6) 
@@ -653,7 +696,8 @@ Does EE also include a manipulation of social environment (i.e., number of indiv
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_ES7<- rma.mv(yi = lnRR_ESa, V = lnRRV_ES, mod = ~EE_social-1, random = list(~1|Study_ID,
-                                                                                ~1|ES_ID),
+                                                                                ~1|ES_ID,
+                                                                                ~1|Strain),
                  test = "t",
                  data = dat)
 
@@ -677,7 +721,8 @@ Does the form of enrichment include exercise through a running wheel or treadmil
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_ES8<- rma.mv(yi = lnRR_ESa, V = lnRRV_ES, mod = ~EE_exercise-1, random = list(~1|Study_ID, 
-    ~1|ES_ID),
+    ~1|ES_ID,
+    ~1|Strain),
      test = "t",
      data = dat)
 
@@ -701,7 +746,8 @@ The age at which the individuals were exposed to environmental enrichment.
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_ES9 <- rma.mv(yi = lnRR_ESa, V = lnRRV_ES, mod = ~Age_EE_exposure-1, random = list(~1|Study_ID,
-                                                                                       ~1|ES_ID),
+                                                                                       ~1|ES_ID,
+                                                                                       ~1|Strain),
                   test = "t",
                   data = dat)
 
@@ -719,4 +765,52 @@ orchard_plot(mod_ES9, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) +
         text = element_text(size = 24), # change font sizes
         legend.title = element_text(size = 15),
         legend.text = element_text(size = 13)) 
+```
+
+# Modelling with SMD
+
+## Stress
+
+### Intercept model
+Why does the funnel plot look so strange and why is I2 higher?
+``` {r, message = FALSE, warning = FALSE}
+mod_S0a <- rma.mv(yi = SMD_Sa, V = SMDV_S, random = list(~1|Study_ID,
+                                                         ~1|ES_ID,
+                                                         ~1|Strain),
+                test = "t",
+                data = dat)
+summary(mod_S0a) 
+i2_ml(mod_S0a) 
+funnel(mod_S0a) 
+
+```
+
+### Environmental Enrichment
+
+#### Intercept model
+Why does the funnel plot look so strange and why is I2 higher?
+``` {r, message = FALSE, warning = FALSE}
+mod_E0a <- rma.mv(yi = SMD_Ea, V = SMDV_E, random = list(~1|Study_ID,
+                                                         ~1|ES_ID, 
+                                                         ~1|Strain),
+                 test = "t",
+                 data = dat)
+summary(mod_E0a)
+i2_ml(mod_E0a)
+funnel(mod_E0a) 
+```
+
+### Interaction
+
+#### Intercept model
+Why does the funnel plot look so strange and why is I2 higher?
+``` {r, message = FALSE, warning = FALSE}
+mod_ES0a <- rma.mv(yi = SMD_ESa, V = SMDV_ES, random = list(~1|Study_ID,
+                                                            ~1|ES_ID,
+                                                            ~1|Strain),
+                  test = "t",
+                  data = dat)
+summary(mod_ES0a)
+i2_ml(mod_ES0a)
+funnel(mod_ES0a)
 ```
