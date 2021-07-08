@@ -1,6 +1,7 @@
 # custom functions
 
 # TODO this function needs to be updated - including 2nd order adjustments
+# TODO get Shinichi to check variance VCV function
 
 # lnRR, SMD and lnCVR
 
@@ -12,34 +13,17 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
   
   # lnRR
   # main effect Environment enrichment
-  lnRR_E <- as.numeric(0.5 * log((data[[ES_mean]]*data[[EC_mean]]) / (data[[CS_mean]]*data[[CC_mean]]))) #checked and seems correct
+  lnRR_E <- as.numeric(0.5 * log((data[[ES_mean]]*data[[EC_mean]]) / (data[[CS_mean]]*data[[CC_mean]])))
   
-  # the error has 1/4 
+
   lnRRV_E <-  as.numeric(0.25 * (((data[[ES_SD]])^2 / ((data[[ES_mean]])^2*data[[ES_n]])) + 
                                    ((data[[EC_SD]])^2 / ((data[[EC_mean]])^2*data[[EC_n]])) + 
                                    ((data[[CS_SD]])^2 / ((data[[CS_mean]])^2*data[[CS_n]])) +
                                    ((data[[CC_SD]])^2 / ((data[[CC_mean]])^2*data[[CC_n]]))))
   
-  #testing 
-  #(0.25 * (((3.29)^2 / ((13.57)^2*10)) + 
-             #((7.43)^2 / ((15.83)^2*10)) + 
-             #((4.11)^2 / ((20.09)^2*10)) +
-             #((4.46)^2 / ((10.5)^2*10))))
-  
-  #(0.25 * ((10.48 / 1841.449) + 
-             #(55.2049 / 2505.889) + 
-             #(16.8921/ 4036.081) +
-             #(19.8916 / 1102.5)))
-  #checked and seems correct: number can vary after four decimals
   
 # main effect Stress
   lnRR_S <- as.numeric( 0.5 * log((data[[ES_mean]]*data[[CS_mean]]) / (data[[EC_mean]]*data[[CC_mean]])))
-  
-  #testing
-  
-#( 0.5 * log((13.57*20.09) / (15.83*10.5)))
-#( 0.5 * log((272.6213) / (166.215)))
-# seems correct
   
   lnRRV_S <- lnRRV_E
   
@@ -47,17 +31,7 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
   lnRR_ES <-   as.numeric((log(data[[ES_mean]]) - log(data[[CS_mean]])) - 
                            (log(data[[EC_mean]]) - log(data[[CC_mean]])))
   
-  #no interaction should be 0 (i.e., lnRR_E + lnRR_S effect would cancel each other out)- this would be a pure additive effect
-  #positive means environment and stress is better
 
-  
-  #testing
-  #((log(13.57) - log(20.09)) - 
-      #(log(15.83) - log(10.5)))
-  
-  #((2.607861 - 3.000222) - 
-      #(2.761907 - 2.351375))
-#seems correct  
 
   lnRRV_ES <- 
     as.numeric((((data[[ES_SD]])^2 / ((data[[ES_mean]])^2*data[[ES_n]])) + 
@@ -65,73 +39,23 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
                   ((data[[CS_SD]])^2 / ((data[[CS_mean]])^2*data[[CS_n]])) +
                   ((data[[CC_SD]])^2 / ((data[[CC_mean]])^2*data[[CC_n]]))))
   
- #testing
-  #((((3.29)^2 / ((13.57)^2*10)) + 
-   #   ((7.43)^2 / ((15.83)^2*10)) + 
-    #  ((4.11)^2 / ((20.09)^2*10)) +
-     # ((4.46)^2 / ((10.5)^2*10))))
-  
- # ((10.8241 / 1841.449) + 
-  #    (55.2049 / 2505.889) + 
-   #   (16.8921 / 4036.081) +
-    #  (19.8916/ 1102.5))
-  #seems correct
-  
-  # lnVR
-  # main effect Environment enrichment
-  
-  #TODO I think there may be an issue with the forumla for lnVR_E: I can't get the formular to be consistent when entering actual values. The formula also differs from lnVR_S 
+
   
   lnVR_E <- as.numeric(0.5 * log((data[[ES_SD]]*data[[EC_SD]]) / (data[[CS_SD]]*data[[CC_SD]])) + 
                          0.5 * ( (1/(2*(data[[ES_n]] -1))) + (1/(2*(data[[EC_n]] -1))) -
                                    (1/(2*(data[[CS_n]] -1))) - (1/(2*(data[[CC_n]] -1)))))
   
-  #testing
-  
-  #(0.5 * log((3.21*7.43) / (4.11*4.46)) + 
-   #0.5 * ( (1/(2*(10 -1))) + (1/(2*(10 -1))) -
-    #        (1/(2*(10 -1))) - (1/(2*(10 -1)))))
-  
-  
-  #(0.5 * log((23.8503) / (18.3306)) + 
-   # 0.5 * ( (1/18) + (1/18) -
-    #          (1/18) - (1/18)))
-  #seems correct
-  #TODO - why are the addition and subtraction of the df reversed of lnVR_E and lnVR_S? See forumla used for lnVR_S below
-  
-  
-  #(0.5 * log(62.6961 / 33.1378) + 
-  #   0.5 * ( (1/18) - (1/18) +
-  #            (1/18) - (1/18)))
-  
+
   lnVRV_E <- as.numeric(0.25 * ( (1/(2*(data[[ES_n]] -1))) + (1/(2*(data[[EC_n]] -1))) +
                                     (1/(2*(data[[CS_n]] -1))) + (1/(2*(data[[CC_n]] -1))) ))
   
-  #testing
- # (0.25 * ( (1/(2*(10 -1))) + (1/(2*(10 -1))) +
-  #                                 (1/(2*(10 -1))) + (1/(2*(10 -1))) ))
-  
-  
-  #(0.25 * ( (1/18) + (1/18) +
-   #           (1/18) + (1/18)))
-  # seems correct
   
   
   # main effect Stress
   lnVR_S <- as.numeric(0.5 * log((data[[ES_SD]]*data[[CS_SD]]) / (data[[EC_SD]]*data[[CC_SD]])) + 
                          0.5 * ( (1/(2*(data[[ES_n]] -1))) - (1/(2*(data[[EC_n]] -1))) +
                                    (1/(2*(data[[CS_n]] -1))) - (1/(2*(data[[CC_n]] -1)))))
-  
-  #testing
-  
-  #(0.5 * log((3.09*20.29) / (7.43*4.46)) + 
-   #   0.5 * ( (1/(2*(10 -1))) - (1/(2*(10 -1))) +
-    #            (1/(2*(10 -1))) - (1/(2*(10 -1)))))
-  
-  #(0.5 * log(62.6961 / 33.1378) + 
-   #   0.5 * ( (1/18) - (1/18) +
-    #            (1/18) - (1/18)))
-  # seems correct
+
   
   
   lnVRV_S <- lnVRV_E
@@ -142,32 +66,11 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
                          + ( (1/(2*(data[[ES_n]] -1))) - (1/(2*(data[[EC_n]] -1))) -
                                (1/(2*(data[[CS_n]] -1))) + (1/(2*(data[[CC_n]] -1)))) )
   
-  #testing 
-#( (log(3.29) - log(4.11)) - 
- #                          (log(7.43) - log(4.46)) 
-  #                       + ( (1/(2*10 -1))) - (1/(2*(10 -1))) -
-   #                            (1/(2*(10 -1))) + (1/(2*(10 -1)))) 
-  
-  
-  #( (-0.222535) - 
-   #   (0.510377) 
-    #+ ( (1/18) - (1/18) -
-     # (1/18) + (1/18)))
-  
-#seems correct
   
   lnVRV_ES <- as.numeric(( (1/(2*(data[[ES_n]] -1))) + (1/(2*(data[[EC_n]] -1))) +
                  (1/(2*(data[[CS_n]] -1))) + (1/(2*(data[[CC_n]] -1))) ))
   
-  #testing
-  
-#(( (1/(2*(10 -1))) + (1/(2*(10 -1))) +
- #                            (1/(2*(10 -1))) + (1/(2*(10 -1))) ))
-  
-  #(( (1/(18) + (1/18) +
-   #    (1/18) + (1/18))))
-  
-  #seems correct
+
   
   # lnCVR
   CV_ES <- data[[ES_SD]]/data[[ES_mean]]
@@ -175,26 +78,13 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
   CV_CS <- data[[CS_SD]]/data[[CS_mean]]
   CV_CC <- data[[CC_SD]]/data[[CC_mean]]
   
-  #testing
-  CV_ES <- 3.29/13.57
-  CV_EC <- 7.43/15.83
-  CV_CS <- 4.11/20.09
-  CV_CC <- 4.46/10.5
+
   
   # main effect Environment enrichment
   lnCVR_E <- as.numeric(0.5 * log((CV_ES*CV_EC) / (CV_CS*CV_CC)) + 
                           0.5 * ( (1/(2*(data[[ES_n]] -1))) - (1/(2*(data[[CS_n]] -1))) +
                                     (1/(2*(data[[EC_n]] -1))) - (1/(2*(data[[CC_n]] -1)))) )
   
- # (0.5 * log((0.2424466*0.469362) / (0.2045794*0.4247619)) + 
-  #                       0.5 * ( (1/(2*(10 -1))) + (1/(2*(10 -1))) -
-   #                                (1/(2*(10 -1))) - (1/(2*(10 -1)))) )
-  
-  
-  #(0.5 * log(0.1137952 / 0.08689753) + 
-   #   0.5 * ( (1/18) + (1/18) -
-    #            (1/18) - (1/18) ))
-  #seems correct
   
   lnCVRV_E <-  lnRRV_E + lnVRV_E
 
@@ -204,18 +94,6 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
                           0.5 * ( (1/(2*(data[[ES_n]] -1))) - (1/(2*(data[[EC_n]] -1))) +
                                     (1/(2*(data[[CS_n]] -1))) - (1/(2*(data[[CC_n]] -1)))) )
   
-  #testing
-  
-  #(0.5 * log((0.2424466*0.2045794) / (0.469362*0.4247619)) + 
-  #    0.5 * ( (1/(2*(10 -1))) - (1/(2*(10 -1))) +
-   #             (1/(2*(10 -1))) - (1/(2*(10-1)))) )
-  
-  #(0.5 * log(0.04959958 / 0.1993671) + 
-   #   0.5 * ( (1/18) - (1/18) +
-    #            (1/18) - (1/18) ))
-
-  #Seems correct
-  
   lnCVRV_S <- lnCVRV_E
   
   # interaction
@@ -223,18 +101,8 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
   lnCVR_ES <- as.numeric( (log(CV_ES) - log(CV_CS)) - (log(CV_EC) - log(CV_CC)) 
                          + ( (1/(2*(data[[ES_n]] -1))) - (1/(2*(data[[EC_n]] -1))) -
                                (1/(2*(data[[CS_n]] -1))) + (1/(2*(data[[CC_n]] -1)))) )
-  #testing
-  
-  #( (log(0.2424466) - log(0.2045794)) - (log(0.469362) - log(0.4247619)) 
-   # + ( (1/(2*(10 -1))) - (1/(2*(10 -1))) -
-    #      (1/(2*(10 -1))) + (1/(2*(10 -1)))) )
-  
-  #( (0.1698253 - 0.09984555) 
-   # + ( (1/18) - (1/18) -
-    #      (1/18) + (1/18) ))
-  #seems correct
-  
 
+  
   lnCVRV_ES <- lnRRV_ES + lnVRV_ES
   
   # SMD
@@ -244,20 +112,6 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
                                 (data[[CC_n]]-1)*data[[CC_SD]]^2) / 
                                (data[[ES_n]] + data[[EC_n]] + data[[CS_n]] + data[[CC_n]] - 4)))
   
-  #testing
-  
- # sqrt((sqrt(((10-1)*3.21^2 + 
-  #                        (10-1)*7.43^2 + 
-   #                       (10-1)*4.11^2 +
-    #                      (10-1)*4.46^2) / 
-     #                    (10 + 10 + 10 + 10 - 4))))
-  
-  #sqrt((sqrt(9*10.3041 + 
-   #                       9*55.2049 + 
-    #                      9*16.8921 +
-      #                   36))
-  #I can't get the the same numbers
-  #TODO this looks like this is being sqrt twice - check if this is correct
   
   # main effect Environment enrichment
   SMD_E <- as.numeric( ((data[[ES_mean]] + data[[EC_mean]]) - (data[[CS_mean]] + data[[CC_mean]]))/
@@ -316,3 +170,56 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
   effect
   
 }
+
+#variance VCV
+
+make_VCV_matrix <- function(data, V, cluster, obs, type=c("vcv", "cor"), rho=0.5){
+  
+  if (missing(data)) 
+    stop("Must specify dataframe via 'data' argument.")
+  if (missing(V)) 
+    stop("Must specify name of the variance variable via 'V' argument.")
+  if (missing(cluster)) 
+    stop("Must specify name of the clustering variable via 'cluster' argument.")
+  if (missing(obs)) 
+    obs <- 1:length(V)   
+  if (missing(type)) 
+    type <- "vcv" 
+  
+  ## V = variance, cluster = animal group iD/study ID, ob = effect size id, type = default VCV settings
+  
+  new_matrix <- matrix(0,nrow = dim(data)[1],ncol = dim(data)[1]) #make empty matrix of the same size as data length
+  rownames(new_matrix) <- data[ ,obs]
+  colnames(new_matrix) <- data[ ,obs]
+  # find start and end coordinates for the subsets
+  shared_coord <- which(data[ ,cluster] %in% data[duplicated(data[ ,cluster]), cluster]==TRUE)
+  # matrix of combinations of coordinates for each experiment with shared control
+  combinations <- do.call("rbind", tapply(shared_coord, data[shared_coord,cluster], function(x) t(combn(x,2))))
+  
+  if(type == "vcv"){
+    # calculate covariance values between  values at the positions in shared_list and place them on the matrix
+    for (i in 1:dim(combinations)[1]){
+      p1 <- combinations[i,1]
+      p2 <- combinations[i,2]
+      p1_p2_cov <- rho * sqrt(data[p1,V]) * sqrt(data[p2,V])
+      new_matrix[p1,p2] <- p1_p2_cov
+      new_matrix[p2,p1] <- p1_p2_cov
+    }
+    diag(new_matrix) <- data[ ,V]   #add the diagonal
+  }
+  
+  if(type == "cor"){
+    # calculate covariance values between  values at the positions in shared_list and place them on the matrix
+    for (i in 1:dim(combinations)[1]){
+      p1 <- combinations[i,1]
+      p2 <- combinations[i,2]
+      p1_p2_cov <- rho
+      new_matrix[p1,p2] <- p1_p2_cov
+      new_matrix[p2,p1] <- p1_p2_cov
+    }
+    diag(new_matrix) <- 1   #add the diagonal of 1
+  }
+  
+  return(new_matrix)
+}
+

@@ -124,6 +124,96 @@ dat <- dat %>% mutate(Type_learning = case_when(Type_learning == 1 ~ "Habituatio
 
 ```
 
+#### Making Variance VCV
+Used to control for trait relatedness within individuals
+
+``` {r, message = FALSE, warning = FALSE, results = 'hide'}
+#TODO get Shinichi to get VCV 
+#function 
+#make_VCV_matrix <- function(data, V, cluster, obs, type=c("vcv", "cor"), rho=0.5){
+  
+  #if (missing(data)) 
+   # stop("Must specify dataframe via 'data' argument.")
+  #if (missing(V)) 
+   # stop("Must specify name of the variance variable via 'V' argument.")
+  #if (missing(cluster)) 
+   # stop("Must specify name of the clustering variable via 'cluster' argument.")
+  #if (missing(obs)) 
+   # obs <- 1:length(V)   
+  #if (missing(type)) 
+   # type <- "vcv" 
+  
+  ## V = variance, cluster = animal group iD/study ID, ob = effect size id, type = default VCV settings
+  
+  #new_matrix <- matrix(0,nrow = dim(data)[1],ncol = dim(data)[1]) #make empty matrix of the same size as data length
+  #rownames(new_matrix) <- data[ ,obs]
+  #colnames(new_matrix) <- data[ ,obs]
+  # find start and end coordinates for the subsets
+  #shared_coord <- which(data[ ,cluster] %in% data[duplicated(data[ ,cluster]), cluster]==TRUE)
+  # matrix of combinations of coordinates for each experiment with shared control
+  #combinations <- do.call("rbind", tapply(shared_coord, data[shared_coord,cluster], function(x) t(combn(x,2))))
+  
+  #if(type == "vcv"){
+    # calculate covariance values between  values at the positions in shared_list and place them on the matrix
+   # for (i in 1:dim(combinations)[1]){
+    #  p1 <- combinations[i,1]
+     # p2 <- combinations[i,2]
+      #p1_p2_cov <- rho * sqrt(data[p1,V]) * sqrt(data[p2,V])
+    #  new_matrix[p1,p2] <- p1_p2_cov
+     # new_matrix[p2,p1] <- p1_p2_cov
+    #}
+  #  diag(new_matrix) <- data[ ,V]   #add the diagonal
+#  }
+  
+ # if(type == "cor"){
+    # calculate covariance values between  values at the positions in shared_list and place them on the matrix
+  #  for (i in 1:dim(combinations)[1]){
+   #   p1 <- combinations[i,1]
+    #  p2 <- combinations[i,2]
+     # p1_p2_cov <- rho
+      #new_matrix[p1,p2] <- p1_p2_cov
+    #  new_matrix[p2,p1] <- p1_p2_cov
+    #}
+    #diag(new_matrix) <- 1   #add the diagonal of 1
+  #}
+  
+  #return(new_matrix)
+#}
+
+##adding data to empty VCV matrix
+VCV_E <- make_VCV_matrix(data = dat, V = "lnRRV_E", cluster = "Study_ID", obs = "ES_ID")
+VCV_S <- make_VCV_matrix(data = dat, V = "lnRRV_S", cluster = "Study_ID", obs = "ES_ID")
+VCV_ES <- make_VCV_matrix(data = dat, V = "lnRRV_ES", cluster = "Study_ID", obs = "ES_ID")
+
+is.positive.definite(VCV_E)
+isSymmetric(VCV_E)
+is.positive.definite(VCV_S)
+isSymmetric(VCV_S)
+is.positive.definite(VCV_ES)
+isSymmetric(VCV_ES)
+
+```
+
+#### Examining the group of large/positive effect sizes
+Note that I checked the top four most positive interaction effect sizes and the data looks correct.
+Highest ES is study 27, effect size 88, where Maternally separated EE individuals freeze significantly more when given a cue from inhibitory avoidance. 
+Im not sure why the second highest one (ES 16) is so high as the control indivs do the best. 
+EE indivs do best in the 3rd highest ES (ES 10) so not sure about this one either?
+The fourth highest (ES 12) seems correct
+``` {r, message = FALSE, warning = FALSE}
+largeES_S <- dat %>%
+  slice_max(lnRR_S, n = 10)
+
+largeES_E <- dat %>%
+  slice_max(lnRR_E, n = 10)
+
+largeES_ES <-dat %>%
+  slice_max(lnRR_ES, n = 10)
+
+#most of the largest effect sizes come from different papers
+
+````
+
 # Modelling with lnRR
 Things todo: 
 - Incorporate strain as random effect
@@ -138,7 +228,7 @@ Learning and memory are significantly reduced due to stress.
 High heterogeneity
 
 ``` {r, message = FALSE, warning = FALSE}
-mod_S0 <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, random = list(~1|Study_ID,
+mod_S0 <- rma.mv(yi = lnRR_Sa, V = VCV_S, random = list(~1|Study_ID,
                                                           ~1|ES_ID,
                                                           ~1|Strain),
                  test = "t", 
@@ -158,21 +248,6 @@ orchard_plot(mod_S0, mod = "Int", xlab = "lnRR", alpha=0.4) +
         legend.title = element_text(size = 15),
         legend.text = element_text(size = 13)) 
 ```
-#### Examining the group of large/positive effect sizes
-
-``` {r, message = FALSE, warning = FALSE}
-largeES_S <- dat %>%
-  slice_max(lnRR_S, n = 10)
-
-largeES_E <- dat %>%
-  slice_max(lnRR_E, n = 10)
-
-largeES_ES <-dat %>%
-  slice_max(lnRR_ES, n = 10)
-
-#most of the largest effect sizes come from different papers
-
-````
 
 ### Meta-regression
 #### Type of learning
@@ -181,11 +256,15 @@ The type of learning/memory response
 ``` {r, message = FALSE, warning = FALSE}
 dat$Type_learning<-as.factor(dat$Type_learning)
 
-mod_S1 <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Type_learning-1, random =   list(~1|Study_ID,
+dat1 <- filter(dat, Type_learning %in% c("Recognition", "Habituation", "Conditioning"))
+VCV_S1 <- make_VCV_matrix(data = dat1, V = "lnRRV_S", cluster = "Study_ID", obs = "ES_ID")
+
+
+mod_S1 <- rma.mv(yi = lnRR_Sa, V = VCV_S1, mod = ~Type_learning-1, random =   list(~1|Study_ID,
                                                                                     ~1|ES_ID,
                                                                                     ~1|Strain),
                  test = "t",
-                 data = dat)
+                 data = dat1)
 
 summary(mod_S1)
 r2_ml(mod_S1) 
@@ -207,7 +286,7 @@ Is the assay broadly measuring learning or memory?
 
 ``` {r, message = FALSE, warning = FALSE}
 
-mod_S2 <-  rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID,
+mod_S2 <-  rma.mv(yi = lnRR_Sa, V = VCV_S, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID,
                                                                                         ~1|ES_ID,
                                                                                         ~1|Strain),
                   test = "t",
@@ -232,11 +311,15 @@ orchard_plot(mod_S2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) +
 The type of cue used 
 
 ``` {r, message = FALSE, warning = FALSE}
-mod_S3 <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~ Appetitive_vs_aversive-1, random = list(~1|Study_ID,
+
+dat2 <- filter(dat, Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"))
+VCV_S2 <- make_VCV_matrix(data = dat2, V = "lnRRV_S", cluster = "Study_ID", obs = "ES_ID")
+
+mod_S3 <- rma.mv(yi = lnRR_Sa, V = VCV_S2, mod = ~ Appetitive_vs_aversive-1, random = list(~1|Study_ID,
                                                                                             ~1|ES_ID,
                                                                                             ~1|Strain),
                  test = "t",
-                 data = dat)
+                 data = dat2)
 
 summary(mod_S3)
 r2_ml(mod_S3) 
@@ -257,11 +340,14 @@ orchard_plot(mod_S3, mod = "Appetitive_vs_aversive", xlab = "lnRR", alpha=0.4) +
 The type of stress manipulation 
 
 ``` {r, message = FALSE, warning = FALSE}
-mod_S4 <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Type_stress_exposure-1, random = list(~1|Study_ID,
+dat3 <- filter(dat, Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"))
+VCV_S3 <- make_VCV_matrix(data = dat3, V = "lnRRV_S", cluster = "Study_ID", obs = "ES_ID")
+
+mod_S4 <- rma.mv(yi = lnRR_Sa, V = VCV_S3, mod = ~Type_stress_exposure-1, random = list(~1|Study_ID,
                                                                                          ~1|ES_ID,
                                                                                          ~1|Strain),
                  test = "t",
-                 data = dat)
+                 data = dat3)
 summary(mod_S4) 
 r2_ml(mod_S4)
 
@@ -282,7 +368,9 @@ The age at which the individuals were exposed to the stressor.
 Note there are a lot of 'unkown' age as authors only report PND which needs to be researched. I'm wondering if this also needs an 'adolescence' category as this seesm to be popular in rodent research
 
 ``` {r, message = FALSE, warning = FALSE}
-mod_S5 <-rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Age_stress_exposure-1, random = list(~1|Study_ID,
+#TODO these ages need to be recategoried and analysis run again
+
+mod_S5 <-rma.mv(yi = lnRR_Sa, V = VCV_S, mod = ~Age_stress_exposure-1, random = list(~1|Study_ID,
                                                                                        ~1|ES_ID,
                                                                                        ~1|Strain),
                 test = "t",
@@ -307,11 +395,14 @@ How long was the stress applied for (chronic = every day for 7 days or more)?
 This has the highest marginal R2
 
 ``` {r, message = FALSE, warning = FALSE}
-mod_S6 <-rma.mv(yi = lnRR_Sa, V = lnRRV_S, mod = ~Stress_duration-1, random = list(~1|Study_ID,
+dat4 <- filter(dat, Stress_duration %in% c("Chronic", "Acute", "MS", "Combination"))
+VCV_S4 <- make_VCV_matrix(data = dat3, V = "lnRRV_S", cluster = "Study_ID", obs = "ES_ID")
+
+mod_S6 <-rma.mv(yi = lnRR_Sa, V = VCV_S4, mod = ~Stress_duration-1, random = list(~1|Study_ID,
                                                                                    ~1|ES_ID,
                                                                                    ~1|Strain),
                 test = "t",
-                data = dat)
+                data = dat4)
 summary(mod_S6) 
 r2_ml(mod_S6) 
 
@@ -535,10 +626,6 @@ orchard_plot(mod_ES0, mod = "Int", xlab = "lnRR", alpha=0.4) +
         legend.text = element_text(size = 13)) 
 
 ```
-Note that I checked the top four most positive ES and the data looks correct.
-Highest ES is study 27, effect size 88 where Maternally separated EE individuals freeze significantly more when given a cue from inhibitory avoidance. 
-Im not sure why the second highest one is like (ES 16) that as the control indivs do the best. EE indivs do best in the 3rd highest ES (ES 10). 
-The fourth highest (ES 12) seems correct
 
 
 ### Meta-regression
@@ -811,6 +898,6 @@ mod_ES0a <- rma.mv(yi = SMD_ESa, V = SMDV_ES, random = list(~1|Study_ID,
                   test = "t",
                   data = dat)
 summary(mod_ES0a)
-i2_ml(mod_ES0a)
+i2_ml(mod_ES0a) #I2 is very high! 99.37%
 funnel(mod_ES0a)
 ```
