@@ -22,7 +22,9 @@ pacman::p_load(tidyverse,
                here,
                metafor,
                emmeans,
-               orchaRd)
+               orchaRd, 
+               MCMCglmm,
+               corpcor)
 
 ```
 
@@ -257,6 +259,25 @@ orchard_plot(mod_S0, mod = "Int", xlab = "lnRR", alpha=0.4) +
         text = element_text(size = 24), # change font sizes
         legend.title = element_text(size = 15),
         legend.text = element_text(size = 13)) 
+```
+
+### Publication Bias
+... I was going to run this using the same code as last meta-analysis (MCMCglmm) but thought there might be an easier way?
+
+``` {r, message = FALSE, warning = FALSE}
+#need to remove NAs
+
+dat_na_S <- dat %>%
+  drop_na(c(lnRR_Sa, lnRRV_S))
+
+dat_na_E <- dat  %>%
+  drop_na(c(lnRR_Ea, lnRRV_E))
+
+dat_na_ES <- dat  %>%
+  drop_na(c(lnRR_ESa, lnRRV_ES))
+
+#Stress
+#TODO check with Shinichi if there is an easier way to do PB (eggers regression, funnel asymmetry)
 ```
 
 ### Meta-regression
