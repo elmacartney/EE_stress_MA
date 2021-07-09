@@ -942,6 +942,9 @@ summary(mod_S0a)
 i2_ml(mod_S0a) 
 funnel(mod_S0a) 
 
+funnel(mod_S0a, yaxis="seinv",) 
+
+
 ```
 
 ### Environmental Enrichment
