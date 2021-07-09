@@ -80,6 +80,12 @@ dat$lnRR_ESa <-  ifelse(dat$Response_direction == 2, dat$lnRR_ES*-1,ifelse(is.na
 dat$SMD_Ea <- ifelse(dat$Response_direction == 2, dat$SMD_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_E)) # currently NAswhich causes error
 dat$SMD_Sa  <- ifelse(dat$Response_direction == 2, dat$SMD_S*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_S)) # currently NAswhich causes error
 dat$SMD_ESa <-  ifelse(dat$Response_direction == 2, dat$SMD_ES*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_ES))
+
+#rounding down integer sample sizes 
+dat$CC_n <- floor(dat$CC_n)
+dat$EC_n <- floor(dat$EC_n)
+dat$CS_n <- floor(dat$CS_n)
+dat$ES_n <- floor(dat$CS_n)
 ```
 
 #### Assigning human readable words to moderators
