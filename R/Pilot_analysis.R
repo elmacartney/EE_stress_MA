@@ -445,6 +445,80 @@ orchard_plot(mod_ES0, mod = "Int", xlab = "lnRR", alpha=0.4) +
         legend.title = element_text(size = 15),
         legend.text = element_text(size = 13)) 
 
+#modelling with lnVRV----
+
+#stress intercept model
+VCV_S <- make_VCV_matrix(data = dat, V = "lnRRV_S", cluster = "Study_ID", obs = "ES_ID")
+
+mod_Sb <- rma.mv(yi = lnVRV_S, V = lnRRV_S, random = list(~1|Study_ID, 
+                                                                                  ~ 1|Strain,
+                                                                                  ~1|ES_ID),
+                test = "t",
+                data = dat)
+summary(mod_Sb) #significantly positive- seems like SE is better than just E by itself
+funnel(mod_Sb)
+i2_ml(mod_Sb) 
+
+#enrichment intercept model
+VCV_E <- make_VCV_matrix(data = dat, V = "lnRRV_E", cluster = "Study_ID", obs = "ES_ID")
+
+mod_Eb <- rma.mv(yi = lnVRV_E, V = lnRRV_E, random = list(~1|Study_ID, 
+                                                          ~ 1|Strain,
+                                                          ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+
+summary(mod_Eb) #significantly positive- seems like SE is better than just E by itself
+funnel(mod_Eb)
+i2_ml(mod_Eb)
+
+#interaction intercept model
+VCV_ES <- make_VCV_matrix(data = dat, V = "lnRRV_ES", cluster = "Study_ID", obs = "ES_ID")
+
+mod_ESb <- rma.mv(yi = lnVRV_ES, V = lnRRV_ES, random = list(~1|Study_ID, 
+                                                          ~ 1|Strain,
+                                                          ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+
+summary(mod_ESb) 
+funnel(mod_ESb)
+i2_ml(mod_ESb)
+
+#modelling with lnCVR----
+
+#stress intercept model
+mod_Sc <- rma.mv(yi = lnCVR_S, V = lnRRV_S, random = list(~1|Study_ID, 
+                                                          ~ 1|Strain,
+                                                          ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+summary(mod_Sc) #significantly positive- seems like SE is better than just E by itself
+funnel(mod_Sc)
+i2_ml(mod_Sc) 
+
+#enrichment intercept model
+mod_Ec <- rma.mv(yi = lnCVR_E, V = lnRRV_E, random = list(~1|Study_ID, 
+                                                          ~ 1|Strain,
+                                                          ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+
+summary(mod_Ec) 
+funnel(mod_Ec)
+i2_ml(mod_Ec)
+
+#interaction intercept model
+mod_ESc <- rma.mv(yi = lnCVR_ES, V = lnRRV_ES, random = list(~1|Study_ID, 
+                                                            ~ 1|Strain,
+                                                            ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+
+summary(mod_ESc) 
+funnel(mod_ESc)
+i2_ml(mod_ESc)
+
 #moderators
 #TODO should we include multiple moderators (i.e., stress and enrichment) into the interaction model?
 dat$Type_learning<-as.factor(dat$Type_learning)

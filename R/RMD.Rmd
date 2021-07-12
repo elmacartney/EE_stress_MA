@@ -41,7 +41,7 @@ Getting effect sizes from function, 'flipping' effect sizes so that all effect s
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
 
-#fixing negative values in study 16 (this doesn't work as can't use 0 in lnRR calculation)
+#fixing negative values in study 14 (this doesn't work as can't use 0 in lnRR calculation)
 #modifying study 16 that has negative values: shifting everything up by the lowest value
 #note, this results in inf lnRR - is it because of the zeros?
 #dat1 <- dat %>%
