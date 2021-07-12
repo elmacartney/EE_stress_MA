@@ -448,9 +448,9 @@ orchard_plot(mod_ES0, mod = "Int", xlab = "lnRR", alpha=0.4) +
 #modelling with lnVRV----
 
 #stress intercept model
-VCV_S <- make_VCV_matrix(data = dat, V = "lnRRV_S", cluster = "Study_ID", obs = "ES_ID")
+VCV_Sb <- make_VCV_matrix(data = dat, V = "lnVRV_S", cluster = "Study_ID", obs = "ES_ID")
 
-mod_Sb <- rma.mv(yi = lnVRV_S, V = lnRRV_S, random = list(~1|Study_ID, 
+mod_Sb <- rma.mv(yi = lnVR_S, V = VCV_Sb, random = list(~1|Study_ID, 
                                                                                   ~ 1|Strain,
                                                                                   ~1|ES_ID),
                 test = "t",
@@ -460,9 +460,9 @@ funnel(mod_Sb)
 i2_ml(mod_Sb) 
 
 #enrichment intercept model
-VCV_E <- make_VCV_matrix(data = dat, V = "lnRRV_E", cluster = "Study_ID", obs = "ES_ID")
+VCV_Eb <- make_VCV_matrix(data = dat, V = "lnVRV_E", cluster = "Study_ID", obs = "ES_ID")
 
-mod_Eb <- rma.mv(yi = lnVRV_E, V = lnRRV_E, random = list(~1|Study_ID, 
+mod_Eb <- rma.mv(yi = lnVR_E, V = VCV_Eb, random = list(~1|Study_ID, 
                                                           ~ 1|Strain,
                                                           ~1|ES_ID),
                  test = "t",
@@ -473,9 +473,9 @@ funnel(mod_Eb)
 i2_ml(mod_Eb)
 
 #interaction intercept model
-VCV_ES <- make_VCV_matrix(data = dat, V = "lnRRV_ES", cluster = "Study_ID", obs = "ES_ID")
+VCV_ESb <- make_VCV_matrix(data = dat, V = "lnVRV_ES", cluster = "Study_ID", obs = "ES_ID")
 
-mod_ESb <- rma.mv(yi = lnVRV_ES, V = lnRRV_ES, random = list(~1|Study_ID, 
+mod_ESb <- rma.mv(yi = lnVR_ES, V = VCV_ESb, random = list(~1|Study_ID, 
                                                           ~ 1|Strain,
                                                           ~1|ES_ID),
                  test = "t",
@@ -488,7 +488,9 @@ i2_ml(mod_ESb)
 #modelling with lnCVR----
 
 #stress intercept model
-mod_Sc <- rma.mv(yi = lnCVR_S, V = lnRRV_S, random = list(~1|Study_ID, 
+VCV_Sc <- make_VCV_matrix(data = dat, V = "lnCVRV_S", cluster = "Study_ID", obs = "ES_ID")
+
+mod_Sc <- rma.mv(yi = lnCVR_S, V = VCV_Sc, random = list(~1|Study_ID, 
                                                           ~ 1|Strain,
                                                           ~1|ES_ID),
                  test = "t",
@@ -498,7 +500,8 @@ funnel(mod_Sc)
 i2_ml(mod_Sc) 
 
 #enrichment intercept model
-mod_Ec <- rma.mv(yi = lnCVR_E, V = lnRRV_E, random = list(~1|Study_ID, 
+VCV_Ec <- make_VCV_matrix(data = dat, V = "lnCVRV_E", cluster = "Study_ID", obs = "ES_ID")
+mod_Ec <- rma.mv(yi = lnCVR_E, V = VCV_Ec, random = list(~1|Study_ID, 
                                                           ~ 1|Strain,
                                                           ~1|ES_ID),
                  test = "t",
@@ -509,7 +512,8 @@ funnel(mod_Ec)
 i2_ml(mod_Ec)
 
 #interaction intercept model
-mod_ESc <- rma.mv(yi = lnCVR_ES, V = lnRRV_ES, random = list(~1|Study_ID, 
+VCV_ESc <- make_VCV_matrix(data = dat, V = "lnCVRV_ES", cluster = "Study_ID", obs = "ES_ID")
+mod_ESc <- rma.mv(yi = lnCVR_ES, V = VCV_ESc, random = list(~1|Study_ID, 
                                                             ~ 1|Strain,
                                                             ~1|ES_ID),
                  test = "t",
