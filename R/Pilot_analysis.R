@@ -118,7 +118,7 @@ dat$SMD_ESa <-  ifelse(dat$Response_direction == 2, dat$SMD_ES*-1,ifelse(is.na(d
 # TODO - 3 new meta-analyses - in relation to CC
 # Altneartive ---- 
 # environment----
-
+# EC vs CC
 mod_E20 <- rma.mv(yi = lnRR_E2a, V = lnRRV_E2, random = list(~1|Study_ID, 
                                                           # ~ 1|Strain, does not run as we have NA
                                                           ~1|ES_ID),
@@ -127,7 +127,7 @@ mod_E20 <- rma.mv(yi = lnRR_E2a, V = lnRRV_E2, random = list(~1|Study_ID,
 summary(mod_E20) #
 
 # stress----
-
+# CS vs CC
 mod_S20 <- rma.mv(yi = lnRR_S2a, V = lnRRV_S2, random = list(~1|Study_ID, 
                                                           # ~ 1|Strain, does not run as we have NA
                                                           ~1|ES_ID),
@@ -137,6 +137,7 @@ summary(mod_S20) #
 
 
 # EE x Stree ----
+# ES vs CC
 
 mod_ES20 <- rma.mv(yi = lnRR_ES2a, V = lnRRV_ES2, random = list(~1|Study_ID, 
                                                           # ~ 1|Strain, does not run as we have NA
@@ -146,13 +147,17 @@ mod_ES20 <- rma.mv(yi = lnRR_ES2a, V = lnRRV_ES2, random = list(~1|Study_ID,
 summary(mod_ES20) #
 
 # E effect in the presence of S
-
+# ES vs CS
 mod_E30 <- rma.mv(yi = lnRR_E3a, V = lnRRV_E3, random = list(~1|Study_ID, 
                                                                # ~ 1|Strain, does not run as we have NA
                                                                ~1|ES_ID),
                   test = "t",
                   data = dat)
 summary(mod_E30) #
+
+# ES vs EC
+
+
 
 #######################################
 
@@ -521,6 +526,84 @@ orchard_plot(mod_ES0, mod = "Int", xlab = "lnRR", alpha=0.4) +
         text = element_text(size = 24), # change font sizes
         legend.title = element_text(size = 15),
         legend.text = element_text(size = 13)) 
+
+#modelling with lnVRV----
+
+#stress intercept model
+VCV_Sb <- make_VCV_matrix(data = dat, V = "lnVRV_S", cluster = "Study_ID", obs = "ES_ID")
+
+mod_Sb <- rma.mv(yi = lnVR_S, V = VCV_Sb, random = list(~1|Study_ID, 
+                                                                                  ~ 1|Strain,
+                                                                                  ~1|ES_ID),
+                test = "t",
+                data = dat)
+summary(mod_Sb) 
+funnel(mod_Sb)
+i2_ml(mod_Sb) 
+
+#enrichment intercept model
+VCV_Eb <- make_VCV_matrix(data = dat, V = "lnVRV_E", cluster = "Study_ID", obs = "ES_ID")
+
+mod_Eb <- rma.mv(yi = lnVR_E, V = VCV_Eb, random = list(~1|Study_ID, 
+                                                          ~ 1|Strain,
+                                                          ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+
+summary(mod_Eb) 
+funnel(mod_Eb)
+i2_ml(mod_Eb)
+
+#interaction intercept model
+VCV_ESb <- make_VCV_matrix(data = dat, V = "lnVRV_ES", cluster = "Study_ID", obs = "ES_ID")
+
+mod_ESb <- rma.mv(yi = lnVR_ES, V = VCV_ESb, random = list(~1|Study_ID, 
+                                                          ~ 1|Strain,
+                                                          ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+
+summary(mod_ESb) 
+funnel(mod_ESb)
+i2_ml(mod_ESb)
+
+#modelling with lnCVR----
+
+#stress intercept model
+VCV_Sc <- make_VCV_matrix(data = dat, V = "lnCVRV_S", cluster = "Study_ID", obs = "ES_ID")
+
+mod_Sc <- rma.mv(yi = lnCVR_S, V = VCV_Sc, random = list(~1|Study_ID, 
+                                                          ~ 1|Strain,
+                                                          ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+summary(mod_Sc) #significantly positive- seems like SE is better than just E by itself
+funnel(mod_Sc)
+i2_ml(mod_Sc) 
+
+#enrichment intercept model
+VCV_Ec <- make_VCV_matrix(data = dat, V = "lnCVRV_E", cluster = "Study_ID", obs = "ES_ID")
+mod_Ec <- rma.mv(yi = lnCVR_E, V = VCV_Ec, random = list(~1|Study_ID, 
+                                                          ~ 1|Strain,
+                                                          ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+
+summary(mod_Ec) 
+funnel(mod_Ec)
+i2_ml(mod_Ec)
+
+#interaction intercept model
+VCV_ESc <- make_VCV_matrix(data = dat, V = "lnCVRV_ES", cluster = "Study_ID", obs = "ES_ID")
+mod_ESc <- rma.mv(yi = lnCVR_ES, V = VCV_ESc, random = list(~1|Study_ID, 
+                                                            ~ 1|Strain,
+                                                            ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+
+summary(mod_ESc) 
+funnel(mod_ESc)
+i2_ml(mod_ESc)
 
 #moderators
 #TODO should we include multiple moderators (i.e., stress and enrichment) into the interaction model?
