@@ -1,12 +1,12 @@
 #checks for installation and loads packages
-install.packages("devtools")
-install.packages("tidyverse")
-install.packages("metafor")
-install.packages("patchwork")
-install.packages("R.rsp")
-install.packages("Rtools")
-
-devtools::install_github("itchyshin/orchard_plot", subdir = "orchaRd", force = TRUE, build_vignettes = TRUE) #need this to get orchaRD package
+# install.packages("devtools")
+# install.packages("tidyverse")
+# install.packages("metafor")
+# install.packages("patchwork")
+# install.packages("R.rsp")
+# install.packages("Rtools")
+# 
+# devtools::install_github("itchyshin/orchard_plot", subdir = "orchaRd", force = TRUE, build_vignettes = TRUE) #need this to get orchaRD package
 
 pacman::p_load(tidyverse, 
                here,
@@ -67,10 +67,18 @@ effect_size <- effect_set(CC_n = "CC_n", CC_mean = "CC_mean", CC_SD = "CC_SD",
                           ES_n = "ES_n", ES_mean = "ES_mean", ES_SD = "ES_SD",
                           data = dat) #this is running the function that we have already loaded
 
+# TODO - a new set of effect sizes
+
+effect_size2 <- effect_set2(CC_n = "CC_n", CC_mean = "CC_mean", CC_SD = "CC_SD",
+                          EC_n = "EC_n", EC_mean = "EC_mean" , EC_SD ="EC_SD",
+                          CS_n = "CS_n", CS_mean = "CS_mean", CS_SD = "CS_SD",
+                          ES_n = "ES_n", ES_mean = "ES_mean", ES_SD = "ES_SD",
+                          data = dat) 
+
 # which one has all the data available
 full_info <- which(complete.cases(effect_size) == TRUE) #removing missing effect sizes
 
-dat_effect <- cbind(dat, effect_size)
+dat_effect <- cbind(dat, effect_size, effect_size2)
 names(dat_effect)
 
 # TODO - we need to sort this out a bit more later
@@ -89,13 +97,64 @@ dimentions <- dim(dat) # 7 less
 #flipping lnRR for values where higher = worse
 dat$lnRR_Ea <- ifelse(dat$Response_direction == 2, dat$lnRR_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E)) # currently NAswhich causes error
 dat$lnRR_Sa  <- ifelse(dat$Response_direction == 2, dat$lnRR_S*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_S)) # currently NAswhich causes error
+dat$lnRR_ea <- ifelse(dat$Response_direction == 2, dat$lnRR_e*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_e)) # currently NAswhich causes error
+dat$lnRR_sa  <- ifelse(dat$Response_direction == 2, dat$lnRR_s*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_s)) # c
+# TODO - is this the issue?? - this is fine
 dat$lnRR_ESa <-  ifelse(dat$Response_direction == 2, dat$lnRR_ES*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_ES)) # currently NAswhich causes error
+
+# TODO - flipping effect sizes for effect2
+dat$lnRR_E2a <- ifelse(dat$Response_direction == 2, dat$lnRR_E2*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E2)) # currently NAswhich causes error
+dat$lnRR_S2a  <- ifelse(dat$Response_direction == 2, dat$lnRR_S2*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_S2)) # currently NAswhich causes error
+dat$lnRR_ES2a <-  ifelse(dat$Response_direction == 2, dat$lnRR_ES2*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_ES2)) # currently NAswhich causes error
+dat$lnRR_E3a <-  ifelse(dat$Response_direction == 2, dat$lnRR_E3*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E3)) # currently NAswhich causes error
 
 #flipping SMD
 dat$SMD_Ea <- ifelse(dat$Response_direction == 2, dat$SMD_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_E)) # currently NAswhich causes error
 dat$SMD_Sa  <- ifelse(dat$Response_direction == 2, dat$SMD_S*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_S)) # currently NAswhich causes error
 dat$SMD_ESa <-  ifelse(dat$Response_direction == 2, dat$SMD_ES*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_ES)) # currently NAswhich causes error
 
+
+
+# TODO - 3 new meta-analyses - in relation to CC
+# Altneartive ---- 
+# environment----
+
+mod_E20 <- rma.mv(yi = lnRR_E2a, V = lnRRV_E2, random = list(~1|Study_ID, 
+                                                          # ~ 1|Strain, does not run as we have NA
+                                                          ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+summary(mod_E20) #
+
+# stress----
+
+mod_S20 <- rma.mv(yi = lnRR_S2a, V = lnRRV_S2, random = list(~1|Study_ID, 
+                                                          # ~ 1|Strain, does not run as we have NA
+                                                          ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+summary(mod_S20) #
+
+
+# EE x Stree ----
+
+mod_ES20 <- rma.mv(yi = lnRR_ES2a, V = lnRRV_ES2, random = list(~1|Study_ID, 
+                                                          # ~ 1|Strain, does not run as we have NA
+                                                          ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+summary(mod_ES20) #
+
+# E effect in the presence of S
+
+mod_E30 <- rma.mv(yi = lnRR_E3a, V = lnRRV_E3, random = list(~1|Study_ID, 
+                                                               # ~ 1|Strain, does not run as we have NA
+                                                               ~1|ES_ID),
+                  test = "t",
+                  data = dat)
+summary(mod_E30) #
+
+#######################################
 
 # modeling with lnRR----
 
@@ -109,6 +168,16 @@ mod_E0 <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, random = list(~1|Study_ID,
 summary(mod_E0) #learning and memory significantly better when enrichment
 
 funnel(mod_E0)
+
+
+mod_e0 <- rma.mv(yi = lnRR_ea, V = lnRRV_e, random = list(~1|Study_ID, 
+                                                          # ~ 1|Strain, does not run as we have NA
+                                                          ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+summary(mod_e0) #learning and memory significantly better when enrichment
+
+funnel(mod_e0)
 
 #trying orchard plot
 
@@ -289,6 +358,14 @@ mod_S0 <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, random = list(~1|Study_ID,
 summary(mod_S0) #learning and memory significantly worse when stressed
 funnel(mod_S0)
 i2_ml(mod_S0) #high hetero
+
+
+mod_s0 <- rma.mv(yi = lnRR_sa, V = lnRRV_s, random = list(~1|Study_ID, 
+                                                          # ~ 1|Strain, does not run as we have NA
+                                                          ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+summary(mod_s0)
 
 # Orchard plot 
 orchard_plot(mod_S0, mod = "Int", xlab = "lnRR", alpha=0.4) + 

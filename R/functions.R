@@ -21,11 +21,23 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
                                    ((data[[CS_SD]])^2 / ((data[[CS_mean]])^2*data[[CS_n]])) +
                                    ((data[[CC_SD]])^2 / ((data[[CC_mean]])^2*data[[CC_n]]))))
   
+  # alternative method
+  lnRR_e <- as.numeric(log(0.5*(data[[ES_mean]] + data[[EC_mean]])) - 
+                         log(0.5*(data[[CS_mean]]+ data[[CC_mean]])))
+  
+  
+  lnRRV_e <-  as.numeric((1/(data[[ES_mean]] + data[[EC_mean]]))^2*(data[[ES_SD]]^2 / data[[ES_n]] + data[[EC_SD]]^2 / data[[EC_n]]) +  (1/(data[[CS_mean]] + data[[CC_mean]]))^2*(data[[CS_SD]]^2 / data[[CS_n]] + data[[CC_SD]]^2 / data[[CC_n]])
+    )
   
 # main effect Stress
   lnRR_S <- as.numeric( 0.5 * log((data[[ES_mean]]*data[[CS_mean]]) / (data[[EC_mean]]*data[[CC_mean]])))
   
   lnRRV_S <- lnRRV_E
+  
+  # alternative method
+  lnRR_s <- as.numeric(log(0.5*(data[[ES_mean]] + data[[CS_mean]])) - 
+                         log(0.5*(data[[EC_mean]]+ data[[CC_mean]])))
+  lnRRV_s <- lnRRV_e
   
   # interaction
   lnRR_ES <-   as.numeric((log(data[[ES_mean]]) - log(data[[CS_mean]])) - 
@@ -39,8 +51,9 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
                   ((data[[CS_SD]])^2 / ((data[[CS_mean]])^2*data[[CS_n]])) +
                   ((data[[CC_SD]])^2 / ((data[[CC_mean]])^2*data[[CC_n]]))))
   
-
   
+# lnVR
+  # main effect Environment enrichment
   lnVR_E <- as.numeric(0.5 * log((data[[ES_SD]]*data[[EC_SD]]) / (data[[CS_SD]]*data[[CC_SD]])) + 
                          0.5 * ( (1/(2*(data[[ES_n]] -1))) + (1/(2*(data[[EC_n]] -1))) -
                                    (1/(2*(data[[CS_n]] -1))) - (1/(2*(data[[CC_n]] -1)))))
@@ -141,8 +154,12 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
   effect <- tibble(# lnRR
                    lnRR_E = lnRR_E,
                    lnRRV_E = lnRRV_E, 
+                   lnRR_e = lnRR_e,
+                   lnRRV_e = lnRRV_e,
                    lnRR_S = lnRR_S, 
-                   lnRRV_S = lnRRV_S, 
+                   lnRRV_S = lnRRV_S,
+                   lnRR_s = lnRR_s, 
+                   lnRRV_s = lnRRV_s, 
                    lnRR_ES =lnRR_ES, 
                    lnRRV_ES = lnRRV_ES,
                    # lnVR
@@ -170,6 +187,58 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
   effect
   
 }
+
+
+# comparing different conditions to CC
+
+effect_set2 <- function(CC_n, CC_mean, CC_SD,
+                       EC_n, EC_mean, EC_SD,
+                       CS_n, CS_mean, CS_SD,
+                       ES_n, ES_mean, ES_SD,
+                       data){
+  
+  # lnRR
+  # TODO - add some small sample adjustment (do this later)
+  # EC vs CC
+  lnRR_E2 <- as.numeric(log(data[[EC_mean]]) - log(data[[CC_mean]]))
+  
+  
+  lnRRV_E2 <-  as.numeric((data[[EC_SD]]^2 / (data[[EC_mean]]^2*data[[EC_n]])) + 
+                                   (data[[CC_SD]]^2 / data[[CC_mean]]^2*data[[CC_n]]))
+  
+  
+  # CS vs CC
+  lnRR_S2 <- as.numeric( log(data[[CS_mean]]) - log(data[[CC_mean]]))
+  
+  lnRRV_S2 <- as.numeric((data[[CS_SD]]^2 / (data[[CS_mean]]^2*data[[CS_n]])) + 
+                          (data[[CC_SD]]^2 / data[[CC_mean]]^2*data[[CC_n]]))
+  
+  # ES vs CC
+  lnRR_ES2 <- as.numeric( log(data[[ES_mean]]) - log(data[[CC_mean]]))
+  
+  lnRRV_ES2 <- as.numeric((data[[ES_SD]]^2 / (data[[ES_mean]]^2*data[[ES_n]])) + 
+                           (data[[CC_SD]]^2 / data[[CC_mean]]^2*data[[CC_n]]))
+  
+  # ES vs CS (the effect of E in the presence of S)
+  lnRR_E3 <- as.numeric( log(data[[ES_mean]]) - log(data[[CS_mean]]))
+  
+  lnRRV_E3 <- as.numeric((data[[ES_SD]]^2 / (data[[ES_mean]]^2*data[[ES_n]])) + 
+                            (data[[CS_SD]]^2 / data[[CS_mean]]^2*data[[CS_n]]))
+  
+  effect2 <- tibble(
+    lnRR_E2 = lnRR_E2,
+    lnRRV_E2 = lnRRV_E2, 
+    lnRR_S2 = lnRR_S2, 
+    lnRRV_S2 = lnRRV_S2, 
+    lnRR_ES2 =lnRR_ES2, 
+    lnRRV_ES2 = lnRRV_ES2,
+    lnRR_E3 =lnRR_E3, 
+    lnRRV_E3 = lnRRV_E3,
+  )
+  effect2
+  
+}
+
 
 #variance VCV
 
