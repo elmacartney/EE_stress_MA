@@ -455,7 +455,7 @@ mod_Sb <- rma.mv(yi = lnVR_S, V = VCV_Sb, random = list(~1|Study_ID,
                                                                                   ~1|ES_ID),
                 test = "t",
                 data = dat)
-summary(mod_Sb) #significantly positive- seems like SE is better than just E by itself
+summary(mod_Sb) 
 funnel(mod_Sb)
 i2_ml(mod_Sb) 
 
@@ -468,7 +468,7 @@ mod_Eb <- rma.mv(yi = lnVR_E, V = VCV_Eb, random = list(~1|Study_ID,
                  test = "t",
                  data = dat)
 
-summary(mod_Eb) #significantly positive- seems like SE is better than just E by itself
+summary(mod_Eb) 
 funnel(mod_Eb)
 i2_ml(mod_Eb)
 

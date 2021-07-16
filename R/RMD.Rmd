@@ -41,23 +41,6 @@ Getting effect sizes from function, 'flipping' effect sizes so that all effect s
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
 
-#fixing negative values in study 14 (this doesn't work as can't use 0 in lnRR calculation)
-#modifying study 16 that has negative values: shifting everything up by the lowest value
-#note, this results in inf lnRR - is it because of the zeros?
-#dat1 <- dat %>%
- # rowwise() %>%
-  #mutate(min.mean = min(CC_mean, EC_mean, CS_mean, ES_mean)) %>%
-  #ungroup() %>%
-  #mutate(CC_mean = case_when(First_author == "Wang" ~ CC_mean + abs(min.mean),
-                            # TRUE ~ as.numeric(.$CC_mean))) %>%
-  #mutate(EC_mean = case_when(First_author == "Wang" ~ EC_mean + abs(min.mean), 
-                             #TRUE ~ as.numeric(.$EC_mean))) %>%
-  #mutate(CS_mean = case_when(First_author == "Wang" ~ CS_mean + abs(min.mean),
-                             #TRUE ~ as.numeric(.$CS_mean))) %>%
-  #mutate(ES_mean = case_when(First_author == "Wang" ~ ES_mean + abs(min.mean),
-                             #TRUE ~ as.numeric(.$ES_mean)))
-
-
 #Getting effect sizes
 effect_size <- effect_set(CC_n = "CC_n", CC_mean = "CC_mean", CC_SD = "CC_SD",
                           EC_n = "EC_n", EC_mean = "EC_mean" , EC_SD ="EC_SD",
@@ -136,57 +119,6 @@ dat <- dat %>% mutate(Type_learning = case_when(Type_learning == 1 ~ "Habituatio
 Used to control for trait relatedness within individuals
 
 ``` {r, message = FALSE, warning = FALSE, results = 'hide'}
-#TODO get Shinichi to get VCV 
-#function 
-#make_VCV_matrix <- function(data, V, cluster, obs, type=c("vcv", "cor"), rho=0.5){
-  
-  #if (missing(data)) 
-   # stop("Must specify dataframe via 'data' argument.")
-  #if (missing(V)) 
-   # stop("Must specify name of the variance variable via 'V' argument.")
-  #if (missing(cluster)) 
-   # stop("Must specify name of the clustering variable via 'cluster' argument.")
-  #if (missing(obs)) 
-   # obs <- 1:length(V)   
-  #if (missing(type)) 
-   # type <- "vcv" 
-  
-  ## V = variance, cluster = animal group iD/study ID, ob = effect size id, type = default VCV settings
-  
-  #new_matrix <- matrix(0,nrow = dim(data)[1],ncol = dim(data)[1]) #make empty matrix of the same size as data length
-  #rownames(new_matrix) <- data[ ,obs]
-  #colnames(new_matrix) <- data[ ,obs]
-  # find start and end coordinates for the subsets
-  #shared_coord <- which(data[ ,cluster] %in% data[duplicated(data[ ,cluster]), cluster]==TRUE)
-  # matrix of combinations of coordinates for each experiment with shared control
-  #combinations <- do.call("rbind", tapply(shared_coord, data[shared_coord,cluster], function(x) t(combn(x,2))))
-  
-  #if(type == "vcv"){
-    # calculate covariance values between  values at the positions in shared_list and place them on the matrix
-   # for (i in 1:dim(combinations)[1]){
-    #  p1 <- combinations[i,1]
-     # p2 <- combinations[i,2]
-      #p1_p2_cov <- rho * sqrt(data[p1,V]) * sqrt(data[p2,V])
-    #  new_matrix[p1,p2] <- p1_p2_cov
-     # new_matrix[p2,p1] <- p1_p2_cov
-    #}
-  #  diag(new_matrix) <- data[ ,V]   #add the diagonal
-#  }
-  
- # if(type == "cor"){
-    # calculate covariance values between  values at the positions in shared_list and place them on the matrix
-  #  for (i in 1:dim(combinations)[1]){
-   #   p1 <- combinations[i,1]
-    #  p2 <- combinations[i,2]
-     # p1_p2_cov <- rho
-      #new_matrix[p1,p2] <- p1_p2_cov
-    #  new_matrix[p2,p1] <- p1_p2_cov
-    #}
-    #diag(new_matrix) <- 1   #add the diagonal of 1
-  #}
-  
-  #return(new_matrix)
-#}
 
 ##adding data to empty VCV matrix
 VCV_E <- make_VCV_matrix(data = dat, V = "lnRRV_E", cluster = "Study_ID", obs = "ES_ID")
@@ -924,6 +856,171 @@ orchard_plot(mod_ES9, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) +
         text = element_text(size = 24), # change font sizes
         legend.title = element_text(size = 15),
         legend.text = element_text(size = 13)) 
+```
+
+# Modelling with lnVR
+
+## Stress
+
+``` {r, message = FALSE, warning = FALSE}
+VCV_Sb <- make_VCV_matrix(data = dat, V = "lnVRV_S", cluster = "Study_ID", obs = "ES_ID")
+
+mod_Sb <- rma.mv(yi = lnVR_S, V = VCV_Sb, random = list(~1|Study_ID, 
+                                                        ~ 1|Strain,
+                                                        ~1|ES_ID),
+                test = "t",
+                data = dat)
+summary(mod_Sb) #
+funnel(mod_Sb)
+i2_ml(mod_Sb) 
+
+# Orchard plot 
+orchard_plot(mod_Sb, mod = "Int", xlab = "lnVR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+
+```
+
+## Enrichment
+
+``` {r, message = FALSE, warning = FALSE}
+VCV_Eb <- make_VCV_matrix(data = dat, V = "lnVRV_E", cluster = "Study_ID", obs = "ES_ID")
+
+mod_Eb <- rma.mv(yi = lnVR_E, V = VCV_Eb, random = list(~1|Study_ID, 
+                                                          ~ 1|Strain,
+                                                          ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+
+summary(mod_Eb) 
+funnel(mod_Eb)
+i2_ml(mod_Eb)
+
+# Orchard plot 
+orchard_plot(mod_Eb, mod = "Int", xlab = "lnVR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+```
+
+## Interaction
+
+``` {r, message = FALSE, warning = FALSE}
+VCV_ESb <- make_VCV_matrix(data = dat, V = "lnVRV_ES", cluster = "Study_ID", obs = "ES_ID")
+
+mod_ESb <- rma.mv(yi = lnVR_ES, V = VCV_ESb, random = list(~1|Study_ID, 
+                                                          ~ 1|Strain,
+                                                          ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+
+summary(mod_ESb) 
+funnel(mod_ESb)
+i2_ml(mod_ESb)
+
+# Orchard plot 
+orchard_plot(mod_ESb, mod = "Int", xlab = "lnVR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+```
+
+# Modelling with lnCVR
+
+## Stress
+
+``` {r, message = FALSE, warning = FALSE}
+VCV_Sc <- make_VCV_matrix(data = dat, V = "lnCVRV_S", cluster = "Study_ID", obs = "ES_ID")
+
+mod_Sc <- rma.mv(yi = lnCVR_S, V = VCV_Sc, random = list(~1|Study_ID, 
+                                                          ~ 1|Strain,
+                                                          ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+summary(mod_Sc) #significantly positive- seems like SE is better than just E by itself
+funnel(mod_Sc)
+i2_ml(mod_Sc) 
+
+# Orchard plot 
+orchard_plot(mod_Sc, mod = "Int", xlab = "lnCVR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+```
+
+## Enrichment
+
+``` {r, message = FALSE, warning = FALSE}
+VCV_Ec <- make_VCV_matrix(data = dat, V = "lnCVRV_E", cluster = "Study_ID", obs = "ES_ID")
+mod_Ec <- rma.mv(yi = lnCVR_E, V = VCV_Ec, random = list(~1|Study_ID, 
+                                                          ~ 1|Strain,
+                                                          ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+
+summary(mod_Ec) 
+funnel(mod_Ec)
+i2_ml(mod_Ec)
+
+# Orchard plot 
+orchard_plot(mod_Ec, mod = "Int", xlab = "lnCVR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+
+```
+
+## Interaction
+
+``` {r, message = FALSE, warning = FALSE}
+VCV_ESc <- make_VCV_matrix(data = dat, V = "lnCVRV_ES", cluster = "Study_ID", obs = "ES_ID")
+mod_ESc <- rma.mv(yi = lnCVR_ES, V = VCV_ESc, random = list(~1|Study_ID, 
+                                                            ~ 1|Strain,
+                                                            ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+
+summary(mod_ESc) 
+funnel(mod_ESc)
+i2_ml(mod_ESc)
+
+# Orchard plot 
+orchard_plot(mod_ESc, mod = "Int", xlab = "lnCVR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+
 ```
 
 # Modelling with SMD
