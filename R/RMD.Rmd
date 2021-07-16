@@ -40,6 +40,13 @@ source(here("R/functions.R"))
 Getting effect sizes from function, 'flipping' effect sizes so that all effect sizes are higher values = individuals do better and learning/memory, and shifting negative values to possitive as lnRR cannot use negative values
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
+#shifting up negative values (all from Wang et al 2020): 
+#ES 36 up by 29.40
+#ES 37 up by 36.65
+#ES 38 up by 80
+#ES 39 up by 33.86
+
+#dat <- 
 
 #Getting effect sizes
 effect_size <- effect_set(CC_n = "CC_n", CC_mean = "CC_mean", CC_SD = "CC_SD",
