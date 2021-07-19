@@ -176,6 +176,16 @@ summary(mod_S30)
 
 orchard_plot(mod_S30, mod = "Int", xlab = "lnRR")
 
+mod_list <- list(mod_E20, mod_S20, mod_ES20, mod_E30, mod_S30)
+
+mod_res <- lapply(mod_list, function(x) mod_results(x, mod = "Int"))
+
+merged <- submerge(mod_res[[1]], mod_res[[2]],  mod_res[[3]], mod_res[[4]],  mod_res[[5]], mix = T)
+
+
+#merged$mod_table$name2 <- c("EC vs CC", "CS vs CC", "ES vs CC", "ES vs EC", "ES vs CS")
+
+orchard_plot(merged, mod = "Int", xlab = "lnRR", angle = 0) #+ geom_point(data = merged$mod_table, aes(y = name2, x = estimate))
 
 #######################################
 
