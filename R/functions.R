@@ -225,6 +225,13 @@ effect_set2 <- function(CC_n, CC_mean, CC_SD,
   lnRRV_E3 <- as.numeric((data[[ES_SD]]^2 / (data[[ES_mean]]^2*data[[ES_n]])) + 
                             (data[[CS_SD]]^2 / data[[CS_mean]]^2*data[[CS_n]]))
   
+  # ES vs EC (the effect of S in the presence of E)
+  lnRR_S3 <- as.numeric( log(data[[ES_mean]]) - log(data[[EC_mean]]))
+  
+  lnRRV_S3 <- as.numeric((data[[ES_SD]]^2 / (data[[ES_mean]]^2*data[[ES_n]])) + 
+                           (data[[EC_SD]]^2 / data[[EC_mean]]^2*data[[EC_n]]))
+  
+  
   effect2 <- tibble(
     lnRR_E2 = lnRR_E2,
     lnRRV_E2 = lnRRV_E2, 
@@ -234,6 +241,8 @@ effect_set2 <- function(CC_n, CC_mean, CC_SD,
     lnRRV_ES2 = lnRRV_ES2,
     lnRR_E3 =lnRR_E3, 
     lnRRV_E3 = lnRRV_E3,
+    lnRR_S3 = lnRR_S3,
+    lnRRV_S3 = lnRRV_S3
   )
   effect2
   

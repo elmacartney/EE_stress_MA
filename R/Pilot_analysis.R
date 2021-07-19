@@ -107,6 +107,7 @@ dat$lnRR_E2a <- ifelse(dat$Response_direction == 2, dat$lnRR_E2*-1,ifelse(is.na(
 dat$lnRR_S2a  <- ifelse(dat$Response_direction == 2, dat$lnRR_S2*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_S2)) # currently NAswhich causes error
 dat$lnRR_ES2a <-  ifelse(dat$Response_direction == 2, dat$lnRR_ES2*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_ES2)) # currently NAswhich causes error
 dat$lnRR_E3a <-  ifelse(dat$Response_direction == 2, dat$lnRR_E3*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E3)) # currently NAswhich causes error
+dat$lnRR_S3a <-  ifelse(dat$Response_direction == 2, dat$lnRR_S3*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_S3)) # currently NAswhich causes error
 
 #flipping SMD
 dat$SMD_Ea <- ifelse(dat$Response_direction == 2, dat$SMD_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_E)) # currently NAswhich causes error
@@ -124,7 +125,9 @@ mod_E20 <- rma.mv(yi = lnRR_E2a, V = lnRRV_E2, random = list(~1|Study_ID,
                                                           ~1|ES_ID),
                  test = "t",
                  data = dat)
-summary(mod_E20) #
+summary(mod_E20) 
+
+orchard_plot(mod_E20, mod = "Int", xlab = "lnRR")
 
 # stress----
 # CS vs CC
@@ -135,6 +138,7 @@ mod_S20 <- rma.mv(yi = lnRR_S2a, V = lnRRV_S2, random = list(~1|Study_ID,
                  data = dat)
 summary(mod_S20) #
 
+orchard_plot(mod_S20, mod = "Int", xlab = "lnRR")
 
 # EE x Stree ----
 # ES vs CC
@@ -146,6 +150,8 @@ mod_ES20 <- rma.mv(yi = lnRR_ES2a, V = lnRRV_ES2, random = list(~1|Study_ID,
                  data = dat)
 summary(mod_ES20) #
 
+orchard_plot(mod_ES20, mod = "Int", xlab = "lnRR")
+
 # E effect in the presence of S
 # ES vs CS
 mod_E30 <- rma.mv(yi = lnRR_E3a, V = lnRRV_E3, random = list(~1|Study_ID, 
@@ -153,10 +159,22 @@ mod_E30 <- rma.mv(yi = lnRR_E3a, V = lnRRV_E3, random = list(~1|Study_ID,
                                                                ~1|ES_ID),
                   test = "t",
                   data = dat)
-summary(mod_E30) #
+summary(mod_E30) 
 
+orchard_plot(mod_E30, mod = "Int", xlab = "lnRR")
+
+# S effect in the presence of E 
+# environments nullify the effect of Stress
 # ES vs EC
 
+mod_S30 <- rma.mv(yi = lnRR_S3a, V = lnRRV_S3, random = list(~1|Study_ID, 
+                                                             # ~ 1|Strain, does not run as we have NA
+                                                             ~1|ES_ID),
+                  test = "t",
+                  data = dat)
+summary(mod_S30) 
+
+orchard_plot(mod_S30, mod = "Int", xlab = "lnRR")
 
 
 #######################################
