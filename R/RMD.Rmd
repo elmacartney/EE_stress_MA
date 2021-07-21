@@ -40,22 +40,26 @@ source(here("R/functions.R"))
 Getting effect sizes from function, 'flipping' effect sizes so that all effect sizes are higher values = individuals do better and learning/memory, and shifting negative values to possitive as lnRR cannot use negative values
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
+#removing negative values
+#dat <- dat %>%
+ # mutate(CC_mean = case_when(ES_ID == 36 ~ CC_mean+29.4),
+  #       CS_mean = case_when(ES_ID == 36 ~ CC_mean+29.4),
+   #      EC_mean = case_when(ES_ID == 36 ~ CC_mean+29.4),
+    #     ES_mean = case_when(ES_ID == 36 ~ CC_mean+29.4),
+     #    CC_mean = case_when(ES_ID == 37 ~ CC_mean+36.65),
+      #   CS_mean = case_when(ES_ID == 37 ~ CC_mean+36.65),
+       #  EC_mean = case_when(ES_ID == 37 ~ CC_mean+36.65),
+        # ES_mean = case_when(ES_ID == 37 ~ CC_mean+36.65),
+         #CC_mean = case_when(ES_ID == 38 ~ CC_mean+80),
+         #CS_mean = case_when(ES_ID == 38 ~ CC_mean+80),
+         #EC_mean = case_when(ES_ID == 38 ~ CC_mean+80),
+         #ES_mean = case_when(ES_ID == 38 ~ CC_mean+80),
+         #CC_mean = case_when(ES_ID == 39 ~ CC_mean+33.86),
+         #CS_mean = case_when(ES_ID == 39 ~ CC_mean+33.86),
+         #EC_mean = case_when(ES_ID == 39 ~ CC_mean+33.86),
+         #ES_mean = case_when(ES_ID == 39 ~ CC_mean+33.86))
 
-#fixing negative values in study 16 (this doesn't work as can't use 0 in lnRR calculation)
-#modifying study 16 that has negative values: shifting everything up by the lowest value
-#note, this results in inf lnRR - is it because of the zeros?
-#dat1 <- dat %>%
- # rowwise() %>%
-  #mutate(min.mean = min(CC_mean, EC_mean, CS_mean, ES_mean)) %>%
-  #ungroup() %>%
-  #mutate(CC_mean = case_when(First_author == "Wang" ~ CC_mean + abs(min.mean),
-                            # TRUE ~ as.numeric(.$CC_mean))) %>%
-  #mutate(EC_mean = case_when(First_author == "Wang" ~ EC_mean + abs(min.mean), 
-                             #TRUE ~ as.numeric(.$EC_mean))) %>%
-  #mutate(CS_mean = case_when(First_author == "Wang" ~ CS_mean + abs(min.mean),
-                             #TRUE ~ as.numeric(.$CS_mean))) %>%
-  #mutate(ES_mean = case_when(First_author == "Wang" ~ ES_mean + abs(min.mean),
-                             #TRUE ~ as.numeric(.$ES_mean)))
+#dat$CC_mean <- ifelse(dat$ES_ID == 36, dat$CC_mean+29.4, dat$CC_mean)
 
 
 #Getting effect sizes
@@ -64,17 +68,39 @@ effect_size <- effect_set(CC_n = "CC_n", CC_mean = "CC_mean", CC_SD = "CC_SD",
                           CS_n = "CS_n", CS_mean = "CS_mean", CS_SD = "CS_SD",
                           ES_n = "ES_n", ES_mean = "ES_mean", ES_SD = "ES_SD",
                           data = dat)
+#'pure' effect sizes
+effect_size2 <- effect_set2(CC_n = "CC_n", CC_mean = "CC_mean", CC_SD = "CC_SD",
+                          EC_n = "EC_n", EC_mean = "EC_mean" , EC_SD ="EC_SD",
+                          CS_n = "CS_n", CS_mean = "CS_mean", CS_SD = "CS_SD",
+                          ES_n = "ES_n", ES_mean = "ES_mean", ES_SD = "ES_SD",
+                          data = dat) 
 
 #Removing missing effect sizes
+dim(dat)
 full_info <- which(complete.cases(effect_size) == TRUE) 
-dat_effect <- cbind(dat, effect_size)
+dat_effect <- cbind(dat, effect_size, effect_size2)
 dat <- dat_effect[full_info, ]
+names(dat_effect)
+
+# TODO - we need to sort this out a bit more later
+#There are no longer any missing effect sizes but is missing info in moderators: do we still need to remove these?
+dat <- dat_effect[full_info, ]
+
+dim(dat_effect)
+dimentions <- dim(dat) # 7 less
 
 #Flipping 'lower is better' effect sizes
 #flipping lnRR for values where higher = worse
 dat$lnRR_Ea <- ifelse(dat$Response_direction == 2, dat$lnRR_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E)) # currently NAswhich causes error
 dat$lnRR_Sa  <- ifelse(dat$Response_direction == 2, dat$lnRR_S*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_S)) # currently NAswhich causes error
 dat$lnRR_ESa <-  ifelse(dat$Response_direction == 2, dat$lnRR_ES*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_ES)) # currently NAswhich causes error
+
+#flipping 'pure effect sizes'
+dat$lnRR_E2a <- ifelse(dat$Response_direction == 2, dat$lnRR_E2*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E2)) # currently NAswhich causes error
+dat$lnRR_S2a  <- ifelse(dat$Response_direction == 2, dat$lnRR_S2*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_S2)) # currently NAswhich causes error
+dat$lnRR_ES2a <-  ifelse(dat$Response_direction == 2, dat$lnRR_ES2*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_ES2)) # currently NAswhich causes error
+dat$lnRR_E3a <-  ifelse(dat$Response_direction == 2, dat$lnRR_E3*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E3)) # currently NAswhich causes error
+dat$lnRR_S3a <-  ifelse(dat$Response_direction == 2, dat$lnRR_S3*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_S3)) # currently NAswhich causes error
 
 #flipping SMD
 dat$SMD_Ea <- ifelse(dat$Response_direction == 2, dat$SMD_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_E)) # currently NAswhich causes error
@@ -136,58 +162,6 @@ dat <- dat %>% mutate(Type_learning = case_when(Type_learning == 1 ~ "Habituatio
 Used to control for trait relatedness within individuals
 
 ``` {r, message = FALSE, warning = FALSE, results = 'hide'}
-#TODO get Shinichi to get VCV 
-#function 
-#make_VCV_matrix <- function(data, V, cluster, obs, type=c("vcv", "cor"), rho=0.5){
-  
-  #if (missing(data)) 
-   # stop("Must specify dataframe via 'data' argument.")
-  #if (missing(V)) 
-   # stop("Must specify name of the variance variable via 'V' argument.")
-  #if (missing(cluster)) 
-   # stop("Must specify name of the clustering variable via 'cluster' argument.")
-  #if (missing(obs)) 
-   # obs <- 1:length(V)   
-  #if (missing(type)) 
-   # type <- "vcv" 
-  
-  ## V = variance, cluster = animal group iD/study ID, ob = effect size id, type = default VCV settings
-  
-  #new_matrix <- matrix(0,nrow = dim(data)[1],ncol = dim(data)[1]) #make empty matrix of the same size as data length
-  #rownames(new_matrix) <- data[ ,obs]
-  #colnames(new_matrix) <- data[ ,obs]
-  # find start and end coordinates for the subsets
-  #shared_coord <- which(data[ ,cluster] %in% data[duplicated(data[ ,cluster]), cluster]==TRUE)
-  # matrix of combinations of coordinates for each experiment with shared control
-  #combinations <- do.call("rbind", tapply(shared_coord, data[shared_coord,cluster], function(x) t(combn(x,2))))
-  
-  #if(type == "vcv"){
-    # calculate covariance values between  values at the positions in shared_list and place them on the matrix
-   # for (i in 1:dim(combinations)[1]){
-    #  p1 <- combinations[i,1]
-     # p2 <- combinations[i,2]
-      #p1_p2_cov <- rho * sqrt(data[p1,V]) * sqrt(data[p2,V])
-    #  new_matrix[p1,p2] <- p1_p2_cov
-     # new_matrix[p2,p1] <- p1_p2_cov
-    #}
-  #  diag(new_matrix) <- data[ ,V]   #add the diagonal
-#  }
-  
- # if(type == "cor"){
-    # calculate covariance values between  values at the positions in shared_list and place them on the matrix
-  #  for (i in 1:dim(combinations)[1]){
-   #   p1 <- combinations[i,1]
-    #  p2 <- combinations[i,2]
-     # p1_p2_cov <- rho
-      #new_matrix[p1,p2] <- p1_p2_cov
-    #  new_matrix[p2,p1] <- p1_p2_cov
-    #}
-    #diag(new_matrix) <- 1   #add the diagonal of 1
-  #}
-  
-  #return(new_matrix)
-#}
-
 ##adding data to empty VCV matrix
 VCV_E <- make_VCV_matrix(data = dat, V = "lnRRV_E", cluster = "Study_ID", obs = "ES_ID")
 VCV_S <- make_VCV_matrix(data = dat, V = "lnRRV_S", cluster = "Study_ID", obs = "ES_ID")
@@ -924,6 +898,87 @@ orchard_plot(mod_ES9, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) +
         text = element_text(size = 24), # change font sizes
         legend.title = element_text(size = 15),
         legend.text = element_text(size = 13)) 
+```
+
+# 'Pure effect sizes'
+Comparing ES relative to stress we can see that the increase is about 18% but ES relative to control is 12% (i.e., this is the interaction). 
+
+We can also see that ES relative to control 9% so these individuals actually do better than baseline individuals. There is also no significant difference between ES and EC individuals (although estimate is slightly lower), meaning that enrichment in the presence of stress can result in learning and memory that is just as good as enriched individuals without stress
+
+## Enrichment relative to control
+
+``` {r, message = FALSE, warning = FALSE}
+mod_E20 <- rma.mv(yi = lnRR_E2a, V = lnRRV_E2, random = list(~1|Study_ID, 
+                                                          # ~ 1|Strain, does not run as we have NA
+                                                          ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+summary(mod_E20) 
+
+orchard_plot(mod_E20, mod = "Int", xlab = "lnRR")
+```
+## Stress relative to control
+
+``` {r, message = FALSE, warning = FALSE}
+mod_S20 <- rma.mv(yi = lnRR_S2a, V = lnRRV_S2, random = list(~1|Study_ID, 
+                                                          # ~ 1|Strain, does not run as we have NA
+                                                          ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+summary(mod_S20) #
+
+orchard_plot(mod_S20, mod = "Int", xlab = "lnRR")
+```
+## Enrichment + stress relative to control
+
+``` {r, message = FALSE, warning = FALSE}
+mod_ES20 <- rma.mv(yi = lnRR_ES2a, V = lnRRV_ES2, random = list(~1|Study_ID, 
+                                                          # ~ 1|Strain, does not run as we have NA
+                                                          ~1|ES_ID),
+                 test = "t",
+                 data = dat)
+summary(mod_ES20) #
+
+orchard_plot(mod_ES20, mod = "Int", xlab = "lnRR")
+```
+## Enrichment + stress relative to stress
+``` {r, message = FALSE, warning = FALSE}
+mod_E30 <- rma.mv(yi = lnRR_E3a, V = lnRRV_E3, random = list(~1|Study_ID, 
+                                                               # ~ 1|Strain, does not run as we have NA
+                                                               ~1|ES_ID),
+                  test = "t",
+                  data = dat)
+summary(mod_E30) 
+
+orchard_plot(mod_E30, mod = "Int", xlab = "lnRR")
+```
+
+## Enrichment + stress relative to enrichment
+``` {r, message = FALSE, warning = FALSE}
+mod_S30 <- rma.mv(yi = lnRR_S3a, V = lnRRV_S3, random = list(~1|Study_ID, 
+                                                             # ~ 1|Strain, does not run as we have NA
+                                                             ~1|ES_ID),
+                  test = "t",
+                  data = dat)
+summary(mod_S30) 
+
+orchard_plot(mod_S30, mod = "Int", xlab = "lnRR")
+```
+### Combined orchard plot
+``` {r, message = FALSE, warning = FALSE}
+#TODO need to figure out how to label y-axis. Also need to think about the most logical order to present these so that readers will understand what they are showing
+
+mod_list <- list(mod_E20, mod_S20, mod_ES20, mod_E30, mod_S30)
+
+mod_res <- lapply(mod_list, function(x) mod_results(x, mod = "Int"))
+
+merged <- submerge(mod_res[[1]], mod_res[[2]],  mod_res[[3]], mod_res[[4]],  mod_res[[5]], mix = T)
+
+
+#merged$mod_table$name2 <- c("EC vs CC", "CS vs CC", "ES vs CC", "ES vs EC", "ES vs CS")
+
+orchard_plot(merged, mod = "Int", xlab = "lnRR", angle = 0) #+ geom_point(data = merged$mod_table, aes(y = name2, x = estimate))
+
 ```
 
 # Modelling with SMD
