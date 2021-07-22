@@ -1,0 +1,83 @@
+---
+title: "Formula"
+author: "Shinichi Nakagawa"
+date: "23/07/2021"
+output: word_document
+---
+
+# lnRR
+$$
+\ln{\text{RR}}=  \ln \left( \frac{M_{\text{T}}} {M_{\text{C}}}\right) = \ln (M_\text{T}) - \ln (M_\text{C}),
+$$
+$$
+\text{var}(\ln{\text{RR}}) =  \frac{SD_\text{T}^2}{N_\text{T}M_\text{T}^2} + \frac{SD_{\text{C}}^2}{N_\text{C}M_\text{C}^2},
+$$
+## 5 lnRRs
+
+$$
+\ln{\text{RR}} = \ln (M_{\text{EC}}/M_{\text{CC}}), 
+\ln (M_{\text{CS}}/M_{\text{CC}}), 
+\ln (M_{\text{ES}}/M_{\text{CC}}), 
+\ln (M_{\text{ES}}/M_{\text{EC}}), 
+\ln (M_{\text{ES}}/M_{\text{CS}}) ,
+$$
+# main effect: EE
+
+$$
+\ln{\text{RR}_\text{EE}} = 
+\ln\left( \frac{ M_\text{ES} +  M_\text{EC}} {2} \right) - 
+\ln\left( \frac {M_\text{CS} +  M_\text{CC}} {2} \right) = \ln \left(
+{\frac {M_\text{ES} + M_\text{EC}} {M_\text{CS} + M_\text{CC}}} 
+ \right),
+$$
+
+$$
+\text{var}(\ln{\text{RR}_\text{EE}}) = 
+\left( 
+\frac{1} { M_\text{ES} + M_\text{EC} } 
+\right)^2
+\left(
+\frac{SD_\text{ES}^2}{N_\text{ES}} + \frac{SD_\text{EC}^2}{N_\text{EC}}
+\right) + \left( \frac {1} {  M_\text{CS} +  M_\text{CC} } \right)^2
+\left(\frac{SD_\text{CS}^2}{N_\text{CS}} + \frac{SD_\text{CC}^2}{n_\text{CC}}
+\right)
+$$
+
+
+$$
+\ln{\text{RR}_\text{stress}} = 
+\ln\left( \frac{ M_\text{ES} +  M_\text{CS}} {2} \right) - 
+\ln\left( \frac {M_\text{EC} +  M_\text{CC}} {2} \right) = \ln \left(
+{\frac {M_\text{ES} + M_\text{CS}} {M_\text{EC} + M_\text{CC}}} 
+ \right),
+$$
+
+$$
+\text{var}(\ln{\text{RR}_\text{stress}}) =
+\left( 
+\frac{1} { M_\text{ES} + M_\text{CS} } 
+\right)^2
+\left(
+\frac{SD_\text{ES}^2}{N_\text{ES}} + \frac{SD_\text{CS}^2}{N_\text{CS}}
+\right) + \left( \frac {1} {  M_\text{EC} +  M_\text{CC} } \right)^2
+\left(\frac{SD_\text{EC}^2}{N_\text{EC}} + \frac{SD_\text{CC}^2}{n_\text{CC}}
+\right)
+$$
+
+
+$$
+\ln{\text{RR}_\text{interaction}} 
+= \left(\ln M_\text{ES} -  \ln M_\text{CS}  \right) - 
+\left( \ln M_\text{EC} -  \ln M_\text{CC} \right)
+= 
+\ln \left( \frac {M_\text{ES} / M_\text{CS} } 
+{M_\text{EC} / \ M_\text{CC}} \right)
+$$
+
+$$
+\text{var}(\ln{\text{RR}_\text{interaction}}) =
+\frac {SD_\text{ES}^2} { N_\text{ES} M_\text{ES}^2 } + \frac{SD_\text{EC}^2}{N_\text{EC}M_\text{EC}^2} + 
+\frac {SD_\text{CS}^2}{N_\text{CS} M_\text{CS}^2} + \frac{SD_\text{CC}^2}{N_\text{CC} M_\text{CC}^2}.
+$$
+
+
