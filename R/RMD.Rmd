@@ -24,7 +24,8 @@ pacman::p_load(tidyverse,
                emmeans,
                orchaRd, 
                MCMCglmm,
-               corpcor)
+               corpcor,
+               clubSandwich)
 
 ```
 
@@ -41,23 +42,24 @@ Getting effect sizes from function, 'flipping' effect sizes so that all effect s
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
 #removing negative values
-#dat <- dat %>%
- # mutate(CC_mean = case_when(ES_ID == 36 ~ CC_mean+29.4),
-  #       CS_mean = case_when(ES_ID == 36 ~ CC_mean+29.4),
-   #      EC_mean = case_when(ES_ID == 36 ~ CC_mean+29.4),
-    #     ES_mean = case_when(ES_ID == 36 ~ CC_mean+29.4),
-     #    CC_mean = case_when(ES_ID == 37 ~ CC_mean+36.65),
-      #   CS_mean = case_when(ES_ID == 37 ~ CC_mean+36.65),
-       #  EC_mean = case_when(ES_ID == 37 ~ CC_mean+36.65),
-        # ES_mean = case_when(ES_ID == 37 ~ CC_mean+36.65),
-         #CC_mean = case_when(ES_ID == 38 ~ CC_mean+80),
-         #CS_mean = case_when(ES_ID == 38 ~ CC_mean+80),
-         #EC_mean = case_when(ES_ID == 38 ~ CC_mean+80),
-         #ES_mean = case_when(ES_ID == 38 ~ CC_mean+80),
-         #CC_mean = case_when(ES_ID == 39 ~ CC_mean+33.86),
-         #CS_mean = case_when(ES_ID == 39 ~ CC_mean+33.86),
-         #EC_mean = case_when(ES_ID == 39 ~ CC_mean+33.86),
-         #ES_mean = case_when(ES_ID == 39 ~ CC_mean+33.86))
+dat <- dat %>%
+  mutate(CC_mean = case_when(ES_ID == 36 ~ CC_mean+29.4),
+         CS_mean = case_when(ES_ID == 36 ~ CC_mean+29.4),
+         EC_mean = case_when(ES_ID == 36 ~ CC_mean+29.4),
+         ES_mean = case_when(ES_ID == 36 ~ CC_mean+29.4),
+         CC_mean = case_when(ES_ID == 37 ~ CC_mean+36.65),
+         CS_mean = case_when(ES_ID == 37 ~ CC_mean+36.65),
+         EC_mean = case_when(ES_ID == 37 ~ CC_mean+36.65),
+         ES_mean = case_when(ES_ID == 37 ~ CC_mean+36.65),
+         CC_mean = case_when(ES_ID == 38 ~ CC_mean+80),
+         CS_mean = case_when(ES_ID == 38 ~ CC_mean+80),
+         EC_mean = case_when(ES_ID == 38 ~ CC_mean+80),
+         ES_mean = case_when(ES_ID == 38 ~ CC_mean+80),
+         CC_mean = case_when(ES_ID == 39 ~ CC_mean+33.86),
+         CS_mean = case_when(ES_ID == 39 ~ CC_mean+33.86),
+         EC_mean = case_when(ES_ID == 39 ~ CC_mean+33.86),
+         ES_mean = case_when(ES_ID == 39 ~ CC_mean+33.86))
+dat<- as.data.frame(dat)
 
 #dat$CC_mean <- ifelse(dat$ES_ID == 36, dat$CC_mean+29.4, dat$CC_mean)
 
@@ -76,6 +78,7 @@ effect_size2 <- effect_set2(CC_n = "CC_n", CC_mean = "CC_mean", CC_SD = "CC_SD",
                           data = dat) 
 
 #Removing missing effect sizes
+#TODO can take this out now
 dim(dat)
 full_info <- which(complete.cases(effect_size) == TRUE) 
 dat_effect <- cbind(dat, effect_size, effect_size2)
@@ -163,9 +166,14 @@ Used to control for trait relatedness within individuals
 
 ``` {r, message = FALSE, warning = FALSE, results = 'hide'}
 ##adding data to empty VCV matrix
-VCV_E <- make_VCV_matrix(data = dat, V = "lnRRV_E", cluster = "Study_ID", obs = "ES_ID")
-VCV_S <- make_VCV_matrix(data = dat, V = "lnRRV_S", cluster = "Study_ID", obs = "ES_ID")
-VCV_ES <- make_VCV_matrix(data = dat, V = "lnRRV_ES", cluster = "Study_ID", obs = "ES_ID")
+#TODO this VCV doesn't run in models
+VCV_E <- impute_covariance_matrix(vi = dat$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
+VCV_S <- impute_covariance_matrix(vi = dat$lnRRV_S, cluster = dat$Study_ID, r = 0.5)
+VCV_ES <- impute_covariance_matrix(vi = dat$lnRRV_ES, cluster = dat$Study_ID, r = 0.5)
+
+#VCV_E <- make_VCV_matrix(data = dat, V = "lnRRV_E", cluster = "Study_ID", obs = "ES_ID")
+#VCV_S <- make_VCV_matrix(data = dat, V = "lnRRV_S", cluster = "Study_ID", obs = "ES_ID")
+#VCV_ES <- make_VCV_matrix(data = dat, V = "lnRRV_ES", cluster = "Study_ID", obs = "ES_ID")
 
 is.positive.definite(VCV_E)
 isSymmetric(VCV_E)
@@ -917,6 +925,7 @@ summary(mod_E20)
 
 orchard_plot(mod_E20, mod = "Int", xlab = "lnRR")
 ```
+
 ## Stress relative to control
 
 ``` {r, message = FALSE, warning = FALSE}
@@ -929,6 +938,7 @@ summary(mod_S20) #
 
 orchard_plot(mod_S20, mod = "Int", xlab = "lnRR")
 ```
+
 ## Enrichment + stress relative to control
 
 ``` {r, message = FALSE, warning = FALSE}
@@ -941,7 +951,9 @@ summary(mod_ES20) #
 
 orchard_plot(mod_ES20, mod = "Int", xlab = "lnRR")
 ```
+
 ## Enrichment + stress relative to stress
+
 ``` {r, message = FALSE, warning = FALSE}
 mod_E30 <- rma.mv(yi = lnRR_E3a, V = lnRRV_E3, random = list(~1|Study_ID, 
                                                                # ~ 1|Strain, does not run as we have NA
@@ -954,6 +966,7 @@ orchard_plot(mod_E30, mod = "Int", xlab = "lnRR")
 ```
 
 ## Enrichment + stress relative to enrichment
+
 ``` {r, message = FALSE, warning = FALSE}
 mod_S30 <- rma.mv(yi = lnRR_S3a, V = lnRRV_S3, random = list(~1|Study_ID, 
                                                              # ~ 1|Strain, does not run as we have NA
@@ -964,7 +977,8 @@ summary(mod_S30)
 
 orchard_plot(mod_S30, mod = "Int", xlab = "lnRR")
 ```
-### Combined orchard plot
+
+## Combined orchard plot
 ``` {r, message = FALSE, warning = FALSE}
 #TODO need to figure out how to label y-axis. Also need to think about the most logical order to present these so that readers will understand what they are showing
 
