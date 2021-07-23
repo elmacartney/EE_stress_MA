@@ -42,24 +42,37 @@ Getting effect sizes from function, 'flipping' effect sizes so that all effect s
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
 #removing negative values
-dat <- dat %>%
-  mutate(CC_mean = case_when(ES_ID == 36 ~ CC_mean+29.4),
-         CS_mean = case_when(ES_ID == 36 ~ CC_mean+29.4),
-         EC_mean = case_when(ES_ID == 36 ~ CC_mean+29.4),
-         ES_mean = case_when(ES_ID == 36 ~ CC_mean+29.4),
-         CC_mean = case_when(ES_ID == 37 ~ CC_mean+36.65),
-         CS_mean = case_when(ES_ID == 37 ~ CC_mean+36.65),
-         EC_mean = case_when(ES_ID == 37 ~ CC_mean+36.65),
-         ES_mean = case_when(ES_ID == 37 ~ CC_mean+36.65),
-         CC_mean = case_when(ES_ID == 38 ~ CC_mean+80),
-         CS_mean = case_when(ES_ID == 38 ~ CC_mean+80),
-         EC_mean = case_when(ES_ID == 38 ~ CC_mean+80),
-         ES_mean = case_when(ES_ID == 38 ~ CC_mean+80),
-         CC_mean = case_when(ES_ID == 39 ~ CC_mean+33.86),
-         CS_mean = case_when(ES_ID == 39 ~ CC_mean+33.86),
-         EC_mean = case_when(ES_ID == 39 ~ CC_mean+33.86),
-         ES_mean = case_when(ES_ID == 39 ~ CC_mean+33.86))
-dat<- as.data.frame(dat)
+# TODO - please do the rest
+dat <- dat %>% mutate(CC_mean = if_else(ES_ID == 36,  CC_mean+29.4, CC_mean),
+                      CS_mean = if_else(ES_ID == 36,  CC_mean+29.4, CS_mean),
+                      EC_mean = if_else(ES_ID == 36,  CC_mean+29.4, EC_mean),
+                      ES_mean = if_else(ES_ID == 36,  CC_mean+29.4, ES_mean))
+  
+# testing
+dat$CC_mean # try to do it your code below
+
+
+# TODO Erin - this is not working (I do not think this is how you use case_when-this is used when you have different categories of things)
+# TODO Erin -you need to learn how to test your code is working - you need to make a habit of it (TESTIN crutial important)
+# TODO - I will teach what you mena next - really important process which you should have pick up early in your R career (doing this and not doing will make a huge difference - once learn, you will solve 80% of problems and also better at asking R questions)  
+# TODO - it was easy to find this miskate as - I jsut did "dat$CC_mean" - it was all NA
+  # mutate(CC_mean = case_when(ES_ID == 36 ~ CC_mean+29.4),
+  #        CS_mean = case_when(ES_ID == 36 ~ CC_mean+29.4),
+  #        EC_mean = case_when(ES_ID == 36 ~ CC_mean+29.4),
+  #        ES_mean = case_when(ES_ID == 36 ~ CC_mean+29.4),
+  #        CC_mean = case_when(ES_ID == 37 ~ CC_mean+36.65),
+  #        CS_mean = case_when(ES_ID == 37 ~ CC_mean+36.65),
+  #        EC_mean = case_when(ES_ID == 37 ~ CC_mean+36.65),
+  #        ES_mean = case_when(ES_ID == 37 ~ CC_mean+36.65),
+  #        CC_mean = case_when(ES_ID == 38 ~ CC_mean+80),
+  #        CS_mean = case_when(ES_ID == 38 ~ CC_mean+80),
+  #        EC_mean = case_when(ES_ID == 38 ~ CC_mean+80),
+  #        ES_mean = case_when(ES_ID == 38 ~ CC_mean+80),
+  #        CC_mean = case_when(ES_ID == 39 ~ CC_mean+33.86),
+  #        CS_mean = case_when(ES_ID == 39 ~ CC_mean+33.86),
+  #        EC_mean = case_when(ES_ID == 39 ~ CC_mean+33.86),
+  #        ES_mean = case_when(ES_ID == 39 ~ CC_mean+33.86))
+#dat<- as.data.frame(dat)
 
 #dat$CC_mean <- ifelse(dat$ES_ID == 36, dat$CC_mean+29.4, dat$CC_mean)
 
@@ -79,8 +92,9 @@ effect_size2 <- effect_set2(CC_n = "CC_n", CC_mean = "CC_mean", CC_SD = "CC_SD",
 
 #Removing missing effect sizes
 #TODO can take this out now
+# TODO - Shinichi - takiing this out does not work 
 dim(dat)
-full_info <- which(complete.cases(effect_size) == TRUE) 
+full_info <- which(complete.cases(effect_size) == TRUE)
 dat_effect <- cbind(dat, effect_size, effect_size2)
 dat <- dat_effect[full_info, ]
 names(dat_effect)
@@ -175,23 +189,25 @@ VCV_ES <- impute_covariance_matrix(vi = dat$lnRRV_ES, cluster = dat$Study_ID, r 
 #VCV_S <- make_VCV_matrix(data = dat, V = "lnRRV_S", cluster = "Study_ID", obs = "ES_ID")
 #VCV_ES <- make_VCV_matrix(data = dat, V = "lnRRV_ES", cluster = "Study_ID", obs = "ES_ID")
 
-is.positive.definite(VCV_E)
-isSymmetric(VCV_E)
-is.positive.definite(VCV_S)
-isSymmetric(VCV_S)
-is.positive.definite(VCV_ES)
-isSymmetric(VCV_ES)
+# this will not work for impute_cavaraince_matrix - this is a different format
+# TODO explain Erin - why this is good but not that useful
+# is.positive.definite(VCV_E)
+# isSymmetric(VCV_E)
+# is.positive.definite(VCV_S)
+# isSymmetric(VCV_S)
+# is.positive.definite(VCV_ES)
+# isSymmetric(VCV_ES)
 
 VCV_Ea <- make_VCV_matrix(data = dat, V = "SMDV_E", cluster = "Study_ID", obs = "ES_ID")
 VCV_Sa <- make_VCV_matrix(data = dat, V = "SMDV_S", cluster = "Study_ID", obs = "ES_ID")
 VCV_ESa <- make_VCV_matrix(data = dat, V = "SMDV_ES", cluster = "Study_ID", obs = "ES_ID")
 
-is.positive.definite(VCV_Ea)
-isSymmetric(VCV_Ea)
-is.positive.definite(VCV_Sa)
-isSymmetric(VCV_Sa)
-is.positive.definite(VCV_ESa)
-isSymmetric(VCV_ESa)
+# is.positive.definite(VCV_Ea)
+# isSymmetric(VCV_Ea)
+# is.positive.definite(VCV_Sa)
+# isSymmetric(VCV_Sa)
+# is.positive.definite(VCV_ESa)
+# isSymmetric(VCV_ESa)
 ```
 
 #### Examining the group of large/positive effect sizes
