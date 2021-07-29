@@ -1060,7 +1060,9 @@ orchard2
 ```
 ## panel of both orchard plots
 ``` {r, message = FALSE, warning = FALSE}
-
+library(patchwork)
+p1 <- orchard1|orchard2 + plot_annotation(tag_levels = "a")
+p1
 ```
 
 # Modelling with SMD
