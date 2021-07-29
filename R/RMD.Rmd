@@ -646,7 +646,7 @@ orchard_plot(mod_E6, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) +
 
 ### Intercept
 Enriched and stress animals are better at learning and memory. 
-Note: interaction is slightly non-significant after inclusing Wang et al (study that we shifted up due to negative values)
+Note: interaction is slightly non-significant after including Wang et al (study that we shifted up due to negative values)
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_ES0 <- rma.mv(yi = lnRR_ESa, V = VCV_ES, random = list(~1|Study_ID,
@@ -923,6 +923,20 @@ orchard_plot(mod_ES8, mod = "EE_exercise", xlab = "lnRR", alpha=0.4) +
         legend.text = element_text(size = 13)) 
 ```
 
+## Combined orchard plot
+
+``` {r, message = FALSE, warning = FALSE}
+mod_list1 <- list(mod_ES0, mod_S0, mod_E0)
+
+mod_res1 <- lapply(mod_list1, function(x) mod_results(x, mod = "Int"))
+
+merged1 <- submerge(mod_res1[[1]], mod_res1[[2]],  mod_res1[[3]], mix = T)
+
+orchard1<- orchard_plot(merged, mod = "Int", xlab = "lnRR", angle = 0) #+ geom_point(data = merged$mod_table, aes(y = name2, x = estimate))
+
+orchard1
+```
+
 #### Age of enrichment
 The age at which the individuals were exposed to environmental enrichment.  
 This needs to be redone after recategorising
@@ -1005,6 +1019,7 @@ mod_E30 <- rma.mv(yi = lnRR_E3a, V = lnRRV_E3, random = list(~1|Study_ID,
                   test = "t",
                   data = dat)
 summary(mod_E30) 
+i2_ml(mod_E30) 
 
 orchard_plot(mod_E30, mod = "Int", xlab = "lnRR")
 ```
@@ -1014,7 +1029,7 @@ orchard_plot(mod_E30, mod = "Int", xlab = "lnRR")
 ``` {r, message = FALSE, warning = FALSE}
 #TODO having strain as random effect means model wont run
 mod_S30 <- rma.mv(yi = lnRR_S3a, V = lnRRV_S3, random = list(~1|Study_ID,
-                                                             #~ 1|Strain,
+                                                             ~ 1|Strain,
                                                              ~1|ES_ID),
                   test = "t",
                   data = dat)
@@ -1028,16 +1043,23 @@ orchard_plot(mod_S30, mod = "Int", xlab = "lnRR")
 ``` {r, message = FALSE, warning = FALSE}
 #TODO need to figure out how to label y-axis. Also need to think about the most logical order to present these so that readers will understand what they are showing
 
-mod_list <- list(mod_E20, mod_S20, mod_ES20, mod_E30, mod_S30)
+#mod_list2 <- list(mod_E20, mod_S20, mod_ES20, mod_E30, mod_S30)
+mod_list2 <- list(mod_S30, mod_E30, mod_ES20, mod_S20, mod_E20) #rearranged the order so that it matches intext results
 
-mod_res <- lapply(mod_list, function(x) mod_results(x, mod = "Int"))
+mod_res2 <- lapply(mod_list2, function(x) mod_results(x, mod = "Int"))
 
-merged <- submerge(mod_res[[1]], mod_res[[2]],  mod_res[[3]], mod_res[[4]],  mod_res[[5]], mix = T)
+merged2 <- submerge(mod_res2[[1]], mod_res2[[2]],  mod_res2[[3]], mod_res2[[4]],  mod_res2[[5]], mix = T)
 
 
 #merged$mod_table$name2 <- c("EC vs CC", "CS vs CC", "ES vs CC", "ES vs EC", "ES vs CS")
 
-orchard_plot(merged, mod = "Int", xlab = "lnRR", angle = 0) #+ geom_point(data = merged$mod_table, aes(y = name2, x = estimate))
+orchard2 <- orchard_plot(merged2, mod = "Int", xlab = "lnRR", angle = 0) #+ geom_point(data = merged$mod_table, aes(y = name2, x = estimate))
+
+orchard2
+
+```
+## panel of both orchard plots
+``` {r, message = FALSE, warning = FALSE}
 
 ```
 
