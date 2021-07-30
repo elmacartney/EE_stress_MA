@@ -25,7 +25,10 @@ pacman::p_load(tidyverse,
                orchaRd, 
                MCMCglmm,
                corpcor,
-               clubSandwich)
+               clubSandwich,
+               MuMIn)
+# needed for model selection using MuMin within metafor
+eval(metafor:::.MuMIn)
 
 ```
 
@@ -262,8 +265,11 @@ dat_Sfm <- dat %>%
          Stress_duration %in% c("Chronic", "Acute"))
 
 VCV_Sfm <- impute_covariance_matrix(vi = dat_Sfm$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
+
+# TODO - we do not need mulitple -1 = explain why to Erin - anyway, we do not need - 1 at all for the full model
+#  a few things to think about 1) model selection or 2) 
                  
-mod_Sfm <- rma.mv(yi = lnRR_Sa, V = VCV_Sfm, mod = ~Type_learning-1 + Learning_vs_memory-1 + Appetitive_vs_aversive-1 + Type_stress_exposure-1 + Age_stress_exposure-1 + Stress_duration-1 , random =   list(~1|Study_ID,
+mod_Sfm <- rma.mv(yi = lnRR_Sa, V = VCV_Sfm, mod = ~Type_learning + Learning_vs_memory + Appetitive_vs_aversive + Type_stress_exposure + Age_stress_exposure + Stress_duration, random =   list(~1|Study_ID,
                                                                                     ~1|ES_ID,
                                                                                     ~1|Strain),
                     test = "t",
@@ -271,6 +277,10 @@ mod_Sfm <- rma.mv(yi = lnRR_Sa, V = VCV_Sfm, mod = ~Type_learning-1 + Learning_v
 summary(mod_Sfm)
 r2_ml(mod_Sfm) 
 
+
+res_Sfm <- dredge(mod_Sfm, trace=2)
+subset(res_Sfm, delta <= 2, recalc.weights=FALSE)
+importance(res_Sfm)
 ```
 
 
@@ -291,7 +301,7 @@ mod_S1 <- rma.mv(yi = lnRR_Sa, V = VCV_S1, mod = ~Type_learning-1, random =   li
                  data = dat1)
 
 summary(mod_S1)
-r2_ml(mod_S) 
+r2_ml(mod_S1) 
 
 # Orchard plot 
 orchard_plot(mod_S1, mod = "Type_learning", xlab = "lnRR", alpha=0.4) + 
@@ -1034,11 +1044,13 @@ orchard_plot(mod_E30, mod = "Int", xlab = "lnRR")
 
 ``` {r, message = FALSE, warning = FALSE}
 #TODO having strain as random effect means model wont run
+# TODO - error says covergence issue so try different optimizer
 mod_S30 <- rma.mv(yi = lnRR_S3a, V = lnRRV_S3, random = list(~1|Study_ID,
                                                              ~ 1|Strain,
                                                              ~1|ES_ID),
                   test = "t",
-                  data = dat)
+                  data = dat,
+                   control=list(optimizer="optim", optmethod="Nelder-Mead"))
 summary(mod_S30) 
 i2_ml(mod_S30) 
 
@@ -1056,6 +1068,14 @@ mod_res2 <- lapply(mod_list2, function(x) mod_results(x, mod = "Int"))
 
 merged2 <- submerge(mod_res2[[1]], mod_res2[[2]],  mod_res2[[3]], mod_res2[[4]],  mod_res2[[5]], mix = T)
 
+# TOTO - renamed - you may want to play with this
+merged2$mod_table$name <- factor(merged2$mod_table$name, levels = c("Intrcpt1", 
+    "Intrcpt2", "Intrcpt3", "Intrcpt4", "Intrcpt5"), 
+    labels = rev(c("EC vs CC", "CS vs CC", "ES vs CC", "ES vs EC", "ES vs CS")))
+
+merged2$data$moderator <- factor(merged2$data$moderator, levels = c("Intrcpt1", 
+    "Intrcpt2", "Intrcpt3", "Intrcpt4", "Intrcpt5"), 
+    labels = rev(c("EC vs CC", "CS vs CC", "ES vs CC", "ES vs EC", "ES vs CS")))
 
 #merged$mod_table$name2 <- c("EC vs CC", "CS vs CC", "ES vs CC", "ES vs EC", "ES vs CS")
 
