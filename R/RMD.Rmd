@@ -244,13 +244,37 @@ orchard_plot(mod_S0, mod = "Int", xlab = "lnRR", alpha=0.4) +
 
 
 #trying to calculate effective sample size
-dat$e_n <- with(dat, (4*(((CC_mean + EC_mean)/2) * ((ES_mean + CS_mean)/2)) / (((CC_mean + EC_mean)/2) + ((ES_mean + CS_mean)/2))))
+dat$e_n_S <- with(dat, (4*((CC_n + EC_n)/2) * ((ES_n + CS_n)/2) / ((CC_n + EC_n)/2) + ((ES_n + CS_n)/2)))
 
-#dat$e_n <- with(dat, (4*(C_N*T_N)) / (C_N + T_N))
-#funnel(dat$lnRR_S, dat$lnRRV_S, ni = dat$e_n, yaxis="ni",
- #      #xlim = c(-3, 3),
-  #     ylab = "Effective sample size",
-   #    xlab = "Effect size (lnRR)")
+funnel(dat$lnRR_S, dat$lnRRV_S, ni = dat$e_n_S, yaxis="ni",
+       ylab = "Effective sample size",
+       xlab = "Effect size (lnRR)")
+
+
+funnel(dataset.rr$yi, dataset.rr$vi, ni = dataset.rr$e_n, yaxis="ni",
+       #xlim = c(-3, 3),
+       ylab = "Effective sample size",
+       xlab = "Effect size (lnRR)") 
+
+
+#time lag bias
+#TODO need to redo with multiple moderators
+dat$Year_published <- as.vector(scale(dat$Year_published, scale = F))
+
+#publication.bias.model.rr.all.srin <- rma.mv(yi, vi, mods = ~-1 + sqrt_inv_n_tilda + 
+ #   year.c + Experimental.or.Observational., random = list(~1 | Disturbance_category, 
+  #  ~1 | obsID, ~1 | paperID), method = "REML", test = "t", data = dataset.rr, control = list(optimizer = "optim", 
+   # optmethod = "Nelder-Mead"))
+
+timelag_S <- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + Year_published, random = list(~1|Study_ID,
+                                                          ~1|ES_ID,
+                                                          ~1|Strain), method = "REML", test = "t", 
+    data = dat)
+
+summary(timelag_S)
+# extracting the mean and 95% confidence intervals
+estimates_timelag_S <- estimates.CI(timelag_S)
+
 
 ```
 
@@ -277,7 +301,7 @@ mod_Sfm <- rma.mv(yi = lnRR_Sa, V = VCV_Sfm, mod = ~Type_learning + Learning_vs_
 summary(mod_Sfm)
 r2_ml(mod_Sfm) 
 
-
+#TODO what package do we need for dredge?
 res_Sfm <- dredge(mod_Sfm, trace=2)
 subset(res_Sfm, delta <= 2, recalc.weights=FALSE)
 importance(res_Sfm)
