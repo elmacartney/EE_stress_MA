@@ -39,7 +39,7 @@ source(here("R/functions_cleanedup.R"))
 ```
 
 #### Data organisation
-Getting effect sizes from function, 'flipping' effect sizes so that all effect sizes are higher values = individuals do better and learning/memory, and shifting negative values to possitive as lnRR cannot use negative values
+Getting effect sizes from function, 'flipping' effect sizes so that all effect sizes are higher values = individuals do better and learning/memory, and shifting negative values to positive as lnRR cannot use negative values
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
 #removing negative values
@@ -230,19 +230,25 @@ orchard_plot(mod_S0, mod = "Int", xlab = "lnRR", alpha=0.4) +
 ... I was going to run this using the same code as last meta-analysis (MCMCglmm) but thought there might be an easier way?
 
 ``` {r, message = FALSE, warning = FALSE}
-#need to remove NAs
+#funnel(mod_S0)
 
-dat_na_S <- dat %>%
-  drop_na(c(lnRR_Sa, lnRRV_S))
+#should use effective sample size instead to account for unbalanced sampling, also heterogeneity and non-independence?
 
-dat_na_E <- dat  %>%
-  drop_na(c(lnRR_Ea, lnRRV_E))
+#funnel(dat$lnRR_S, dat$lnRRV_S, yaxis="seinv",
+ #      #xlim = c(-3, 3),
+  #     ylab = "Precision (1/SE)",
+   #    xlab = "Effect size (lnRR)") 
 
-dat_na_ES <- dat  %>%
-  drop_na(c(lnRR_ESa, lnRRV_ES))
 
-#Stress
-#TODO check with Shinichi if there is an easier way to do PB (eggers regression, funnel asymmetry)
+#trying to calculate effective sample size
+dat$e_n <- with(dat, (4*(((CC_mean + EC_mean)/2) * ((ES_mean + CS_mean)/2)) / (((CC_mean + EC_mean)/2) + ((ES_mean + CS_mean)/2))))
+
+#dat$e_n <- with(dat, (4*(C_N*T_N)) / (C_N + T_N))
+#funnel(dat$lnRR_S, dat$lnRRV_S, ni = dat$e_n, yaxis="ni",
+ #      #xlim = c(-3, 3),
+  #     ylab = "Effective sample size",
+   #    xlab = "Effect size (lnRR)")
+
 ```
 
 ### Meta-regression
