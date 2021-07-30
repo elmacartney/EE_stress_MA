@@ -293,7 +293,7 @@ VCV_Sfm <- impute_covariance_matrix(vi = dat_Sfm$lnRRV_E, cluster = dat$Study_ID
 # TODO - we do not need mulitple -1 = explain why to Erin - anyway, we do not need - 1 at all for the full model
 #  a few things to think about 1) model selection or 2) 
                  
-mod_Sfm <- rma.mv(yi = lnRR_Sa, V = VCV_Sfm, mod = ~Type_learning + Learning_vs_memory + Appetitive_vs_aversive + Type_stress_exposure + Age_stress_exposure + Stress_duration, random =   list(~1|Study_ID,
+mod_Sfm <- rma.mv(yi = lnRR_Sa, V = VCV_Sfm, mod = ~Type_learning -1 + Learning_vs_memory + Appetitive_vs_aversive + Type_stress_exposure + Age_stress_exposure + Stress_duration, random =   list(~1|Study_ID,
                                                                                     ~1|ES_ID,
                                                                                     ~1|Strain),
                     test = "t",
@@ -303,8 +303,8 @@ r2_ml(mod_Sfm)
 
 #TODO what package do we need for dredge?
 res_Sfm <- dredge(mod_Sfm, trace=2)
-subset(res_Sfm, delta <= 2, recalc.weights=FALSE)
-importance(res_Sfm)
+res_Sfm2<- subset(res_Sfm, delta <= 2, recalc.weights=FALSE)
+importance(res_Sfm2)
 ```
 
 
