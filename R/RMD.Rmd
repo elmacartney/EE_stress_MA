@@ -243,37 +243,63 @@ orchard_plot(mod_S0, mod = "Int", xlab = "lnRR", alpha=0.4) +
    #    xlab = "Effect size (lnRR)") 
 
 
-#trying to calculate effective sample size
+#calculating effective sample size
+#TODO check with shinichi that this is calculted correctly
 dat$e_n_S <- with(dat, (4*((CC_n + EC_n)/2) * ((ES_n + CS_n)/2) / ((CC_n + EC_n)/2) + ((ES_n + CS_n)/2)))
 
-funnel(dat$lnRR_S, dat$lnRRV_S, ni = dat$e_n_S, yaxis="ni",
+funnel_S <- funnel(dat$lnRR_S, dat$lnRRV_S, ni = dat$e_n_S, yaxis="ni",
        ylab = "Effective sample size",
        xlab = "Effect size (lnRR)")
 
-
-funnel(dataset.rr$yi, dataset.rr$vi, ni = dataset.rr$e_n, yaxis="ni",
-       #xlim = c(-3, 3),
-       ylab = "Effective sample size",
-       xlab = "Effect size (lnRR)") 
-
+funnel_S
+#TODO should we still check for funnel asymmetry?
 
 #time lag bias
-#TODO need to redo with multiple moderators
+#unimoderator
 dat$Year_published <- as.vector(scale(dat$Year_published, scale = F))
 
-#publication.bias.model.rr.all.srin <- rma.mv(yi, vi, mods = ~-1 + sqrt_inv_n_tilda + 
- #   year.c + Experimental.or.Observational., random = list(~1 | Disturbance_category, 
-  #  ~1 | obsID, ~1 | paperID), method = "REML", test = "t", data = dataset.rr, control = list(optimizer = "optim", 
-   # optmethod = "Nelder-Mead"))
-
-timelag_S <- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + Year_published, random = list(~1|Study_ID,
+timelag_S_uni <- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + Year_published, random = list(~1|Study_ID,
                                                           ~1|ES_ID,
                                                           ~1|Strain), method = "REML", test = "t", 
     data = dat)
 
-summary(timelag_S)
-# extracting the mean and 95% confidence intervals
-estimates_timelag_S <- estimates.CI(timelag_S)
+summary(timelag_S_uni)
+#TODO: what package is estimates.CI from?
+estimates_timelag_S_uni <- estimates.CI(timelag_S_uni)
+
+#multimoderator
+#removing categories with k < 5
+dat_Sfm <- dat %>%
+  filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
+         Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"),
+         Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"),
+         Stress_duration %in% c("Chronic", "Acute"))
+
+dat_Sfm$Year_published <- as.vector(scale(dat_Sfm$Year_published, scale = F))
+
+timelag_S_multi <- rma.mv(yi = lnRR_Sa, V = VCV_Sfm, mod = ~ -1 + Year_published + Type_learning + Learning_vs_memory + Appetitive_vs_aversive + Type_stress_exposure + Age_stress_exposure + Stress_duration, random =   list(~1|Study_ID,
+                                                                                    ~1|ES_ID,
+                                                                                    ~1|Strain),
+                    test = "t",
+                 data = dat_Sfm)
+
+summary(timelag_S_multi)
+#TODO: what package is estimates.CI from?
+estimates_timelag_S_multi <- estimates.CI(timelag_S_multi)
+
+#all in publication bias
+
+allin_S <- rma.mv(yi = lnRR_Sa, V = VCV_Sfm, mod = ~ 1 #removed intercept
+                  + Year_published + Type_learning + Learning_vs_memory + Appetitive_vs_aversive + Type_stress_exposure + Age_stress_exposure + Stress_duration, random =   list(~1|Study_ID,
+                                                                                    ~1|ES_ID,
+                                                                                    ~1|Strain),
+                    test = "t",
+                 data = dat_Sfm)
+
+
+predict.publication.bias.model <- predict(allin_S, 
+    newmods = cbind(seq(min(dat_Sfm$lnRR_S), max(dat_Sfm$lnRR_S), 0.005), c(0), 0, 
+        0, 0, 0, 0, 0, 0, 0, 0, 0))
 
 
 ```
@@ -282,15 +308,14 @@ estimates_timelag_S <- estimates.CI(timelag_S)
 
 ### Full model
 ``` {r, message = FALSE, warning = FALSE}
-dat_Sfm <- dat %>%
-  filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
-         Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"),
-         Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"),
-         Stress_duration %in% c("Chronic", "Acute"))
+#dat_Sfm <- dat %>%
+ # filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
+  #       Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"),
+   #      Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"),
+    #     Stress_duration %in% c("Chronic", "Acute"))
 
 VCV_Sfm <- impute_covariance_matrix(vi = dat_Sfm$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
 
-# TODO - we do not need mulitple -1 = explain why to Erin - anyway, we do not need - 1 at all for the full model
 #  a few things to think about 1) model selection or 2) 
                  
 mod_Sfm <- rma.mv(yi = lnRR_Sa, V = VCV_Sfm, mod = ~Type_learning -1 + Learning_vs_memory + Appetitive_vs_aversive + Type_stress_exposure + Age_stress_exposure + Stress_duration, random =   list(~1|Study_ID,
@@ -301,7 +326,6 @@ mod_Sfm <- rma.mv(yi = lnRR_Sa, V = VCV_Sfm, mod = ~Type_learning -1 + Learning_
 summary(mod_Sfm)
 r2_ml(mod_Sfm) 
 
-#TODO what package do we need for dredge?
 res_Sfm <- dredge(mod_Sfm, trace=2)
 res_Sfm2<- subset(res_Sfm, delta <= 2, recalc.weights=FALSE)
 importance(res_Sfm2)
@@ -524,6 +548,11 @@ mod_Efm <- rma.mv(yi = lnRR_Sa, V = VCV_Efm, mod = ~Type_learning-1 + Learning_v
                  data = dat_Efm)
 summary(mod_Efm)
 r2_ml(mod_Efm) 
+
+res_Efm <- dredge(mod_Efm, trace=2)
+res_Efm2<- subset(res_Efm, delta <= 2, recalc.weights=FALSE)
+importance(res_Efm2)
+```
 
 ```
 
@@ -755,6 +784,11 @@ mod_ESfm <- rma.mv(yi = lnRR_Sa, V = VCV_ESfm, mod = ~Type_learning-1 + Learning
 summary(mod_ESfm)
 r2_ml(mod_ESfm) 
 
+
+res_ESfm <- dredge(mod_ESfm, trace=2)
+res_ESfm2<- subset(res_ESfm, delta <= 2, recalc.weights=FALSE)
+importance(res_Sfm2)
+```
 ```
 
 #### Type of learning
