@@ -139,10 +139,11 @@ dat <- dat %>% mutate(Type_learning = case_when(Type_learning == 1 ~ "Habituatio
                                                        Type_stress_exposure == 9 ~ "Other",
                                                        Type_stress_exposure == 10 ~ "Combination",
                                                        Type_stress_exposure == 11 ~ "unclear"), 
-                      Age_stress_exposure = case_when(Age_stress_exposure == 1 ~ "Prenatal",
-                                                      Age_stress_exposure == 2 ~ "Juvenile",
-                                                      Age_stress_exposure == 3 ~ "Adult",
-                                                      Age_stress_exposure == 4 ~ "Unclear"),
+                      Age_stress_revised = case_when(Age_stress_revised == 1 ~ "Prenatal",
+                                                      Age_stress_revised == 2 ~ "Early postnatal",
+                                                      Age_stress_revised == 3 ~ "Adolescent",
+                                                      Age_stress_revised == 4 ~ "Adult",
+                                                      Age_stress_revised == 5 ~ "Unclear"),
                       Stress_duration = case_when(Stress_duration == 1 ~ "Acute",
                                                   Stress_duration == 2 ~ "Chronic",
                                                   Stress_duration == 3 ~ "Intermittent",
@@ -152,10 +153,11 @@ dat <- dat %>% mutate(Type_learning = case_when(Type_learning == 1 ~ "Habituatio
                                             EE_social == 3 ~ "Unclear"), 
                       EE_exercise = case_when(EE_exercise == 1 ~ "Exercise", 
                                               EE_exercise == 2 ~ "No exercise"),
-                      Age_EE_exposure = case_when(Age_EE_exposure == 1 ~ "Prenatal", 
-                                                  Age_EE_exposure == 2 ~ "Juvenile",
-                                                  Age_EE_exposure == 3 ~ "Adult", 
-                                                  Age_EE_exposure == 4 ~ "Unclear"))
+                      Age_EE_revised = case_when(Age_EE_revised == 1 ~ "Prenatal", 
+                                                  Age_EE_exposure == 2 ~ "Early postnatal",
+                                                  Age_EE_exposure == 3 ~ "Adolescent", 
+                                                  Age_EE_exposure == 4 ~ "Adult",
+                                                  Age_EE_exposure == 5 ~ "Unclear"))
 
 ```
 
@@ -275,17 +277,18 @@ dat_Sfm <- dat %>%
   filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
          Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"),
          Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"),
-         Stress_duration %in% c("Chronic", "Acute"))
+         Stress_duration %in% c("Chronic", "Acute"),
+         Age_stress_revised %in% c("Prenatal", "Early postnatal", "Adult"))
 
-dat_Sfm$Year_published <- as.vector(scale(dat_Sfm$Year_published, scale = F))
+#dat_Sfm$Year_published <- as.vector(scale(dat_Sfm$Year_published, scale = F))
 
-timelag_S_multi <- rma.mv(yi = lnRR_Sa, V = VCV_Sfm, mod = ~ -1 + Year_published + Type_learning + Learning_vs_memory + Appetitive_vs_aversive + Type_stress_exposure + Age_stress_exposure + Stress_duration, random =   list(~1|Study_ID,
-                                                                                    ~1|ES_ID,
-                                                                                    ~1|Strain),
-                    test = "t",
-                 data = dat_Sfm)
+#timelag_S_multi <- rma.mv(yi = lnRR_Sa, V = VCV_Sfm, mod = ~ -1 + Year_published + Type_learning + Learning_vs_memory + Appetitive_vs_aversive + Type_stress_exposure + Age_stress_exposure + Stress_duration, random =   list(~1|Study_ID,
+                            #                    #                                    ~1|ES_ID,
+                                                                                 #   ~1|Strain),
+                  #  test = "t",
+                 #data = dat_Sfm)
 
-summary(timelag_S_multi)
+#summary(timelag_S_multi)
 #TODO: what package is estimates.CI from?
 #estimates_timelag_S_multi <- estimates.CI(timelag_S_multi)
 
@@ -311,7 +314,7 @@ for(i in 1:length(levels(dat$Study_ID))){
 
 
 # writing function for extracting est, ci.lb, and ci.ub from all models
-est.func <- function(m0){
+est.func <- function(mod_S0){
   df <- data.frame(est = mod_S0$b, lower = mod_S0$ci.lb, upper = mod_S0$ci.ub)
   return(df)
 }
@@ -331,8 +334,8 @@ ggplot(MA_CVR) +
   geom_hline(yintercept = mod_S0$b, lty = 1, lwd = 0.75, colour = "black") +
   geom_hline(yintercept = mod_S0$ci.ub, lty = 3, lwd = 0.75, colour = "black") +
   geom_pointrange(aes(x = left_out, y = est, ymin = lower, ymax = upper)) +
-  xlab("Animal group left out") + 
-  ylab("SMD [Cohen's d]  ą 95% CI") + 
+  xlab("Study left out") + 
+  ylab("lnRR, 95% CI") + 
   coord_flip() +
   theme(panel.grid.minor = element_blank())+
   theme_bw() + theme(panel.grid.major = element_blank()) +
@@ -346,17 +349,21 @@ ggplot(MA_CVR) +
 
 ### Full model
 ``` {r, message = FALSE, warning = FALSE}
-#dat_Sfm <- dat %>%
- # filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
-  #       Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"),
-   #      Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"),
-    #     Stress_duration %in% c("Chronic", "Acute"))
+dat$Study_ID <-as.integer(dat$Study_ID)
+#TODO what is wrong with this code??
+#selecting moderator levels with k >=5
+dat_Sfm <- dat %>%
+  filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
+         Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"),
+         Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"),
+         Stress_duration %in% c("Chronic", "Acute"),
+         Age_stress_revised %in% c("Prenatal", "Early postnatal","Adult"))
 
 VCV_Sfm <- impute_covariance_matrix(vi = dat_Sfm$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
 
 #  a few things to think about 1) model selection or 2) 
                  
-mod_Sfm <- rma.mv(yi = lnRR_Sa, V = VCV_Sfm, mod = ~Type_learning -1 + Learning_vs_memory + Appetitive_vs_aversive + Type_stress_exposure + Age_stress_exposure + Stress_duration, random =   list(~1|Study_ID,
+mod_Sfm <- rma.mv(yi = lnRR_Sa, V = VCV_Sfm, mod = ~ Type_learning -1 + Learning_vs_memory + Appetitive_vs_aversive + Type_stress_exposure + Age_stress_revised + Stress_duration, random =   list(~1|Study_ID,
                                                                                     ~1|ES_ID,
                                                                                     ~1|Strain),
                     test = "t",
@@ -488,18 +495,19 @@ The age at which the individuals were exposed to the stressor.
 Note there are a lot of 'unkown' age as authors only report PND which needs to be researched. I'm wondering if this also needs an 'adolescence' category as this seesm to be popular in rodent research
 
 ``` {r, message = FALSE, warning = FALSE}
-#TODO these ages need to be recategoried and analysis run again
+dat3a <- filter(dat, Age_stress_revised %in% c("Prenatal", "Early postnatal","Adult"))
+VCV_S3a <- impute_covariance_matrix(vi = dat3a$lnRRV_S, cluster = dat$Study_ID, r = 0.5)
 
-mod_S5 <-rma.mv(yi = lnRR_Sa, V = VCV_S, mod = ~Age_stress_exposure-1, random = list(~1|Study_ID,
+mod_S5 <-rma.mv(yi = lnRR_Sa, V = VCV_S3a, mod = ~Age_stress_revised-1, random = list(~1|Study_ID,
                                                                                        ~1|ES_ID,
                                                                                        ~1|Strain),
                 test = "t",
-                data = dat)
+                data = dat3a)
 summary(mod_S5) 
 r2_ml(mod_S5) 
 
 # Orchard plot 
-orchard_plot(mod_S5, mod = "Age_stress_exposure", xlab = "lnRR", alpha=0.4) + 
+orchard_plot(mod_S5, mod = "Age_stress_revised", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
