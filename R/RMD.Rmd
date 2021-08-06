@@ -239,30 +239,29 @@ Leave-one-study out sensitivity analysis
 ``` {r, message = FALSE, warning = FALSE}
 #funnel(mod_S0)
 
-#should use effective sample size instead to account for unbalanced sampling, also heterogeneity and non-independence?
-
-#funnel(dat$lnRR_S, dat$lnRRV_S, yaxis="seinv",
- #      #xlim = c(-3, 3),
-  #     ylab = "Precision (1/SE)",
-   #    xlab = "Effect size (lnRR)") 
-
-
 #calculating effective sample size
 #TODO check with shinichi that this is calculted correctly
 dat$e_n_S <- with(dat, (4*((CC_n + EC_n)/2) * ((ES_n + CS_n)/2) / ((CC_n + EC_n)/2) + ((ES_n + CS_n)/2)))
+dat$sqrt_inv_e_n_S <- sqrt(1/(dat$e_n_S/4))
+dat$inv_e_n_S <- 1/(dat$e_n_S/4) #use this if sqrt_inv_e_n_S is significant
 
-funnel_S <- funnel(dat$lnRR_S, dat$lnRRV_S, ni = dat$e_n_S, yaxis="ni",
+#funnel_S <- funnel(dat$lnRR_S, dat$lnRRV_S, ni = dat$e_n_S, yaxis="ni",
+ #      ylab = "Effective sample size",
+  #     xlab = "Effect size (lnRR)")
+funnel_S_inv_e <- funnel(x = dat$lnRR_S, sei = dat$sqrt_inv_e_n_S, yaxis="seinv",
        ylab = "Effective sample size",
        xlab = "Effect size (lnRR)")
 
 funnel_S
-#TODO should we still check for funnel asymmetry?
+
+#should use effective sample size for eggers regression
+#Do with key moderators 'full model' including publication year
 
 #time lag bias
 #unimoderator
 dat$Year_published <- as.vector(scale(dat$Year_published, scale = F))
 
-timelag_S_uni <- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + Year_published, random = list(~1|Study_ID,
+timelag_S_uni <- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n_S +  Year_published + XXXX + XXX, random = list(~1|Study_ID,
                                                           ~1|ES_ID,
                                                           ~1|Strain), method = "REML", test = "t", 
     data = dat)
