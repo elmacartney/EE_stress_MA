@@ -164,3 +164,18 @@ effect_set2 <- function(CC_n, CC_mean, CC_SD,
   effect2
   
 }
+
+estimates.CI <- function(model){
+  db.mf <- data.frame(model$b,row.names = 1:nrow(model$b))
+  db.mf <- cbind(db.mf,model$ci.lb,model$ci.ub,row.names(model$b))
+  names(db.mf) <- c("mean","lower","upper","estimate")
+  return(db.mf[,c("estimate","mean","lower","upper")])
+}
+# custom function for extracting mean and CI for emmeans (marginalized means)
+estimates.CI2 <- function(res){
+  db.mf <- data.frame(summary(res)[,2],row.names = 1:length( summary(res)[,2]))
+  db.mf <- cbind(db.mf,summary(res)[,5],summary(res)[,6],paste0(names(res@levels),summary(res)[,1] ))
+  names(db.mf) <- c("mean","lower","upper","estimate")
+  return(db.mf[,c("estimate","mean","lower","upper")])
+}
+

@@ -301,7 +301,6 @@ make_VCV_matrix <- function(data, V, cluster, obs, type=c("vcv", "cor"), rho=0.5
   return(new_matrix)
 }
 
-
 estimates.CI <- function(model){
   db.mf <- data.frame(model$b,row.names = 1:nrow(model$b))
   db.mf <- cbind(db.mf,model$ci.lb,model$ci.ub,row.names(model$b))
