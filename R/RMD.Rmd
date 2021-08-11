@@ -215,13 +215,21 @@ orchard_plot(mod_S0, mod = "Int", xlab = "lnRR", alpha=0.4) +
 ```
 
 ### Publication bias & sensitivity analysis
+
+# comment by Shinichi
+Erin - we probably should put this section after meta-regressoin
+
 ``` {r, message = FALSE, warning = FALSE}
 funnel(mod_S0)
 
 #calculating effective sample size for use in full meta-regression
 #TODO check with shinichi that this is calculted correctly
-dat$e_n_S <- with(dat, (4*((CC_n + EC_n)/2) * ((ES_n + CS_n)/2) / ((CC_n + EC_n)/2) + ((ES_n + CS_n)/2)))
-dat$sqrt_inv_e_n_S <- sqrt(1/(dat$e_n_S/4))
+# TODO - I have not thought about how to do this for 4 different samples but this is not 
+# this is not quite correct
+#dat$e_n_S <- with(dat, (4*((CC_n + EC_n)/2) * ((ES_n + CS_n)/2) / ((CC_n + EC_n)/2) + ((ES_n + CS_n)/2)))
+# TODO - let's use this and please change other places
+# TODO - I will add this to the method too -  in these caes - probably not really n_tilda
+dat$sqrt_inv_e_n_S <- with(dat, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
 #dat$inv_e_n_S <- 1/(dat$e_n_S/4) #use this if sqrt_inv_e_n_S is significant (below)
 
 #funnel_S_inv_e <- funnel(x = dat$lnRR_S, sei = dat$sqrt_inv_e_n_S, yaxis="seinv",
@@ -239,12 +247,18 @@ dat_Sfm <- dat %>%
          Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"),
          Stress_duration %in% c("Chronic", "Acute"))
 
-dat$Year_published <- as.vector(scale(dat$Year_published, scale = F))
+# probably best to name differently 
+dat_Sfm$c_Year_published <- as.vector(scale(dat_Sfm$Year_published, scale = F))
 
-PB_MR_S<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n_S +  Year_published + Type_learning + Appetitive_vs_aversive + Type_stress_exposure + Age_stress_exposure, random = list(~1|Study_ID,
+#TODO - should we do this for the full model or just put key moderators indentified by our analysis
+# this is why it is good to have this at the end 
+PB_MR_S<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n_S +  c_Year_published + Type_learning + Appetitive_vs_aversive + Type_stress_exposure + Age_stress_exposure, random = list(~1|Study_ID,
                                                           ~1|ES_ID,
-                                                          ~1|Strain), method = "REML", test = "t", 
-    data = dat_Sfm)
+                                                          ~1|Strain), 
+                 method = "REML", 
+                 test = "t", 
+                 data = dat_Sfm,
+                  control=list(optimizer="optim", optmethod="Nelder-Mead"))
 
 summary(PB_MR_S)
 
@@ -530,7 +544,10 @@ orchard_plot(mod_E0, mod = "Int", xlab = "lnRR", alpha=0.4) +  # Orchard plot
 funnel(mod_E0)
 
 #calculating effective sample size for use in full meta-regression
+
 dat$e_n_E <- with(dat, (4*((CC_n + CS_n)/2) * ((ES_n + EC_n)/2) / ((CC_n + CS_n)/2) + ((ES_n + EC_n)/2)))
+
+
 dat$sqrt_inv_e_n_E <- sqrt(1/(dat$e_n_E/4))
 
 #filter data so that all K < 5 are removed
@@ -1199,7 +1216,8 @@ mod_E20 <- rma.mv(yi = lnRR_E2a, V = VCV_E20, random = list(~1|Study_ID,
                                                              ~ 1|Strain,
                                                              ~1|ES_ID),
                  test = "t", 
-                 data = dat, control=list(optimizer="optim", optmethod="Nelder-Mead"))
+                 data = dat, 
+                 control=list(optimizer="optim", optmethod="Nelder-Mead"))
 
 summary(mod_E20) 
 i2_ml(mod_E20) 

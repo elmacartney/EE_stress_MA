@@ -60,7 +60,7 @@ $$
 \left(
 \frac{SD_\text{ES}^2}{N_\text{ES}} + \frac{SD_\text{CS}^2}{N_\text{CS}}
 \right) + \left( \frac {1} {  M_\text{EC} +  M_\text{CC} } \right)^2
-\left(\frac{SD_\text{EC}^2}{N_\text{EC}} + \frac{SD_\text{CC}^2}{n_\text{CC}}
+\left(\frac{SD_\text{EC}^2}{N_\text{EC}} + \frac{SD_\text{CC}^2}{N_\text{CC}}
 \right)
 $$
 
@@ -80,4 +80,9 @@ $$
 \frac {SD_\text{CS}^2}{N_\text{CS} M_\text{CS}^2} + \frac{SD_\text{CC}^2}{N_\text{CC} M_\text{CC}^2}.
 $$
 
-
+$$
+\frac {1} { \tilde{N} }  =
+\frac {1} { N_\text{ES}} + \frac{1}{N_\text{EC}} + 
+\frac {1}{N_\text{CS}} + \frac{1}{N_\text{CC}}.
+$$
+$1 /\tilde{N}$ $\sqrt{1 /\tilde{N}}$ 
