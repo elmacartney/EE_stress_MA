@@ -140,7 +140,11 @@ dat <- dat %>% mutate(Type_learning = case_when(Type_learning == 1 ~ "Habituatio
                                                   Age_EE_exposure == 2 ~ "Early postnatal",
                                                   Age_EE_exposure == 3 ~ "Adolescent", 
                                                   Age_EE_exposure == 4 ~ "Adult",
-                                                  Age_EE_exposure == 5 ~ "Unclear"))
+                                                  Age_EE_exposure == 5 ~ "Unclear"),
+                      Stress_vs_EE_timing = case_when(Stress_vs_EE_timing == 1 ~ "Stress first",
+                                                      Stress_vs_EE_timing == 2 ~ "Enrichment first",
+                                                      Stress_vs_EE_timing == 3 ~ "Concurrently", 
+                                                      Stress_vs_EE_timing == 4 ~ "Unclear"))
 
 ```
 
@@ -214,119 +218,19 @@ orchard_plot(mod_S0, mod = "Int", xlab = "lnRR", alpha=0.4) +
         legend.text = element_text(size = 13)) 
 ```
 
-### Publication bias & sensitivity analysis
-
-# comment by Shinichi
-Erin - we probably should put this section after meta-regressoin
-
-``` {r, message = FALSE, warning = FALSE}
-funnel(mod_S0)
-
-#calculating effective sample size for use in full meta-regression
-#TODO check with shinichi that this is calculted correctly
-# TODO - I have not thought about how to do this for 4 different samples but this is not 
-# this is not quite correct
-#dat$e_n_S <- with(dat, (4*((CC_n + EC_n)/2) * ((ES_n + CS_n)/2) / ((CC_n + EC_n)/2) + ((ES_n + CS_n)/2)))
-# TODO - let's use this and please change other places
-# TODO - I will add this to the method too -  in these caes - probably not really n_tilda
-dat$sqrt_inv_e_n_S <- with(dat, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
-#dat$inv_e_n_S <- 1/(dat$e_n_S/4) #use this if sqrt_inv_e_n_S is significant (below)
-
-#funnel_S_inv_e <- funnel(x = dat$lnRR_S, sei = dat$sqrt_inv_e_n_S, yaxis="seinv",
- #      ylab = "Effective sample size",
-  #     xlab = "Effect size (lnRR)")
-
-#funnel_S_inv_e
-
-#should use effective sample size for eggers regression
-
-#time lag bias and eggers regression
-dat_Sfm <- dat %>%
-  filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
-         Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"),
-         Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"),
-         Stress_duration %in% c("Chronic", "Acute"))
-
-# probably best to name differently 
-dat_Sfm$c_Year_published <- as.vector(scale(dat_Sfm$Year_published, scale = F))
-
-#TODO - should we do this for the full model or just put key moderators indentified by our analysis
-# this is why it is good to have this at the end 
-PB_MR_S<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n_S +  c_Year_published + Type_learning + Appetitive_vs_aversive + Type_stress_exposure + Age_stress_exposure, random = list(~1|Study_ID,
-                                                          ~1|ES_ID,
-                                                          ~1|Strain), 
-                 method = "REML", 
-                 test = "t", 
-                 data = dat_Sfm,
-                  control=list(optimizer="optim", optmethod="Nelder-Mead"))
-
-summary(PB_MR_S)
-
-estimates_PB_MR_S<- estimates.CI(PB_MR_S)
-estimates_PB_MR_S
-
-#no effect of inv_effective sample size or year published
-
-#leave-one-out analysis
-dat$Study_ID <- as.factor(dat$Study_ID)
-
-LeaveOneOut_effectsize <- list()
-for(i in 1:length(levels(dat$Study_ID))){
-  LeaveOneOut_effectsize[[i]] <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, 
-                                        random = list(~1 | Study_ID,~1| ES_ID, ~1 | Strain), 
-                                        method = "REML", data = dat[dat$Study_ID
-                                                                    != levels(dat$Study_ID)[i], ])}
-
-
-# writing function for extracting est, ci.lb, and ci.ub from all models
-est.func <- function(mod_E0){
-  df <- data.frame(est = mod_E0$b, lower = mod_E0$ci.lb, upper = mod_E0$ci.ub)
-  return(df)
-}
-
-
-#using dplyr to form data frame
-MA_CVR <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$Study_ID))
-
-#telling ggplot to stop reordering factors
-MA_CVR$left_out<- as.factor(MA_CVR$left_out)
-MA_CVR$left_out<-factor(MA_CVR$left_out, levels = MA_CVR$left_out)
-
-#plotting
-leaveoneout_S <- ggplot(MA_CVR) +
-  geom_hline(yintercept = 0, lty = 2, lwd = 1) +
-  geom_hline(yintercept = mod_S0$ci.lb, lty = 3, lwd = 0.75, colour = "black") +
-  geom_hline(yintercept = mod_S0$b, lty = 1, lwd = 0.75, colour = "black") +
-  geom_hline(yintercept = mod_S0$ci.ub, lty = 3, lwd = 0.75, colour = "black") +
-  geom_pointrange(aes(x = left_out, y = est, ymin = lower, ymax = upper)) +
-  xlab("Study left out") + 
-  ylab("lnRR, 95% CI") + 
-  coord_flip() +
-  theme(panel.grid.minor = element_blank())+
-  theme_bw() + theme(panel.grid.major = element_blank()) +
-  theme(panel.grid.minor.x = element_blank() ) +
-  theme(axis.text.y = element_text(size = 6))
-
-leaveoneout_S
-
-dat$Study_ID <- as.integer(dat$Study_ID)
-```
-
 ### Meta-regression
 
 ### Full model
 ``` {r, message = FALSE, warning = FALSE}
 dat$Study_ID <-as.integer(dat$Study_ID)
 #selecting moderator levels with k >=5
-#dat_Sfm <- dat %>%
- # filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
-  #       Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"),
-   #      Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"),
-    #     Stress_duration %in% c("Chronic", "Acute"))
+dat_Sfm <- dat %>%
+  filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
+         Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"),
+         Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"),
+         Stress_duration %in% c("Chronic", "Acute"))
 
 VCV_Sfm <- impute_covariance_matrix(vi = dat_Sfm$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
-
-#  a few things to think about 1) model selection or 2) 
                  
 mod_Sfm <- rma.mv(yi = lnRR_Sa, V = VCV_Sfm, mod = ~ Type_learning -1 + Learning_vs_memory + Appetitive_vs_aversive + Type_stress_exposure + Age_stress_exposure + Stress_duration, random =   list(~1|Study_ID,
                                                                                     ~1|ES_ID,
@@ -510,6 +414,77 @@ orchard_plot(mod_S6, mod = "Stress_duration", xlab = "lnRR", alpha=0.4) +
         legend.text = element_text(size = 13)) 
 ```
 
+### Publication bias & sensitivity analysis
+
+``` {r, message = FALSE, warning = FALSE}
+funnel(mod_S0)
+
+#calculating inv effective sample size for use in full meta-regression
+# TODO - I will add this to the method too -  in these caes - probably not really n_tilda
+dat$sqrt_inv_e_n <- with(dat, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
+
+#time lag bias and eggers regression
+dat_Sfm$c_Year_published <- as.vector(scale(dat_Sfm$Year_published, scale = F))
+
+#TODO - should we do this for the full model or just put key moderators indentified by our analysis
+# this is why it is good to have this at the end 
+PB_MR_S<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  c_Year_published + Type_learning + Appetitive_vs_aversive + Type_stress_exposure + Age_stress_exposure, random = list(~1|Study_ID,
+                                                          ~1|ES_ID,
+                                                          ~1|Strain), 
+                 method = "REML", 
+                 test = "t", 
+                 data = dat_Sfm,
+                  control=list(optimizer="optim", optmethod="Nelder-Mead"))
+
+estimates_PB_MR_S<- estimates.CI(PB_MR_S)
+estimates_PB_MR_S
+#no effect of inv_effective sample size or year published
+
+#leave-one-out analysis
+dat$Study_ID <- as.factor(dat$Study_ID)
+
+LeaveOneOut_effectsize <- list()
+for(i in 1:length(levels(dat$Study_ID))){
+  LeaveOneOut_effectsize[[i]] <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, 
+                                        random = list(~1 | Study_ID,~1| ES_ID, ~1 | Strain), 
+                                        method = "REML", data = dat[dat$Study_ID
+                                                                    != levels(dat$Study_ID)[i], ])}
+
+
+# writing function for extracting est, ci.lb, and ci.ub from all models
+est.func <- function(mod_E0){
+  df <- data.frame(est = mod_E0$b, lower = mod_E0$ci.lb, upper = mod_E0$ci.ub)
+  return(df)
+}
+
+
+#using dplyr to form data frame
+MA_CVR <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$Study_ID))
+
+#telling ggplot to stop reordering factors
+MA_CVR$left_out<- as.factor(MA_CVR$left_out)
+MA_CVR$left_out<-factor(MA_CVR$left_out, levels = MA_CVR$left_out)
+
+#plotting
+leaveoneout_S <- ggplot(MA_CVR) +
+  geom_hline(yintercept = 0, lty = 2, lwd = 1) +
+  geom_hline(yintercept = mod_S0$ci.lb, lty = 3, lwd = 0.75, colour = "black") +
+  geom_hline(yintercept = mod_S0$b, lty = 1, lwd = 0.75, colour = "black") +
+  geom_hline(yintercept = mod_S0$ci.ub, lty = 3, lwd = 0.75, colour = "black") +
+  geom_pointrange(aes(x = left_out, y = est, ymin = lower, ymax = upper)) +
+  xlab("Study left out") + 
+  ylab("lnRR, 95% CI") + 
+  coord_flip() +
+  theme(panel.grid.minor = element_blank())+
+  theme_bw() + theme(panel.grid.major = element_blank()) +
+  theme(panel.grid.minor.x = element_blank() ) +
+  theme(axis.text.y = element_text(size = 6))
+
+leaveoneout_S
+
+dat$Study_ID <- as.integer(dat$Study_ID)
+```
+
 ## Environmental enrichment
 
 ### Intercept model
@@ -539,88 +514,15 @@ orchard_plot(mod_E0, mod = "Int", xlab = "lnRR", alpha=0.4) +  # Orchard plot
         legend.text = element_text(size = 13)) 
 ```
 
-### Publication bias & sensitivity analysis
+### Meta-regression
+
+### Full model
 ``` {r, message = FALSE, warning = FALSE}
-funnel(mod_E0)
-
-#calculating effective sample size for use in full meta-regression
-
-dat$e_n_E <- with(dat, (4*((CC_n + CS_n)/2) * ((ES_n + EC_n)/2) / ((CC_n + CS_n)/2) + ((ES_n + EC_n)/2)))
-
-
-dat$sqrt_inv_e_n_E <- sqrt(1/(dat$e_n_E/4))
-
 #filter data so that all K < 5 are removed
 dat_Efm <- dat %>%
   filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
          Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"),
          EE_social %in% c("Social", "Non-social"))
-
-#year published was scaled previously
-
-PB_MR_E<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n_E +  Year_published + Type_learning + Appetitive_vs_aversive + EE_social + EE_exercise + Age_stress_exposure, random = list(~1|Study_ID,
-                                                          ~1|ES_ID,
-                                                          ~1|Strain), method = "REML", test = "t", 
-    data = dat_Efm)
-
-estimates_PB_MR_E<- estimates.CI(PB_MR_E)
-estimates_PB_MR_E
-
-#no effect of inv_effective sample size or year published
-
-#leave-one-out analysis
-dat$Study_ID <- as.factor(dat$Study_ID)
-
-LeaveOneOut_effectsize <- list()
-for(i in 1:length(levels(dat$Study_ID))){
-  LeaveOneOut_effectsize[[i]] <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, 
-                                        random = list(~1 | Study_ID,~1| ES_ID, ~1 | Strain), 
-                                        method = "REML", data = dat[dat$Study_ID
-                                                                    != levels(dat$Study_ID)[i], ])}
-
-
-# writing function for extracting est, ci.lb, and ci.ub from all models
-est.func <- function(mod_E0){
-  df <- data.frame(est = mod_E0$b, lower = mod_E0$ci.lb, upper = mod_E0$ci.ub)
-  return(df)
-}
-
-
-#using dplyr to form data frame
-MA_CVR <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$Study_ID))
-
-#telling ggplot to stop reordering factors
-MA_CVR$left_out<- as.factor(MA_CVR$left_out)
-MA_CVR$left_out<-factor(MA_CVR$left_out, levels = MA_CVR$left_out)
-
-#plotting
-leaveoneout_E <- ggplot(MA_CVR) +
-  geom_hline(yintercept = 0, lty = 2, lwd = 1) +
-  geom_hline(yintercept = mod_E0$ci.lb, lty = 3, lwd = 0.75, colour = "black") +
-  geom_hline(yintercept = mod_E0$b, lty = 1, lwd = 0.75, colour = "black") +
-  geom_hline(yintercept = mod_E0$ci.ub, lty = 3, lwd = 0.75, colour = "black") +
-  geom_pointrange(aes(x = left_out, y = est, ymin = lower, ymax = upper)) +
-  xlab("Study left out") + 
-  ylab("lnRR, 95% CI") + 
-  coord_flip() +
-  theme(panel.grid.minor = element_blank())+
-  theme_bw() + theme(panel.grid.major = element_blank()) +
-  theme(panel.grid.minor.x = element_blank() ) +
-  theme(axis.text.y = element_text(size = 6))
-
-leaveoneout_E
-
-dat$Study_ID <- as.integer(dat$Study_ID)
-```
-
-### Meta-regression
-
-### Full model
-``` {r, message = FALSE, warning = FALSE}
-#dat_Efm <- dat %>%
- # filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
-  #       Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"),
-   #      EE_social %in% c("Social", "Non-social"))
 
 VCV_Efm <- impute_covariance_matrix(vi = dat_Efm$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
                  
@@ -792,6 +694,67 @@ orchard_plot(mod_E6, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) +
         legend.text = element_text(size = 13)) 
 ```
 
+### Publication bias & sensitivity analysis
+``` {r, message = FALSE, warning = FALSE}
+funnel(mod_E0)
+
+#year published was scaled previously and sqrt_inv_e_n already calculated under stress PB
+
+PB_MR_E<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  Year_published + Type_learning + Appetitive_vs_aversive + EE_social + EE_exercise + Age_stress_exposure, random = list(~1|Study_ID,
+                                                          ~1|ES_ID,
+                                                          ~1|Strain), method = "REML", test = "t", 
+    data = dat_Efm)
+
+estimates_PB_MR_E<- estimates.CI(PB_MR_E)
+estimates_PB_MR_E
+
+#no effect of inv_effective sample size or year published
+
+#leave-one-out analysis
+dat$Study_ID <- as.factor(dat$Study_ID)
+
+LeaveOneOut_effectsize <- list()
+for(i in 1:length(levels(dat$Study_ID))){
+  LeaveOneOut_effectsize[[i]] <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, 
+                                        random = list(~1 | Study_ID,~1| ES_ID, ~1 | Strain), 
+                                        method = "REML", data = dat[dat$Study_ID
+                                                                    != levels(dat$Study_ID)[i], ])}
+
+
+# writing function for extracting est, ci.lb, and ci.ub from all models
+est.func <- function(mod_E0){
+  df <- data.frame(est = mod_E0$b, lower = mod_E0$ci.lb, upper = mod_E0$ci.ub)
+  return(df)
+}
+
+
+#using dplyr to form data frame
+MA_CVR <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$Study_ID))
+
+#telling ggplot to stop reordering factors
+MA_CVR$left_out<- as.factor(MA_CVR$left_out)
+MA_CVR$left_out<-factor(MA_CVR$left_out, levels = MA_CVR$left_out)
+
+#plotting
+leaveoneout_E <- ggplot(MA_CVR) +
+  geom_hline(yintercept = 0, lty = 2, lwd = 1) +
+  geom_hline(yintercept = mod_E0$ci.lb, lty = 3, lwd = 0.75, colour = "black") +
+  geom_hline(yintercept = mod_E0$b, lty = 1, lwd = 0.75, colour = "black") +
+  geom_hline(yintercept = mod_E0$ci.ub, lty = 3, lwd = 0.75, colour = "black") +
+  geom_pointrange(aes(x = left_out, y = est, ymin = lower, ymax = upper)) +
+  xlab("Study left out") + 
+  ylab("lnRR, 95% CI") + 
+  coord_flip() +
+  theme(panel.grid.minor = element_blank())+
+  theme_bw() + theme(panel.grid.major = element_blank()) +
+  theme(panel.grid.minor.x = element_blank() ) +
+  theme(axis.text.y = element_text(size = 6))
+
+leaveoneout_E
+
+dat$Study_ID <- as.integer(dat$Study_ID)
+```
+
 ## Interaction of stress and EE
 
 ### Intercept
@@ -842,80 +805,6 @@ orchard_plot(mod_ESoutlier, mod = "Int", xlab = "lnRR", alpha=0.4) +
         legend.title = element_text(size = 15),
         legend.text = element_text(size = 13))   
 ```
-### Publication bias & sensitivity analysis
-``` {r, message = FALSE, warning = FALSE}
-funnel(mod_ES0)
-
-#calculating effective sample size for use in full meta-regression
-#TODO get shinichi to calculate Effective sample size for ES
-#dat$e_n_ES <- with(dat, (4*((CC_n + CS_n)/2) * ((ES_n + EC_n)/2) / ((CC_n + CS_n)/2) + ((ES_n + EC_n)/2)))
-dat$sqrt_inv_e_n_ES <- sqrt(1/(dat$e_n_ES/4))
-
-#filter data so that all K < 5 are removed
-dat_ESfm <- dat %>%
-  filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
-         Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"),
-         EE_social %in% c("Social", "Non-social"),
-         Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"),
-         Stress_duration %in% c("Chronic", "Acute"), 
-         Age_stress_exposure %in% c("Prenatal", "Early postnatal", "Adult"))
-
-#year published was scaled previously
-
-PB_MR_ES<- rma.mv(lnRR_ESa, lnRRV_ES, mods = ~1 + sqrt_inv_e_n_ES +  Year_published + Type_learning + Appetitive_vs_aversive + EE_social + EE_exercise + Age_stress_exposure, random = list(~1|Study_ID,
-                                                          ~1|ES_ID,
-                                                          ~1|Strain), method = "REML", test = "t", 
-    data = dat_ESfm)
-
-estimates_PB_MR_ES<- estimates.CI(PB_MR_ES)
-estimates_PB_MR_ES
-
-#no effect of inv_effective sample size or year published
-
-#leave-one-out analysis
-dat$Study_ID <- as.factor(dat$Study_ID)
-
-LeaveOneOut_effectsize <- list()
-for(i in 1:length(levels(dat$Study_ID))){
-  LeaveOneOut_effectsize[[i]] <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, 
-                                        random = list(~1 | Study_ID,~1| ES_ID, ~1 | Strain), 
-                                        method = "REML", data = dat[dat$Study_ID
-                                                                    != levels(dat$Study_ID)[i], ])}
-
-
-# writing function for extracting est, ci.lb, and ci.ub from all models
-est.func <- function(mod_E0){
-  df <- data.frame(est = mod_E0$b, lower = mod_E0$ci.lb, upper = mod_E0$ci.ub)
-  return(df)
-}
-
-
-#using dplyr to form data frame
-MA_CVR <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$Study_ID))
-
-#telling ggplot to stop reordering factors
-MA_CVR$left_out<- as.factor(MA_CVR$left_out)
-MA_CVR$left_out<-factor(MA_CVR$left_out, levels = MA_CVR$left_out)
-
-#plotting
-leaveoneout_ES <- ggplot(MA_CVR) +
-  geom_hline(yintercept = 0, lty = 2, lwd = 1) +
-  geom_hline(yintercept = mod_E0$ci.lb, lty = 3, lwd = 0.75, colour = "black") +
-  geom_hline(yintercept = mod_E0$b, lty = 1, lwd = 0.75, colour = "black") +
-  geom_hline(yintercept = mod_E0$ci.ub, lty = 3, lwd = 0.75, colour = "black") +
-  geom_pointrange(aes(x = left_out, y = est, ymin = lower, ymax = upper)) +
-  xlab("Study left out") + 
-  ylab("lnRR, 95% CI") + 
-  coord_flip() +
-  theme(panel.grid.minor = element_blank())+
-  theme_bw() + theme(panel.grid.major = element_blank()) +
-  theme(panel.grid.minor.x = element_blank() ) +
-  theme(axis.text.y = element_text(size = 6))
-
-leaveoneout_ES
-
-dat$Study_ID <- as.integer(dat$Study_ID)
-```
 
 ### Meta-regression
 
@@ -926,7 +815,8 @@ dat_ESfm <- dat %>%
          Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"),
          EE_social %in% c("Social", "Non-social"),
          Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"),
-         Stress_duration %in% c("Chronic", "Acute"))
+         Stress_duration %in% c("Chronic", "Acute"), 
+         Age_stress_exposure %in% c("Prenatal", "Early postnatal", "Adult"))
 
 VCV_ESfm <- impute_covariance_matrix(vi = dat_ESfm$lnRRV_ES, cluster = dat$Study_ID, r = 0.5)
                  
@@ -1149,6 +1039,92 @@ orchard_plot(mod_ES8, mod = "EE_exercise", xlab = "lnRR", alpha=0.4) +
         text = element_text(size = 24), # change font sizes
         legend.title = element_text(size = 15),
         legend.text = element_text(size = 13)) 
+```
+
+#### Timing of EE relative to stress 
+What order were animals exposed to stress and EE
+
+``` {r, message = FALSE, warning = FALSE}
+mod_ES9 <- rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~Stress_vs_EE_timing -1, random = list(~1|Study_ID, 
+    ~1|ES_ID,
+    ~1|Strain),
+     test = "t",
+     data = dat)
+
+summary(mod_ES9)
+r2_ml(mod_ES9)
+
+orchard_plot(mod_ES9, mod = "Stress_vs_EE_timing", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+
+```
+
+### Publication bias & sensitivity analysis
+``` {r, message = FALSE, warning = FALSE}
+funnel(mod_ES0)
+
+#year published was scaled previously and sqrt_inv_e_n already calculated under stress PB
+
+PB_MR_ES<- rma.mv(lnRR_ESa, lnRRV_ES, mods = ~1 + sqrt_inv_e_n +  Year_published + Type_learning + Appetitive_vs_aversive + EE_social + EE_exercise + Age_stress_exposure, random = list(~1|Study_ID,
+                                                          ~1|ES_ID,
+                                                          ~1|Strain), method = "REML", test = "t", 
+    data = dat_ESfm)
+
+estimates_PB_MR_ES<- estimates.CI(PB_MR_ES)
+estimates_PB_MR_ES
+
+#no effect of inv_effective sample size or year published
+
+#leave-one-out analysis
+dat$Study_ID <- as.factor(dat$Study_ID)
+
+LeaveOneOut_effectsize <- list()
+for(i in 1:length(levels(dat$Study_ID))){
+  LeaveOneOut_effectsize[[i]] <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, 
+                                        random = list(~1 | Study_ID,~1| ES_ID, ~1 | Strain), 
+                                        method = "REML", data = dat[dat$Study_ID
+                                                                    != levels(dat$Study_ID)[i], ])}
+
+
+# writing function for extracting est, ci.lb, and ci.ub from all models
+est.func <- function(mod_E0){
+  df <- data.frame(est = mod_E0$b, lower = mod_E0$ci.lb, upper = mod_E0$ci.ub)
+  return(df)
+}
+
+
+#using dplyr to form data frame
+MA_CVR <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$Study_ID))
+
+#telling ggplot to stop reordering factors
+MA_CVR$left_out<- as.factor(MA_CVR$left_out)
+MA_CVR$left_out<-factor(MA_CVR$left_out, levels = MA_CVR$left_out)
+
+#plotting
+leaveoneout_ES <- ggplot(MA_CVR) +
+  geom_hline(yintercept = 0, lty = 2, lwd = 1) +
+  geom_hline(yintercept = mod_E0$ci.lb, lty = 3, lwd = 0.75, colour = "black") +
+  geom_hline(yintercept = mod_E0$b, lty = 1, lwd = 0.75, colour = "black") +
+  geom_hline(yintercept = mod_E0$ci.ub, lty = 3, lwd = 0.75, colour = "black") +
+  geom_pointrange(aes(x = left_out, y = est, ymin = lower, ymax = upper)) +
+  xlab("Study left out") + 
+  ylab("lnRR, 95% CI") + 
+  coord_flip() +
+  theme(panel.grid.minor = element_blank())+
+  theme_bw() + theme(panel.grid.major = element_blank()) +
+  theme(panel.grid.minor.x = element_blank() ) +
+  theme(axis.text.y = element_text(size = 6))
+
+leaveoneout_ES
+
+dat$Study_ID <- as.integer(dat$Study_ID)
 ```
 
 ## Combined orchard plot
