@@ -1,0 +1,477 @@
+---
+title: "Dataset_summary"
+authors: "Erin L Macartney, Malgorzata Lagisz, Shinichi Nakagawa"
+date: "12/08/2021"
+output:
+  html_document:
+    code_folding: hide
+    df_print: kable
+    toc: TRUE
+    toc_float: TRUE
+    toc_depth: 4
+    collapsed: FALSE
+    YAML: rmdformats::robobook
+---
+
+```{r setup, results = 'hide'}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+pacman::p_load(tidyverse, 
+               here,
+               readxl,
+               metafor,
+               emmeans,
+               orchaRd, 
+               corpcor,
+               naniar,
+               GoodmanKruskal,
+               networkD3,
+               ggplot2,
+               ggalluvial,
+               ggthemr,
+               patchwork)
+
+ggthemr('flat') #select one ggplot theme to be used
+
+# Load custom function to extract data 
+#source(here("R/functions.R")) 
+source(here("R/functions_cleanedup.R")) 
+```
+
+#### Loading data and functions   
+- Using "Full_data_ML2.xlsx" file
+
+```{r load data, results = 'hide'}
+dat <- read_excel(here("Data", "Full_data_ML2.xlsx"), sheet = 1)
+dim(dat) #96 75
+names(dat)
+```
+
+### Data organisation   
+ - Calculating effect size
+ - 'flipping' effect sizes so that all effect sizes are higher values = individuals do better and learning/memory
+ - shifting negative values to positive as lnRR cannot use negative values.
+
+```{r effect sizes, results = 'hide'}
+#vis_miss(dat) #mostly data is missing at comment fields
+
+#removing one study with negative mean values as these are unable to be used for lnRR
+dat <- droplevels(dat[!dat$First_author == 'Wang',])
+dim(dat) #92 75
+
+#Getting effect sizes
+effect_size <- effect_set(CC_n = "CC_n", CC_mean = "CC_mean", CC_SD = "CC_SD",
+                          EC_n = "EC_n", EC_mean = "EC_mean" , EC_SD ="EC_SD",
+                          CS_n = "CS_n", CS_mean = "CS_mean", CS_SD = "CS_SD",
+                          ES_n = "ES_n", ES_mean = "ES_mean", ES_SD = "ES_SD",
+                          data = dat)
+#'pure' effect sizes
+effect_size2 <- effect_set2(CC_n = "CC_n", CC_mean = "CC_mean", CC_SD = "CC_SD",
+                          EC_n = "EC_n", EC_mean = "EC_mean" , EC_SD ="EC_SD",
+                          CS_n = "CS_n", CS_mean = "CS_mean", CS_SD = "CS_SD",
+                          ES_n = "ES_n", ES_mean = "ES_mean", ES_SD = "ES_SD",
+                          data = dat) 
+
+vis_miss(effect_size) +
+  theme(plot.title = element_text(hjust = 0.5, vjust = 3), 
+        plot.margin = margin(t = 0.5, r = 2, b = 1, l = 1, unit = "cm")) +
+  ggtitle("Missing data in the first set of ES") #no mising values
+
+vis_miss(effect_size2) +
+  theme(plot.title = element_text(hjust = 0.5, vjust = 3), 
+        plot.margin = margin(t = 0.5, r = 2, b = 1, l = 1, unit = "cm")) +
+  ggtitle("Missing data in the second set of ES") #no mising values #no missing values
+
+#Removing missing effect sizes
+#full_info <- which(complete.cases(effect_size) == TRUE)
+dat_effect <- cbind(dat, effect_size, effect_size2)
+#dat <- dat_effect[full_info, ]
+names(dat_effect)
+#dat <- dat_effect[full_info, ]
+
+dim(dat_effect) #92 97
+
+#Flipping 'lower is better' effect sizes ############################ rewrite using https://dplyr.tidyverse.org/reference/if_else.html and try https://datacornering.com/use-ifelse-across-a-range-of-r-data-frame-columns/
+
+#flipping lnRR for values where higher = worse
+dat_effect$lnRR_Ea <- ifelse(dat_effect$Response_direction == 2, dat_effect$lnRR_E*-1, ifelse(is.na(dat_effect$Response_direction) == TRUE, NA, dat_effect$lnRR_E)) 
+dat_effect$lnRR_Sa  <- ifelse(dat_effect$Response_direction == 2, dat_effect$lnRR_S*-1, ifelse(is.na(dat_effect$Response_direction) == TRUE, NA, dat_effect$lnRR_S)) 
+dat_effect$lnRR_ESa <-  ifelse(dat_effect$Response_direction == 2, dat_effect$lnRR_ES*-1, ifelse(is.na(dat_effect$Response_direction) == TRUE, NA, dat_effect$lnRR_ES)) 
+
+#flipping 'pure effect sizes'
+dat_effect$lnRR_E2a <- ifelse(dat_effect$Response_direction == 2, dat_effect$lnRR_E2*-1, ifelse(is.na(dat_effect$Response_direction) == TRUE, NA, dat_effect$lnRR_E2)) 
+dat_effect$lnRR_S2a  <- ifelse(dat_effect$Response_direction == 2, dat_effect$lnRR_S2*-1, ifelse(is.na(dat_effect$Response_direction) == TRUE, NA, dat_effect$lnRR_S2)) 
+dat_effect$lnRR_ES2a <-  ifelse(dat_effect$Response_direction == 2, dat_effect$lnRR_ES2*-1, ifelse(is.na(dat_effect$Response_direction) == TRUE, NA, dat_effect$lnRR_ES2)) 
+dat_effect$lnRR_E3a <-  ifelse(dat_effect$Response_direction == 2, dat_effect$lnRR_E3*-1, ifelse(is.na(dat_effect$Response_direction) == TRUE, NA, dat_effect$lnRR_E3)) 
+dat_effect$lnRR_S3a <-  ifelse(dat_effect$Response_direction == 2, dat_effect$lnRR_S3*-1, ifelse(is.na(dat_effect$Response_direction) == TRUE, NA, dat_effect$lnRR_S3)) 
+
+#flipping SMD
+dat_effect$SMD_Ea <- ifelse(dat_effect$Response_direction == 2, dat_effect$SMD_E*-1,ifelse(is.na(dat_effect$Response_direction) == TRUE, NA, dat_effect$SMD_E)) 
+dat_effect$SMD_Sa  <- ifelse(dat_effect$Response_direction == 2, dat_effect$SMD_S*-1,ifelse(is.na(dat_effect$Response_direction) == TRUE, NA, dat_effect$SMD_S)) 
+dat_effect$SMD_ESa <-  ifelse(dat_effect$Response_direction == 2, dat_effect$SMD_ES*-1,ifelse(is.na(dat_effect$Response_direction) == TRUE, NA, dat_effect$SMD_ES))
+
+#rounding down integer sample sizes 
+dat_effect$CC_n <- floor(dat_effect$CC_n)
+dat_effect$EC_n <- floor(dat_effect$EC_n)
+dat_effect$CS_n <- floor(dat_effect$CS_n)
+dat_effect$ES_n <- floor(dat_effect$CS_n)
+
+names(dat_effect)
+
+#remove columns ending or starting with certain words (these comment columnswill not be used in analyses)
+dat_effect2 <- dat_effect %>% select(!matches("(_SE|centile|_median|_details|_comments|_notes|_author|_contacted|_response)$|^Notes_")) 
+names(dat_effect2)
+
+#vis_miss(dat_effect2) #see columns with missing values
+```
+
+
+### Assign human readable words to categorical moderators   
+- These variables are stored as new columns (_HR)    
+- Only using "revised" "Age" columns (info on life stages)   
+
+```{r add human readable codes, results = 'hide'}
+dat_effect2 <- dat_effect2 %>% mutate(Type_learning_HR = case_when(Type_learning == 1 ~ "Habituation",
+                                                Type_learning == 2 ~ "Conditioning",
+                                                Type_learning == 3 ~ "Recognition", 
+                                                Type_learning == 4 ~ "Unclear"),
+                      Learning_vs_memory_HR = case_when(Learning_vs_memory == 1 ~ "Learning",
+                                                     Learning_vs_memory == 2 ~ "Memory", 
+                                                     Learning_vs_memory == 3 ~ "Habituation"),
+                      Appetitive_vs_aversive_HR = case_when(Appetitive_vs_aversive == 1 ~"Appetitive",
+                                                         Appetitive_vs_aversive == 2 ~ "Aversive",
+                                                         Appetitive_vs_aversive == 3 ~ "Not applicable",
+                                                         Appetitive_vs_aversive == 4 ~ "Unclear"),
+                      Type_stress_exposure_HR = case_when(Type_stress_exposure == 1 ~ "Density",
+                                                       Type_stress_exposure == 2 ~ "Scent",
+                                                       Type_stress_exposure == 3 ~ "Shock",
+                                                       Type_stress_exposure == 4 ~ "Exertion",
+                                                       Type_stress_exposure == 5 ~ "Restraint",
+                                                       Type_stress_exposure == 6 ~ "Maternal Separation",
+                                                       Type_stress_exposure == 7 ~ "Circadian rhythm",
+                                                       Type_stress_exposure == 8 ~ "Noise",
+                                                       Type_stress_exposure == 9 ~ "Other",
+                                                       Type_stress_exposure == 10 ~ "Combination",
+                                                       Type_stress_exposure == 11 ~ "unclear"), 
+                      Age_stress_exposure_HR = case_when(Age_stress_revised == 1 ~ "Prenatal",
+                                                      Age_stress_revised == 2 ~ "Early postnatal",
+                                                      Age_stress_revised == 3 ~ "Adolescent",
+                                                      Age_stress_revised == 4 ~ "Adult",
+                                                      Age_stress_revised == 5 ~ "Unclear"),
+                      Stress_duration_HR = case_when(Stress_duration == 1 ~ "Acute",
+                                                  Stress_duration == 2 ~ "Chronic",
+                                                  Stress_duration == 3 ~ "Intermittent",
+                                                  Stress_duration == 4 ~ "Unclear"),
+                      EE_social_HR = case_when(EE_social == 1 ~ "Social",
+                                            EE_social== 2 ~ "Non-social", 
+                                            EE_social == 3 ~ "Unclear"), 
+                      EE_exercise_HR = case_when(EE_exercise == 1 ~ "Exercise", 
+                                              EE_exercise == 2 ~ "No exercise"),
+                      Age_EE_exposure_HR = case_when(Age_EE_revised == 1 ~ "Prenatal", 
+                                                  Age_EE_revised == 2 ~ "Early postnatal",
+                                                  Age_EE_revised == 3 ~ "Adolescent", 
+                                                  Age_EE_revised == 4 ~ "Adult",
+                                                  Age_EE_revised == 5 ~ "Unclear"),
+                      Stress_vs_EE_timing_HR = case_when(Stress_vs_EE_timing == 1 ~ "Stress first",
+                                                      Stress_vs_EE_timing == 2 ~ "Enrichment first",
+                                                      Stress_vs_EE_timing == 3 ~ "Concurrently", 
+                                                      Stress_vs_EE_timing == 4 ~ "Unclear"),
+                      Age_assay_HR = case_when(Age_assay_revised == 1 ~ "Early postnatal", 
+                                                  Age_assay_revised == 2 ~ "Adolescent", 
+                                                  Age_assay_revised == 3 ~ "Adult",
+                                                  Age_assay_revised == 4 ~ "Unclear"),
+                      Type_EE_exposure_HR = case_when(Type_EE_exposure == 1 ~ "Nesting material",
+                                                      Type_EE_exposure == 2 ~ "Objects",
+                                                      Type_EE_exposure == 3 ~ "Cage complexity", 
+                                                      Type_EE_exposure == 4 ~ "Wheel/trademill",
+                                                      Type_EE_exposure == 5 ~ "Combination",
+                                                      Type_EE_exposure == 6 ~ "Other", 
+                                                      Type_EE_exposure == 7 ~ "Unclear"))
+
+#was missing: Type_EE_exposure : 1 = nesting material, 2 = objects, 3 = complexity of cage (i.e., multilevel cages), 4 = wheel/treadmill, 5 = combination, 6 = other, 7 = unclear 
+```
+
+
+### Explore associations among predictor variables   
+
+```{r exploratory plots, results = 'hide'}
+
+#see columns with missing values
+vis_miss(dat_effect2) +
+  theme(plot.title = element_text(hjust = 0.5, vjust = 3), 
+        plot.margin = margin(t = 0.5, r = 3, b = 1, l = 1, unit = "cm")) +
+  ggtitle("Missing data in the selected predictors") #no mising values
+
+dim(dat_effect2)
+names(dat_effect2)
+str(dat_effect2)
+
+#useGoodman and Kruskal’s τ measure of association between categorical predictor variables (function from package GoodmanKruskal: https://cran.r-project.org/web/packages/GoodmanKruskal/vignettes/GoodmanKruskal.html)
+GKmatrix <- GKtauDataframe(subset(dat_effect2, select = c("Strain", "Sex", "Housing", "Age_EE_revised", "Age_stress_revised", "Age_assay_revised", "Type_EE_exposure", "EE_exercise", "EE_social", "Type_stress_exposure", "Stress_duration", "Stress_vs_EE_timing", "Learning_vs_memory",  "Type_learning", "Appetitive_vs_aversive")) )
+plot(GKmatrix)
+#as above using human-readable (HR) variables only
+GKmatrix <- GKtauDataframe(subset(dat_effect2, select = c("Type_learning_HR", "Learning_vs_memory_HR", "Appetitive_vs_aversive_HR",  "Type_stress_exposure_HR", "Age_stress_exposure_HR", "Stress_duration_HR", "EE_social_HR", "EE_exercise_HR", "Age_EE_exposure_HR", "Stress_vs_EE_timing_HR", "Age_assay_HR")) )
+plot(GKmatrix)
+
+#simple pairwise contingency tables
+table(dat_effect2$Type_learning_HR, dat_effect2$Appetitive_vs_aversive_HR) #some cleanup needed!
+table(dat_effect2$Age_stress_exposure_HR, dat_effect2$Age_EE_exposure_HR) #check "unclear" for Age_EE_exposure_HR
+table(dat_effect2$Type_stress_exposure_HR, dat_effect2$Age_stress_exposure_HR)
+table(dat_effect2$Type_stress_exposure_HR, dat_effect2$Age_assay_HR)
+table(dat_effect2$Type_stress_exposure_HR, dat_effect2$Stress_duration_HR)
+```
+
+
+### Alluvial diagrams for Age (life stages) variables   
+
+```{r alluvial plots age, results = 'hide'}
+
+# create frequency table for 2 categorical Age variables
+freq_ages1 <- as.data.frame(table(dat_effect2$Age_stress_exposure_HR, dat_effect2$Age_EE_exposure_HR)) %>% rename(Age_stress = Var1, Age_EE = Var2)
+
+#use ggalluvial (https://cran.r-project.org/web/packages/ggalluvial/vignettes/ggalluvial.html)
+is_alluvia_form(as.data.frame(freq_ages1), axes = 1:2, silent = TRUE)
+
+ggplot(data = freq_ages1,
+  aes(axis1 = Age_stress, axis2 = Age_EE, y = Freq)) +
+  geom_alluvium(aes(fill = Age_EE)) +
+  geom_stratum(aes(fill = Age_stress)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+#theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold")) +
+  scale_x_discrete(limits = c("Stress", "Enrichment"), expand = c(0.15, 0.05), position = "top") +
+  ggtitle("Life stages used (set1)")
+
+
+# create frequency table for 3 categorical Age variables
+
+freq_ages2 <- as.data.frame(table(dat_effect2$Age_stress_exposure_HR, dat_effect2$Age_EE_exposure_HR, dat_effect2$Age_assay_HR)) %>% rename(Age_stress = Var1, Age_EE = Var2, Age_assay = Var3)
+
+#use ggalluvial (https://cran.r-project.org/web/packages/ggalluvial/vignettes/ggalluvial.html)
+is_alluvia_form(as.data.frame(freq_ages2), axes = 1:3, silent = TRUE)
+
+ggplot(data = freq_ages2,
+  aes(axis1 = Age_stress, axis2 = Age_EE, axis3 = Age_assay, y = Freq)) +
+  geom_alluvium(aes(fill = Age_stress)) +
+  geom_flow() +
+  geom_stratum(aes(fill = Age_stress)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  #theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold")) +
+  scale_x_discrete(limits = c("Stress", "Enrichment", "Assay"), expand = c(0.15, 0.05), position = "top") +
+  ggtitle("Life stages used (set2)")
+
+freq_ages2 %>% filter(Freq != 0) %>% arrange(desc(Freq)) #collapesd table of values, without 0s
+
+# create frequency table for 3 categorical Age variables
+
+freq_ages3 <- as.data.frame(table(dat_effect2$Age_stress_exposure_HR, dat_effect2$Age_EE_exposure_HR, dat_effect2$Age_assay_HR, dat_effect2$Stress_vs_EE_timing_HR)) %>% rename(Age_stress = Var1, Age_EE = Var2, Age_assay = Var3, Order = Var4)
+is_alluvia_form(as.data.frame(freq_ages3), axes = 1:4, silent = TRUE)
+
+ggplot(data = freq_ages3,
+  aes(axis1 = Age_stress, axis2 = Age_EE, axis3 = Age_assay, axis4 = Order,  y = Freq)) +
+  geom_alluvium(aes(fill = Age_stress)) +
+  geom_flow() +
+  geom_stratum(aes(fill = Age_stress)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  #theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold")) +
+  scale_x_discrete(limits = c("Stress", "Enrichment", "Assay", "Order"), expand = c(0.15, 0.05), position = "top") +
+  ggtitle("Life stages used and order (set3)")
+
+freq_ages2 %>% filter(Freq != 0) %>% arrange(desc(Freq)) #collapesd table of values, without 0s
+freq_ages3 %>% filter(Freq != 0) %>% arrange(desc(Freq)) #collapesd table of values, without 0s
+
+```
+
+
+### Alluvial diagrams for Stress variables
+
+```{r alluvial plots stress, results = 'hide'}
+
+# create frequency table for 2 categorical Stress variables
+freq_stress1 <- as.data.frame(table(dat_effect2$Stress_duration_HR, dat_effect2$Type_stress_exposure_HR)) %>% rename(Stress_duration = Var1,  Stress_type = Var2)
+is_alluvia_form(as.data.frame(freq_stress1), axes = 1:2, silent = TRUE)
+
+ggplot(data = freq_stress1,
+  aes(axis1 = Stress_duration, axis2 = Stress_type, y = Freq)) +
+  geom_alluvium(aes(fill = Stress_duration)) +
+  geom_stratum(aes(fill = Stress_duration)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+#theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold")) +
+  scale_x_discrete(limits = c("Duration", "Type"), expand = c(0.15, 0.05), position = "top") +
+  ggtitle("Stress exposure  variables (set1)")
+
+# create frequency table for 3 categorical Stress variables
+freq_stress2 <- as.data.frame(table(dat_effect2$Age_stress_exposure_HR, dat_effect2$Stress_duration_HR, dat_effect2$Type_stress_exposure_HR)) %>% rename(Age_stress = Var1, Duration_stress = Var2, Type_stress = Var3)
+is_alluvia_form(as.data.frame(freq_stress2), axes = 1:3, silent = TRUE)
+
+ggplot(data = freq_stress2,
+  aes(axis1 = Age_stress, axis2 = Duration_stress, axis3 = Type_stress, y = Freq)) +
+  geom_alluvium(aes(fill = Age_stress)) +
+  geom_flow() +
+  geom_stratum(aes(fill = Age_stress)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  #theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold")) +
+  scale_x_discrete(limits = c("Age", "Duration", "Type"), expand = c(0.1, 0.1), position = "top") +
+  ggtitle("Stress exposure variables (set2)")
+```
+
+
+### Alluvial diagrams for EE variables   
+
+```{r alluvial plots EE, results = 'hide'}
+
+# create frequency table for 3 categorical EE variables (EE_Type is not converted to HR)
+freq_EE1 <- as.data.frame(table(dat_effect2$EE_exercise_HR, dat_effect2$EE_social_HR)) %>% rename(EE_exercise = Var1, EE_social = Var2)
+is_alluvia_form(as.data.frame(freq_stress1), axes = 1:2, silent = TRUE)
+
+ggplot(data = freq_EE1,
+  aes(axis1 = EE_exercise, axis2 = EE_social, y = Freq)) +
+  geom_alluvium(aes(fill = EE_exercise)) +
+  geom_stratum(aes(fill = EE_exercise)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+#theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold")) +
+  scale_x_discrete(limits = c("Exercise", "Social"), expand = c(0.15, 0.05), position = "top") +
+  ggtitle("EE exposure  variables (set1)")
+
+
+# create frequency table for 3 categorical EE variables
+freq_EE2 <- as.data.frame(table(dat_effect2$Age_EE_exposure_HR, dat_effect2$EE_exercise_HR, dat_effect2$EE_social_HR)) %>% rename(Age_EE = Var1, EE_exercise = Var2, EE_social = Var3)
+is_alluvia_form(as.data.frame(freq_EE2), axes = 1:3, silent = TRUE)
+
+ggplot(data = freq_EE2,
+  aes(axis1 = Age_EE, axis2 = EE_exercise, axis3 = EE_social, y = Freq)) +
+  geom_alluvium(aes(fill = Age_EE)) +
+  geom_flow() +
+  geom_stratum(aes(fill = Age_EE)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  #theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold")) +
+  scale_x_discrete(limits = c("Age", "Exercise", "Social"), expand = c(0.1, 0.1), position = "top") +
+  ggtitle("EE exposure variables (set2)")
+
+
+# create frequency table for another 3 categorical EE variables
+freq_EE3 <- as.data.frame(table(dat_effect2$Type_EE_exposure_HR, dat_effect2$EE_exercise_HR, dat_effect2$EE_social_HR)) %>% rename(Type_EE = Var1, EE_exercise = Var2, EE_social = Var3)
+is_alluvia_form(as.data.frame(freq_EE3), axes = 1:3, silent = TRUE)
+
+ggplot(data = freq_EE3,
+  aes(axis1 = Type_EE, axis2 = EE_exercise, axis3 = EE_social, y = Freq)) +
+  geom_alluvium(aes(fill = Type_EE)) +
+  geom_flow() +
+  geom_stratum(aes(fill = Type_EE)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  #theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold")) +
+  scale_x_discrete(limits = c("Type", "Exercise", "Social"), expand = c(0.1, 0.1), position = "top") +
+  ggtitle("EE exposure variables (set3)")
+```
+
+
+### Alluvial diagrams for assay variables   
+
+```{r alluvial plots assay, results = 'hide'}
+
+# create frequency table for 3 categorical assay variables 
+freq_assay1 <- as.data.frame(table(dat_effect2$Learning_vs_memory_HR, dat_effect2$Appetitive_vs_aversive_HR)) %>% rename(Learning_Memory = Var1, Reinforcement = Var2)
+is_alluvia_form(as.data.frame(freq_assay1), axes = 1:2, silent = TRUE)
+
+ggplot(data = freq_assay1,
+  aes(axis1 = Learning_Memory, axis2 = Reinforcement, y = Freq)) +
+  geom_alluvium(aes(fill = Learning_Memory)) +
+  geom_stratum(aes(fill = Learning_Memory)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+#theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold")) +
+  scale_x_discrete(limits = c("Learning_Memory", "Reinforcement"), expand = c(0.15, 0.05), position = "top") +
+  ggtitle("Behavioural assay  variables (set1)")
+
+
+# create frequency table for 3 categorical assay variables
+freq_assay2 <- as.data.frame(table(dat_effect2$Age_assay_HR, dat_effect2$Learning_vs_memory_HR, dat_effect2$Appetitive_vs_aversive_HR)) %>% rename(Age_assay = Var1, Learning_Memory = Var2, Reinforcement = Var3)
+is_alluvia_form(as.data.frame(freq_assay2), axes = 1:3, silent = TRUE)
+
+ggplot(data = freq_assay2,
+  aes(axis1 = Age_assay, axis2 = Learning_Memory, axis3 = Reinforcement, y = Freq)) +
+  geom_alluvium(aes(fill = Age_assay)) +
+  geom_flow() +
+  geom_stratum(aes(fill = Age_assay)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  #theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold")) +
+  scale_x_discrete(limits = c("Age", "Learning_Memory", "Reinforcement"), expand = c(0.1, 0.1), position = "top") +
+  ggtitle("Behavioural assay  variables (set2)")
+
+
+# create frequency table for another 3 categorical assay variables
+freq_assay3 <- as.data.frame(table(dat_effect2$Type_learning_HR, dat_effect2$Learning_vs_memory_HR, dat_effect2$Appetitive_vs_aversive_HR)) %>% rename(Type = Var1, Learning_Memory = Var2, Reinforcement = Var3)
+is_alluvia_form(as.data.frame(freq_assay3), axes = 1:3, silent = TRUE)
+
+ggplot(data = freq_assay3,
+  aes(axis1 = Type, axis2 = Learning_Memory, axis3 = Reinforcement, y = Freq)) +
+  geom_alluvium(aes(fill = Type)) +
+  geom_flow() +
+  geom_stratum(aes(fill = Type)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  #theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold")) +
+  scale_x_discrete(limits = c("Type", "Learning_Memory", "Reinforcement"), expand = c(0.1, 0.1), position = "top") +
+  ggtitle("Behavioural assay  variables (set3)")
+```
+
+
+
+```{r assemble plots , results = 'hide'}
+#p_F0_Parent_Exposed / p_Offspring_Sex / p_Trait + plot_layout(ncol = 1, heights = c(1,1,3))
+#ggsave(file = "Figure_explorae_predictors_v0.pdf", width = 16, height = 23, units = "cm", dpi = 300, scale = 1.8,device = cairo_pdf)
+
+# scale_fill_manual(values=c("#BAB3B3EB", "red", "yellow", "blue"))+ #note for manual colour assignment
+```
