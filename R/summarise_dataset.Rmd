@@ -221,6 +221,13 @@ table(dat_effect2$Type_stress_exposure_HR, dat_effect2$Age_assay_HR)
 table(dat_effect2$Type_stress_exposure_HR, dat_effect2$Stress_duration_HR)
 ```
 
+There are associations among:   
+ - Type_learning_HR, Appetitive_vs_aversive_HR (some cleanup needed)   
+ - Age_stress_exposure_HR, Age_EE_exposure_HR (check "unclear" for Age_EE_exposure_HR)   
+ - Type_stress_exposure_HR, Age_stress_exposure_HR   
+ - Type_stress_exposure_HR, Age_assay_HR   
+ - Type_stress_exposure_HR, Stress_duration_HR  
+
 
 ### Alluvial diagrams for Age (life stages) variables   
 
