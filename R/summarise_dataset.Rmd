@@ -537,4 +537,5 @@ ggplot(data = freq_assay3,
 #ggsave(file = "Figure_explorae_predictors_v0.pdf", width = 16, height = 23, units = "cm", dpi = 300, scale = 1.8,device = cairo_pdf)
 
 # scale_fill_manual(values=c("#BAB3B3EB", "red", "yellow", "blue"))+ #note for manual colour assignment
+#https://r-charts.com/flow/ggalluvial/
 ```
