@@ -42,7 +42,7 @@ source(here("R/functions_cleanedup.R"))
 - Using "Full_data_ML2.xlsx" file
 
 ```{r load data, results = 'hide'}
-dat <- read_excel(here("Data", "Full_data_ML2.xlsx"), sheet = 1)
+dat <- read_excel(here("Data", "Full_data_ML3.xlsx"), sheet = 1)
 dim(dat) #96 75
 names(dat)
 ```
