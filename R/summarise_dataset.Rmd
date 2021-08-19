@@ -31,6 +31,8 @@ pacman::p_load(tidyverse,
                ggthemr,
                patchwork)
 
+ggthemr('flat') #select one ggplot theme to be used
+
 # Load custom function to extract data 
 #source(here("R/functions.R")) 
 source(here("R/functions_cleanedup.R")) 
