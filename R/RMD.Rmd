@@ -528,7 +528,7 @@ r2_ml(mod_Sfm)
 
 res_Sfm <- dredge(mod_Sfm, trace=2)
 res_Sfm2<- subset(res_Sfm, delta <= 2, recalc.weights=FALSE)
-importance(res_Sfm2)
+importance(res_Sfm2) #only consists of one model with delta <=2
 ```
 
 
@@ -981,7 +981,9 @@ orchard_plot(mod_E6, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) +
 ``` {r, message = FALSE, warning = FALSE}
 funnel(mod_E0)
 
-#year published was scaled previously and sqrt_inv_e_n already calculated under stress PB
+#year published was scaled previously  under stress PB
+
+dat_Efm$sqrt_inv_e_n <- with(dat_Efm, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
 
 PB_MR_E<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  Year_published + Type_learning + Appetitive_vs_aversive + EE_social + EE_exercise + Age_stress_exposure, random = list(~1|Study_ID,
                                                           ~1|ES_ID,
@@ -1114,7 +1116,7 @@ r2_ml(mod_ESfm)
 
 res_ESfm <- dredge(mod_ESfm, trace=2)
 res_ESfm2<- subset(res_ESfm, delta <= 2, recalc.weights=FALSE)
-importance(res_Sfm2)
+importance(res_ESfm2) 
 ```
 
 
@@ -1353,7 +1355,9 @@ orchard_plot(mod_ES9, mod = "Stress_vs_EE_timing", xlab = "lnRR", alpha=0.4) +
 ``` {r, message = FALSE, warning = FALSE}
 funnel(mod_ES0)
 
-#year published was scaled previously and sqrt_inv_e_n already calculated under stress PB
+#year published was scaled previously under stress PB
+
+dat_ESfm$sqrt_inv_e_n <- with(dat_ESfm, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
 
 PB_MR_ES<- rma.mv(lnRR_ESa, lnRRV_ES, mods = ~1 + sqrt_inv_e_n +  Year_published + Type_learning + Appetitive_vs_aversive + EE_social + EE_exercise + Age_stress_exposure, random = list(~1|Study_ID,
                                                           ~1|ES_ID,
