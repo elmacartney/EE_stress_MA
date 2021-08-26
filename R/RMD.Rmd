@@ -527,7 +527,7 @@ summary(mod_Sfm)
 r2_ml(mod_Sfm) 
 
 res_Sfm <- dredge(mod_Sfm, trace=2)
-res_Sfm2<- subset(res_Sfm, delta <= 2, recalc.weights=FALSE)
+res_Sfm2<- subset(res_Sfm, delta <= 6, recalc.weights=FALSE)
 importance(res_Sfm2) #only consists of one model with delta <=2
 ```
 
@@ -589,7 +589,7 @@ orchard_plot(mod_S2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) +
         legend.text = element_text(size = 13)) 
 ```
 
-#### Appetitive vs aversive 
+#### Type of reinforcement
 The type of cue used 
 
 ``` {r, message = FALSE, warning = FALSE}
@@ -669,7 +669,7 @@ orchard_plot(mod_S5, mod = "Age_stress_exposure", xlab = "lnRR", alpha=0.4) +
         legend.text = element_text(size = 13)) 
 ```
 
-#### Acute vs chronic stress
+#### Stess duration
 How long was the stress applied for (chronic = every day for 7 days or more)?
 This has the highest marginal R2
 
@@ -808,7 +808,8 @@ orchard_plot(mod_E0, mod = "Int", xlab = "lnRR", alpha=0.4) +  # Orchard plot
 dat_Efm <- dat %>%
   filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
          Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"),
-         EE_social %in% c("Social", "Non-social"))
+         EE_social %in% c("Social", "Non-social"), 
+         Age_EE_exposure %in% c("Adult", "Adolescent"))
 
 VCV_Efm <- impute_covariance_matrix(vi = dat_Efm$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
                  
@@ -821,7 +822,7 @@ summary(mod_Efm)
 r2_ml(mod_Efm) 
 
 res_Efm <- dredge(mod_Efm, trace=2)
-res_Efm2<- subset(res_Efm, delta <= 2, recalc.weights=FALSE)
+res_Efm2<- subset(res_Efm, delta <= 6, recalc.weights=FALSE)
 importance(res_Efm2)
 ```
 
@@ -878,11 +879,11 @@ orchard_plot(mod_E2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) +
         legend.text = element_text(size = 13)) 
 ```
 
-#### Appetitive vs aversive 
+#### Type of reinforcement 
 The type of cue used 
 
 ``` {r, message = FALSE, warning = FALSE}
-VCV_E2 <- impute_covariance_matrix(vi = dat2$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
+VCV_E2 <- impute_covariance_matrix(vi = dat2$lnRRV_E, cluster = dat2$Study_ID, r = 0.5)
 mod_E3 <- rma.mv(yi = lnRR_Ea, V = VCV_E2, mod = ~ Appetitive_vs_aversive-1, random = list(~1|Study_ID,
                                                                                             ~1|ES_ID,
                                                                                             ~1|Strain),
@@ -959,11 +960,15 @@ orchard_plot(mod_E5, mod = "EE_exercise", xlab = "lnRR", alpha=0.4) +
 #### Age of enrichment
 The age at which the individuals were exposed to environmental enrichment.
 ``` {r, message = FALSE, warning = FALSE}
-mod_E6 <- rma.mv(yi = lnRR_Ea, V = VCV_E, mod = ~Age_EE_exposure-1, random = list(~1|Study_ID,
+dat6 <- filter(dat, Age_EE_exposure %in% c("Adult", "Adolescent"))
+VCV_E6 <- impute_covariance_matrix(vi = dat6$lnRRV_E, cluster = dat6$Study_ID, r = 0.5)
+
+
+mod_E6 <- rma.mv(yi = lnRR_Ea, V = VCV_E6, mod = ~Age_EE_exposure-1, random = list(~1|Study_ID,
                                                                                     ~1|ES_ID,
                                                                                     ~1|Strain),
                  test = "t",
-                 data = dat)
+                 data = dat6)
 
 summary(mod_E6) 
 r2_ml(mod_E6) 
@@ -1102,13 +1107,14 @@ dat_ESfm <- dat %>%
   filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
          Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"),
          EE_social %in% c("Social", "Non-social"),
+         Age_EE_exposure %in% c("Adult", "Adolescent"),
          Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"),
          Stress_duration %in% c("Chronic", "Acute"), 
          Age_stress_exposure %in% c("Prenatal", "Early postnatal", "Adult"))
 
 VCV_ESfm <- impute_covariance_matrix(vi = dat_ESfm$lnRRV_ES, cluster = dat$Study_ID, r = 0.5)
                  
-mod_ESfm <- rma.mv(yi = lnRR_Sa, V = VCV_ESfm, mod = ~Type_learning-1 + Learning_vs_memory-1 + Appetitive_vs_aversive-1 + EE_social-1 + EE_exercise-1 + Age_EE_exposure-1 + Type_stress_exposure-1 + Age_stress_exposure-1 + Stress_duration-1, random =   list(~1|Study_ID,
+mod_ESfm <- rma.mv(yi = lnRR_Sa, V = VCV_ESfm, mod = ~Type_learning-1 + Learning_vs_memory-1 + Appetitive_vs_aversive-1 + EE_social-1 + EE_exercise-1 + Age_EE_exposure-1 + Type_stress_exposure-1 + Age_stress_exposure-1 + Stress_duration-1 + Stress_vs_EE_timing, random =   list(~1|Study_ID,
                                                                                     ~1|ES_ID,
                                                                                     ~1|Strain),
                     test = "t",
@@ -1118,7 +1124,7 @@ r2_ml(mod_ESfm)
 
 
 res_ESfm <- dredge(mod_ESfm, trace=2)
-res_ESfm2<- subset(res_ESfm, delta <= 2, recalc.weights=FALSE)
+res_ESfm2<- subset(res_ESfm, delta <= 6, recalc.weights=FALSE)
 importance(res_ESfm2) 
 ```
 
@@ -1175,11 +1181,11 @@ orchard_plot(mod_ES2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) +
         legend.text = element_text(size = 13)) 
 ```
 
-#### Appetitive vs aversive 
-The type of cue used 
+#### Type of reinforcement
+The type of conditioning used
 
 ``` {r, message = FALSE, warning = FALSE}
-VCV_ES2 <- impute_covariance_matrix(vi = dat2$lnRRV_ES, cluster = dat$Study_ID, r = 0.5)
+VCV_ES2 <- impute_covariance_matrix(vi = dat2$lnRRV_ES, cluster = dat2$Study_ID, r = 0.5)
 
 mod_ES3 <- rma.mv(yi = lnRR_ESa, V = VCV_ES2, mod = ~ Appetitive_vs_aversive-1, random = list(~1|Study_ID,
                                                                                                ~1|ES_ID,
@@ -1229,8 +1235,6 @@ orchard_plot(mod_ES4, mod = "Type_stress_exposure", xlab = "lnRR", alpha=0.4) +
 
 #### Age of stress
 The age at which the individuals were exposed to the stressor.
-Note there are a lot of 'unkown' age as authors only report PND which needs to be researched. I'm wondering if this also needs an 'adolescence' category as this seesm to be popular in rodent research
-This nees to be redone after age categories are re done
 ``` {r, message = FALSE, warning = FALSE}
 mod_ES5 <-rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~Age_stress_exposure-1, random = list(~1|Study_ID,
                                                                                           ~1|ES_ID,
@@ -1252,12 +1256,13 @@ orchard_plot(mod_ES5, mod = "Age_stress_exposure", xlab = "lnRR", alpha=0.4) +
         legend.text = element_text(size = 13)) 
 ```
 
-#### Acute vs chronic stress
+#### Stress duration
 How long was the stress applied for (chronic = every day for 7 days or more)?
 This has the highest marginal R2 (currentl nearly 43%) - need to redo without outlier
 
 ``` {r, message = FALSE, warning = FALSE}
-VCV_ES4 <- impute_covariance_matrix(vi = dat_ES4$lnRRV_ES, cluster = dat$Study_ID, r = 0.5)
+VCV_ES4 <- impute_covariance_matrix(vi = dat4$lnRRV_ES, cluster = dat4$Study_ID, r = 0.5)
+
 mod_ES6 <-rma.mv(yi = lnRR_ESa, V = VCV_ES4, mod = ~Stress_duration-1, random = list(~1|Study_ID,
                                                                                       ~1|ES_ID,
                                                                                       ~1|Strain),
@@ -1282,7 +1287,7 @@ orchard_plot(mod_ES6, mod = "Stress_duration", xlab = "lnRR", alpha=0.4) +
 Does EE also include a manipulation of social environment (i.e., number of individuals in EE relative to control)? 
 
 ``` {r, message = FALSE, warning = FALSE}
-VCV_ES5 <- impute_covariance_matrix(vi = dat5$lnRRV_ES, cluster = dat$Study_ID, r = 0.5)
+VCV_ES5 <- impute_covariance_matrix(vi = dat5$lnRRV_ES, cluster = dat5$Study_ID, r = 0.5)
 mod_ES7<- rma.mv(yi = lnRR_ESa, V = VCV_ES5, mod = ~EE_social-1, random = list(~1|Study_ID,
                                                                                 ~1|ES_ID,
                                                                                 ~1|Strain),
@@ -1329,7 +1334,7 @@ orchard_plot(mod_ES8, mod = "EE_exercise", xlab = "lnRR", alpha=0.4) +
         legend.text = element_text(size = 13)) 
 ```
 
-#### Timing of EE relative to stress 
+#### Order to treatment exposure
 What order were animals exposed to stress and EE
 
 ``` {r, message = FALSE, warning = FALSE}
@@ -1353,6 +1358,35 @@ orchard_plot(mod_ES9, mod = "Stress_vs_EE_timing", xlab = "lnRR", alpha=0.4) +
         legend.text = element_text(size = 13)) 
 
 ```
+
+### Age of enrichment
+What age were individuals exposed to EE
+``` {r, message = FALSE, warning = FALSE}
+VCV_ES6 <- impute_covariance_matrix(vi = dat6$lnRRV_ES, cluster = dat6$Study_ID, r = 0.5)
+
+mod_ES10 <- rma.mv(yi = lnRR_ESa, V = VCV_ES6, mod = ~Age_EE_exposure-1, random = list(~1|Study_ID,
+                                                                                    ~1|ES_ID,
+                                                                                    ~1|Strain),
+                 test = "t",
+                 data = dat6)
+
+summary(mod_ES10) 
+r2_ml(mod_ES10) 
+
+#Orchard plot 
+orchard_plot(mod_ES10, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+
+
+```
+
 
 ### Publication bias & sensitivity analysis
 ``` {r, message = FALSE, warning = FALSE}
@@ -1566,14 +1600,13 @@ mod_res2 <- lapply(mod_list2, function(x) mod_results(x, mod = "Int"))
 
 merged2 <- submerge(mod_res2[[1]], mod_res2[[2]],  mod_res2[[3]], mod_res2[[4]],  mod_res2[[5]], mix = T)
 
-# TODO - renamed - you may want to play with this
 merged2$mod_table$name <- factor(merged2$mod_table$name, levels = c("Intrcpt1", 
     "Intrcpt2", "Intrcpt3", "Intrcpt4", "Intrcpt5"), 
-    labels = rev(c("EC/CC", "CS/CC", "ES/CC", "ES/EC", "ES/CS")))
+    labels = rev(c("EC/CC", "CS/CC", "ES/CC", "ES/CS", "ES/EC")))
 
 merged2$data$moderator <- factor(merged2$data$moderator, levels = c("Intrcpt1", 
     "Intrcpt2", "Intrcpt3", "Intrcpt4", "Intrcpt5"), 
-    labels = rev(c("EC/CC", "CS/CC", "ES/CC", "ES/EC", "ES/CS")))
+    labels = rev(c("EC/CC", "CS/CC", "ES/CC", "ES/CS", "ES/EC")))
 
 #merged$mod_table$name2 <- c("EC vs CC", "CS vs CC", "ES vs CC", "ES vs EC", "ES vs CS")
 
@@ -1584,7 +1617,7 @@ orchard2
 ```
 ## panel of both orchard plots
 ``` {r, message = FALSE, warning = FALSE}
-p1 <- orchard1|orchard2 + plot_annotation(tag_levels = "a")
+p1 <- orchard1/orchard2 
 p1
 ```
 
