@@ -700,6 +700,9 @@ orchard_plot(mod_S6, mod = "Stress_duration", xlab = "lnRR", alpha=0.4) +
 ### Publication bias & sensitivity analysis
 
 ``` {r, message = FALSE, warning = FALSE}
+
+# TODO - funnel polto shoudl be from the full model (chat wiht Erin - but the Egger regression has the full model + effect sample size and year)
+
 funnel(mod_S0)
 
 #calculating inv effective sample size for use in full meta-regression
