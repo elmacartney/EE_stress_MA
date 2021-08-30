@@ -33,7 +33,8 @@ pacman::p_load(tidyverse,
                networkD3,
                ggplot2,
                ggalluvial,
-               ggthemr)
+               ggthemr,
+               cowplot)
 # needed for model selection using MuMin within metafor
 eval(metafor:::.MuMIn)
 
@@ -527,15 +528,15 @@ summary(mod_E1)
 r2_ml(mod_E1) 
 
 # Orchard plot 
-orchard_plot(mod_E1, mod = "Type_learning", xlab = "lnRR", alpha=0.4) + 
+Learning_E <- orchard_plot(mod_E1, mod = "Type_learning", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
 ```
 
 #### Learning vs Memory
@@ -552,15 +553,15 @@ summary(mod_E2)
 r2_ml(mod_E2) 
 
 # Orchard plot 
-orchard_plot(mod_E2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) + 
+LvsM_E<- orchard_plot(mod_E2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
 ```
 
 #### Type of reinforcement 
@@ -578,15 +579,16 @@ summary(mod_E3)
 r2_ml(mod_E3) 
 
 # Orchard plot 
-orchard_plot(mod_E3, mod = "Appetitive_vs_aversive", xlab = "lnRR", alpha=0.4) + 
+Reinforcement_E <-orchard_plot(mod_E3, mod = "Appetitive_vs_aversive", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  xlim(-0.5, 1.5) + 
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
 ````
 
 #### Social enrichment
@@ -605,15 +607,15 @@ summary(mod_E4)
 r2_ml(mod_E4) 
 
 # Orchard plot 
-orchard_plot(mod_E4, mod = "EE_social", xlab = "lnRR", alpha=0.4) + 
+Social_E <-orchard_plot(mod_E4, mod = "EE_social", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+       text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
 ```
 
 #### Exercise enrichment
@@ -630,17 +632,16 @@ summary(mod_E5)
 r2_ml(mod_E5) 
 
 # Orchard plot 
-orchard_plot(mod_E5, mod = "EE_exercise", xlab = "lnRR", alpha=0.4) + 
+Exercise_E <-orchard_plot(mod_E5, mod = "EE_exercise", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
 ```
-
 #### Age of enrichment
 The age at which the individuals were exposed to environmental enrichment.
 ``` {r, message = FALSE, warning = FALSE}
@@ -658,15 +659,15 @@ summary(mod_E6)
 r2_ml(mod_E6) 
 
 #Orchard plot 
-orchard_plot(mod_E6, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) + 
+Age_E<- orchard_plot(mod_E6, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10))  
 ```
 
 ### Full model
@@ -695,7 +696,7 @@ importance(res_Efm2)
 
 ### Publication bias & sensitivity analysis
 ``` {r, message = FALSE, warning = FALSE}
-funnel(mod_E0)
+funnel(mod_Efm)
 
 #year published was scaled previously  under stress PB
 
@@ -805,15 +806,15 @@ summary(mod_S1)
 r2_ml(mod_S1) 
 
 # Orchard plot 
-orchard_plot(mod_S1, mod = "Type_learning", xlab = "lnRR", alpha=0.4) + 
+Learning_S <-orchard_plot(mod_S1, mod = "Type_learning", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
 ```
 
 #### Learning vs Memory
@@ -831,15 +832,15 @@ summary(mod_S2)
 r2_ml(mod_S2) 
 
 # Orchard plot 
-orchard_plot(mod_S2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) + 
+LvsM_S <- orchard_plot(mod_S2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+       text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
 ```
 
 #### Type of reinforcement
@@ -860,15 +861,15 @@ summary(mod_S3)
 r2_ml(mod_S3) 
 
 # Orchard plot 
-orchard_plot(mod_S3, mod = "Appetitive_vs_aversive", xlab = "lnRR", alpha=0.4) + 
+Reinforcement_S <-orchard_plot(mod_S3, mod = "Appetitive_vs_aversive", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+       text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
 ````
 
 #### Type of stress
@@ -887,15 +888,15 @@ summary(mod_S4)
 r2_ml(mod_S4)
 
 # Orchard plot 
-orchard_plot(mod_S4, mod = "Type_stress_exposure", xlab = "lnRR", alpha=0.4) + 
+Stressor<- orchard_plot(mod_S4, mod = "Type_stress_exposure", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
 ````
 
 #### Age of stress
@@ -911,15 +912,15 @@ summary(mod_S5)
 r2_ml(mod_S5) 
 
 # Orchard plot 
-orchard_plot(mod_S5, mod = "Age_stress_exposure", xlab = "lnRR", alpha=0.4) + 
+Age_S <- orchard_plot(mod_S5, mod = "Age_stress_exposure", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
 ```
 
 #### Stess duration
@@ -939,15 +940,15 @@ summary(mod_S6)
 r2_ml(mod_S6) 
 
 # Orchard plot 
-orchard_plot(mod_S6, mod = "Stress_duration", xlab = "lnRR", alpha=0.4) + 
+Duration_S <- orchard_plot(mod_S6, mod = "Stress_duration", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
 ```
 
 
@@ -983,15 +984,9 @@ importance(res_Sfm2) #only consists of one model with delta <=2
 
 ``` {r, message = FALSE, warning = FALSE}
 
-# TODO - funnel plot should be from the full model (chat with Erin - but the Egger regression has the full model + effect sample size and year)
-# TODO - if you have 
-
-funnel(mod_S0)
-
 funnel(mod_Sfm)
 
 #calculating inv effective sample size for use in full meta-regression
-# TODO - I will add this to the method too -  in these caes - probably not really n_tilda
 dat_Sfm$sqrt_inv_e_n <- with(dat_Sfm, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
 
 #time lag bias and eggers regression
@@ -1126,15 +1121,16 @@ summary(mod_ES1)
 r2_ml(mod_ES1) 
 
 # Orchard plot 
-orchard_plot(mod_ES1, mod = "Type_learning", xlab = "lnRR", alpha=0.4) + 
+Learning_ES <- orchard_plot(mod_ES1, mod = "Type_learning", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        axis.text.x = element_text(size = 10), # change font sizes
+        axis.text.y = element_text(size = 10),
+        legend.title = element_text(size = 7),
+        legend.text = element_text(size = 7)) 
 ```
 
 #### Learning vs Memory
@@ -1151,15 +1147,16 @@ summary(mod_ES2)
 r2_ml(mod_ES2) 
 
 # Orchard plot 
-orchard_plot(mod_ES2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) + 
+LvsM_ES <- orchard_plot(mod_ES2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        axis.text.x = element_text(size = 10), # change font sizes
+        axis.text.y = element_text(size = 10),
+        legend.title = element_text(size = 7),
+        legend.text = element_text(size = 7)) 
 ```
 
 #### Type of reinforcement
@@ -1178,15 +1175,16 @@ summary(mod_ES3)
 r2_ml(mod_ES3) 
 
 # Orchard plot 
-orchard_plot(mod_ES3, mod = "Appetitive_vs_aversive", xlab = "lnRR", alpha=0.4) + 
+Reinforcement_ES <- orchard_plot(mod_ES3, mod = "Appetitive_vs_aversive", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        axis.text.x = element_text(size = 10), # change font sizes
+        axis.text.y = element_text(size = 10),
+        legend.title = element_text(size = 7),
+        legend.text = element_text(size = 7)) 
 ````
 
 #### Type of stress
@@ -1203,15 +1201,16 @@ summary(mod_ES4)
 r2_ml(mod_ES4)
 
 # Orchard plot 
-orchard_plot(mod_ES4, mod = "Type_stress_exposure", xlab = "lnRR", alpha=0.4) + 
+Stressor_ES <- orchard_plot(mod_ES4, mod = "Type_stress_exposure", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        axis.text.x = element_text(size = 10), # change font sizes
+        axis.text.y = element_text(size = 10),
+        legend.title = element_text(size = 7),
+        legend.text = element_text(size = 7))  
 ````
 
 #### Age of stress
@@ -1226,15 +1225,16 @@ summary(mod_ES5)
 r2_ml(mod_ES5) 
 
 # Orchard plot 
-orchard_plot(mod_ES5, mod = "Age_stress_exposure", xlab = "lnRR", alpha=0.4) + 
+Age_stress_ES<-orchard_plot(mod_ES5, mod = "Age_stress_exposure", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+       axis.text.x = element_text(size = 10), # change font sizes
+        axis.text.y = element_text(size = 10),
+        legend.title = element_text(size = 7),
+        legend.text = element_text(size = 7)) 
 ```
 
 #### Stress duration
@@ -1253,15 +1253,16 @@ summary(mod_ES6)
 r2_ml(mod_ES6) 
 
 # Orchard plot 
-orchard_plot(mod_ES6, mod = "Stress_duration", xlab = "lnRR", alpha=0.4) + 
+Duration_ES<- orchard_plot(mod_ES6, mod = "Stress_duration", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        axis.text.x = element_text(size = 10), # change font sizes
+        axis.text.y = element_text(size = 10),
+        legend.title = element_text(size = 7),
+        legend.text = element_text(size = 7)) 
 ```
 
 #### Social enrichment
@@ -1279,15 +1280,16 @@ summary(mod_ES7)
 r2_ml(mod_ES7) 
 
 # Orchard plot 
-orchard_plot(mod_ES7, mod = "EE_social", xlab = "lnRR", alpha=0.4) + 
+Social_ES <- orchard_plot(mod_ES7, mod = "EE_social", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        axis.text.x = element_text(size = 10), # change font sizes
+        axis.text.y = element_text(size = 10),
+        legend.title = element_text(size = 7),
+        legend.text = element_text(size = 7)) 
 ```
 
 #### Exercise enrichment
@@ -1304,15 +1306,16 @@ summary(mod_ES8)
 r2_ml(mod_ES8) 
 
 # Orchard plot 
-orchard_plot(mod_ES8, mod = "EE_exercise", xlab = "lnRR", alpha=0.4) + 
+Exercise_ES <- orchard_plot(mod_ES8, mod = "EE_exercise", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+       axis.text.x = element_text(size = 10), # change font sizes
+        axis.text.y = element_text(size = 10),
+        legend.title = element_text(size = 7),
+        legend.text = element_text(size = 7)) 
 ```
 
 #### Order to treatment exposure
@@ -1328,15 +1331,16 @@ mod_ES9 <- rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~Stress_vs_EE_timing -1, rand
 summary(mod_ES9)
 r2_ml(mod_ES9)
 
-orchard_plot(mod_ES9, mod = "Stress_vs_EE_timing", xlab = "lnRR", alpha=0.4) + 
+Order_ES <- orchard_plot(mod_ES9, mod = "Stress_vs_EE_timing", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        axis.text.x = element_text(size = 10), # change font sizes
+        axis.text.y = element_text(size = 10),
+        legend.title = element_text(size = 7),
+        legend.text = element_text(size = 7)) 
 
 ```
 
@@ -1355,15 +1359,16 @@ summary(mod_ES10)
 r2_ml(mod_ES10) 
 
 #Orchard plot 
-orchard_plot(mod_ES10, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) + 
+Age_enrichment_ES <- orchard_plot(mod_ES10, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+       axis.text.x = element_text(size = 10), # change font sizes
+        axis.text.y = element_text(size = 10),
+        legend.title = element_text(size = 7),
+        legend.text = element_text(size = 7)) 
 
 
 ```
@@ -1398,7 +1403,7 @@ importance(res_ESfm2)
 
 ### Publication bias & sensitivity analysis
 ``` {r, message = FALSE, warning = FALSE}
-funnel(mod_ES0)
+funnel(mod_ESfm)
 
 #year published was scaled previously under stress PB
 
@@ -1475,11 +1480,19 @@ merged1$data$moderator <- factor(merged1$data$moderator, levels = c("Intrcpt1",
     "Intrcpt2", "Intrcpt3"), 
     labels = rev(c("Enrichment main effect", "Stress main effect", "Enrichment x stress interaction")))
 
-orchard1<- orchard_plot(merged1, mod = "Int", xlab = "lnRR", angle = 0) 
+orchard1<- orchard_plot(merged1, mod = "Int", xlab = "lnRR", angle = 0) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals 
+  xlim(-2,4.5) +
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        axis.text.y = element_text(hjust = 1)) 
 
 orchard1
-
-#TODO CI not clear and the alignment of the yaxis is strange
 ```
 
 #### Age of enrichment
@@ -1618,15 +1631,36 @@ merged2$data$moderator <- factor(merged2$data$moderator, levels = c("Intrcpt1",
 
 #merged$mod_table$name2 <- c("EC vs CC", "CS vs CC", "ES vs CC", "ES vs EC", "ES vs CS")
 
-orchard2 <- orchard_plot(merged2, mod = "Int", xlab = "lnRR", angle = 0) #+ geom_point(data = merged$mod_table, aes(y = name2, x = estimate))
+orchard2 <- orchard_plot(merged2, mod = "Int", xlab = "lnRR", angle = 0) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals 
+  xlim(-2,4.5) +
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
 
 orchard2
 
 ```
-## panel of both orchard plots
+## Panel of both orchard plots
 ``` {r, message = FALSE, warning = FALSE}
-p1 <- orchard1/orchard2 
+p1 <- orchard1 + orchard2 +  plot_annotation(tag_levels = 'A')
 p1
+```
+
+##Panel of metagressions
+``` {r, message = FALSE, warning = FALSE}
+#Enrichment
+E_mod <- (LvsM_E + Learning_E + Reinforcement_E)/ (Age_E + Exercise_E + Social_E) +  plot_annotation(tag_levels = 'A')
+
+S_mod <- (LvsM_S + Learning_S + Reinforcement_S) / (Age_S + Stressor + Duration_S) + plot_annotation(tag_levels = 'A')
+
+ES_mod <- plot_grid(LvsM_ES, Learning_ES, Reinforcement_ES, Age_enrichment_ES, Age_stress_ES, Order_ES, Exercise_ES, Social_ES, Stressor_ES, Duration_ES,
+  labels = "AUTO", ncol = 5)
+
 ```
 
 # Modelling with SMD
