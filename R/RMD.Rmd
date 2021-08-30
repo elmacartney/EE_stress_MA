@@ -516,6 +516,7 @@ orchard_plot(mod_E0, mod = "Int", xlab = "lnRR", alpha=0.4) +  # Orchard plot
 The type of learning/memory response
 
 ``` {r, message = FALSE, warning = FALSE}
+dat1 <- filter(dat, Type_learning %in% c("Recognition", "Habituation", "Conditioning"))
 VCV_E1 <- impute_covariance_matrix(vi = dat1$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
 
 mod_E1 <- rma.mv(yi = lnRR_Ea, V = VCV_E1, mod = ~Type_learning-1, random = list(~1|Study_ID,
@@ -531,6 +532,7 @@ r2_ml(mod_E1)
 Learning_E <- orchard_plot(mod_E1, mod = "Type_learning", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  xlim(-0.5, 2) + 
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -556,6 +558,7 @@ r2_ml(mod_E2)
 LvsM_E<- orchard_plot(mod_E2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  xlim(-0.5, 2) + 
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -568,6 +571,8 @@ LvsM_E<- orchard_plot(mod_E2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0
 The type of cue used 
 
 ``` {r, message = FALSE, warning = FALSE}
+
+dat2 <- filter(dat, Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"))
 VCV_E2 <- impute_covariance_matrix(vi = dat2$lnRRV_E, cluster = dat2$Study_ID, r = 0.5)
 mod_E3 <- rma.mv(yi = lnRR_Ea, V = VCV_E2, mod = ~ Appetitive_vs_aversive-1, random = list(~1|Study_ID,
                                                                                             ~1|ES_ID,
@@ -582,7 +587,7 @@ r2_ml(mod_E3)
 Reinforcement_E <-orchard_plot(mod_E3, mod = "Appetitive_vs_aversive", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  xlim(-0.5, 1.5) + 
+  xlim(-0.5, 2) + 
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -610,6 +615,7 @@ r2_ml(mod_E4)
 Social_E <-orchard_plot(mod_E4, mod = "EE_social", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  xlim(-0.5, 2) + 
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -635,6 +641,7 @@ r2_ml(mod_E5)
 Exercise_E <-orchard_plot(mod_E5, mod = "EE_exercise", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  xlim(-0.5, 2) + 
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -662,6 +669,7 @@ r2_ml(mod_E6)
 Age_E<- orchard_plot(mod_E6, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  xlim(-0.5, 2) + 
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -792,7 +800,6 @@ The type of learning/memory response
 ``` {r, message = FALSE, warning = FALSE}
 dat$Type_learning<-as.factor(dat$Type_learning)
 
-dat1 <- filter(dat, Type_learning %in% c("Recognition", "Habituation", "Conditioning"))
 VCV_S1 <- impute_covariance_matrix(vi = dat1$lnRRV_S, cluster = dat$Study_ID, r = 0.5)
 
 
@@ -848,7 +855,6 @@ The type of cue used
 
 ``` {r, message = FALSE, warning = FALSE}
 
-dat2 <- filter(dat, Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"))
 VCV_S2 <- VCV_E <- impute_covariance_matrix(vi = dat2$lnRRV_S, cluster = dat$Study_ID, r = 0.5)
 
 mod_S3 <- rma.mv(yi = lnRR_Sa, V = VCV_S2, mod = ~ Appetitive_vs_aversive-1, random = list(~1|Study_ID,
@@ -1474,11 +1480,11 @@ mod_res1 <- lapply(mod_list1, function(x) mod_results(x, mod = "Int"))
 merged1 <- submerge(mod_res1[[3]], mod_res1[[2]],  mod_res1[[1]], mix = T)
 merged1$mod_table$name <- factor(merged1$mod_table$name, levels = c("Intrcpt1", 
     "Intrcpt2", "Intrcpt3"), 
-    labels = rev(c("Enrichment main effect", "Stress main effect", "Enrichment x stress interaction")))
+    labels = rev(c("Enrichment ME", "Stress ME", "Interaction")))
 
 merged1$data$moderator <- factor(merged1$data$moderator, levels = c("Intrcpt1", 
     "Intrcpt2", "Intrcpt3"), 
-    labels = rev(c("Enrichment main effect", "Stress main effect", "Enrichment x stress interaction")))
+    labels = rev(c("Enrichment ME", "Stress ME", "Interaction")))
 
 orchard1<- orchard_plot(merged1, mod = "Int", xlab = "lnRR", angle = 0) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
@@ -1489,8 +1495,7 @@ orchard1<- orchard_plot(merged1, mod = "Int", xlab = "lnRR", angle = 0) +
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
         text = element_text(size = 15), # change font sizes
         legend.title = element_text(size = 10),
-        legend.text = element_text(size = 10),
-        axis.text.y = element_text(hjust = 1)) 
+        legend.text = element_text(size = 10)) 
 
 orchard1
 ```
@@ -1628,8 +1633,6 @@ merged2$mod_table$name <- factor(merged2$mod_table$name, levels = c("Intrcpt1",
 merged2$data$moderator <- factor(merged2$data$moderator, levels = c("Intrcpt1", 
     "Intrcpt2", "Intrcpt3", "Intrcpt4", "Intrcpt5"), 
     labels = rev(c("EC/CC", "CS/CC", "ES/CC", "ES/CS", "ES/EC")))
-
-#merged$mod_table$name2 <- c("EC vs CC", "CS vs CC", "ES vs CC", "ES vs EC", "ES vs CS")
 
 orchard2 <- orchard_plot(merged2, mod = "Int", xlab = "lnRR", angle = 0) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
