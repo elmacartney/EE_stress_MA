@@ -704,7 +704,7 @@ importance(res_Efm2)
 
 ### Publication bias & sensitivity analysis
 ``` {r, message = FALSE, warning = FALSE}
-funnel(mod_Efm)
+Funnel_E<-funnel(mod_Efm, xlab = "lnRR", ylab = "Standard Error")
 
 #year published was scaled previously  under stress PB
 
@@ -961,9 +961,6 @@ Duration_S <- orchard_plot(mod_S6, mod = "Stress_duration", xlab = "lnRR", alpha
 ### Full model
 ``` {r, message = FALSE, warning = FALSE}
 
-# TODO - put the full model after uni-moderator models - so to match the text (and this will be more logical)
-
-dat$Study_ID <-as.integer(dat$Study_ID)
 #selecting moderator levels with k >=5
 dat_Sfm <- dat %>%
   filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
@@ -990,7 +987,7 @@ importance(res_Sfm2) #only consists of one model with delta <=2
 
 ``` {r, message = FALSE, warning = FALSE}
 
-funnel(mod_Sfm)
+funnel(mod_Sfm, xlab = "lnRR", ylab = "Standard Error")
 
 #calculating inv effective sample size for use in full meta-regression
 dat_Sfm$sqrt_inv_e_n <- with(dat_Sfm, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
@@ -998,8 +995,6 @@ dat_Sfm$sqrt_inv_e_n <- with(dat_Sfm, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
 #time lag bias and eggers regression
 dat_Sfm$c_Year_published <- as.vector(scale(dat_Sfm$Year_published, scale = F))
 
-#TODO - should we do this for the full model or just put key moderators indentified by our analysis
-# this is why it is good to have this at the end 
 PB_MR_S<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  c_Year_published + Type_learning + Appetitive_vs_aversive + Type_stress_exposure + Age_stress_exposure, random = list(~1|Study_ID,
                                                           ~1|ES_ID,
                                                           ~1|Strain), 
@@ -1409,7 +1404,7 @@ importance(res_ESfm2)
 
 ### Publication bias & sensitivity analysis
 ``` {r, message = FALSE, warning = FALSE}
-funnel(mod_ESfm)
+Funnel_ES<-funnel(mod_ESfm, xlab = "lnRR", ylab = "Standard Error")
 
 #year published was scaled previously under stress PB
 
@@ -1654,7 +1649,7 @@ p1 <- orchard1 + orchard2 +  plot_annotation(tag_levels = 'A')
 p1
 ```
 
-##Panel of metagressions
+## Panel of metagressions
 ``` {r, message = FALSE, warning = FALSE}
 #Enrichment
 E_mod <- (LvsM_E + Learning_E + Reinforcement_E)/ (Age_E + Exercise_E + Social_E) +  plot_annotation(tag_levels = 'A')
@@ -1665,6 +1660,11 @@ ES_mod <- plot_grid(LvsM_ES, Learning_ES, Reinforcement_ES, Age_enrichment_ES, A
   labels = "AUTO", ncol = 5)
 
 ```
+## Panel of funnel plots
+``` {r, message = FALSE, warning = FALSE}
+fp <- plot_grid(Funnel_E, Funnel_S, Funnel_ES, labels = "AUTO", ncol = 3)
+```
+
 
 # Modelling with SMD
 
