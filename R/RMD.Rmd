@@ -103,10 +103,8 @@ dat$CC_n <- floor(dat$CC_n)
 dat$EC_n <- floor(dat$EC_n)
 dat$CS_n <- floor(dat$CS_n)
 dat$ES_n <- floor(dat$CS_n)
-```
 
-#### Assigning human readable words to moderators
-```{r, message = FALSE, warning = FALSE, results = 'hide'}
+#assigning human readable terms
 dat <- dat %>% mutate(Type_learning = case_when(Type_learning == 1 ~ "Habituation",
                                                 Type_learning == 2 ~ "Conditioning",
                                                 Type_learning == 3 ~ "Recognition", 
@@ -153,12 +151,20 @@ dat <- dat %>% mutate(Type_learning = case_when(Type_learning == 1 ~ "Habituatio
                                                       Stress_vs_EE_timing == 3 ~ "Concurrently", 
                                                       Stress_vs_EE_timing == 4 ~ "Unclear"))
 
+#making variance VCVs
+VCV_E <- impute_covariance_matrix(vi = dat$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
+VCV_S <- impute_covariance_matrix(vi = dat$lnRRV_S, cluster = dat$Study_ID, r = 0.5)
+VCV_ES <- impute_covariance_matrix(vi = dat$lnRRV_ES, cluster = dat$Study_ID, r = 0.5)
+
+VCV_Ea <- impute_covariance_matrix(vi = dat$SMDV_E, cluster = dat$Study_ID, r = 0.5)
+VCV_Sa <- impute_covariance_matrix(vi = dat$SMDV_S, cluster = dat$Study_ID, r = 0.5)
+VCV_ESa <- impute_covariance_matrix(vi = dat$SMDV_ES, cluster = dat$Study_ID, r = 0.5)
+
 ```
 
 # Data exploration
 
-### General  
-
+## General  
 ``` {r, message = FALSE, warning = FALSE}
 #Number of effect sizes
 length(unique(dat$ES_ID))  
@@ -169,11 +175,10 @@ length(unique(dat$Study_ID))
 #Publication years
 min(dat$Year_published) 
 max(dat$Year_published)
-
 ```
-### Explore associations among predictor variables   
+## Explore associations among predictor variables   
 
-```{r exploratory plots, results = 'hide'}
+```{r, results = 'hide'}
 #see columns with missing values
 vis_miss(dat) +
   theme(plot.title = element_text(hjust = 0.5, vjust = 3), 
@@ -193,13 +198,11 @@ table(dat$Type_stress_exposure, dat$Age_assay)
 table(dat$Type_stress_exposure, dat$Stress_duration)
 ```
 
-### Alluvial diagrams  
+## Alluvial diagrams {.tabset}
 
-```{r alluvial plots species strains sex, results = 'hide'}
-#Species, strain and sex variables  
+### Species and strain
 
-# TODO - you need to break up to different chuncks and how different plots - probably use tabs - you can look at Patrice's Rmd file - which show how to do mulitple tabs - which is very good way to show this kind of things
-
+```{r, results = 'hide', fig.width=10, fig.height=7}
 
 # create a frequency table for Species and Strain variables
 freq_1 <- as.data.frame(table(dat$Common_species, dat$Strain)) %>% rename(Species = Var1, Strain = Var2)
@@ -219,7 +222,11 @@ ggplot(data = freq_1,
         axis.text.x = element_text(face="bold")) +
   scale_x_discrete(limits = c("Species", "Strain"), expand = c(0.15, 0.05), position = "top") +
   ggtitle("Species and strains used (set1)")
+```
 
+### Species, strain and sex
+
+```{r, results = 'hide', fig.width=10, fig.height=7}
 
 # create frequency table for Sex, Species and Strain
 freq_2 <- as.data.frame(table(dat$Sex, dat$Common_species, dat$Strain)) %>% rename(Sex = Var1, Species = Var2, Strain = Var3)
@@ -241,8 +248,11 @@ ggplot(data = freq_2,
   ggtitle("Species, strains and sex used (set2)")
 
 freq_2 %>% filter(Freq != 0) %>% arrange(desc(Freq)) #collapesd table of values, without 0s
+```
 
-#Age (life stages) variables 
+### Age at strss and EE
+
+```{r, results = 'hide', fig.width=10, fig.height=7}
 freq_ages1 <- as.data.frame(table(dat$Age_stress_exposure, dat$Age_EE_exposure)) %>% rename(Age_stress = Var1, Age_EE = Var2)
 is_alluvia_form(as.data.frame(freq_ages1), axes = 1:2, silent = TRUE)
 
@@ -259,7 +269,11 @@ ggplot(data = freq_ages1,
         axis.text.x = element_text(face="bold")) +
   scale_x_discrete(limits = c("Stress", "Enrichment"), expand = c(0.15, 0.05), position = "top") +
   ggtitle("Life stages used (set1)")
+```
 
+### Age at stress, EE, assay
+
+```{r, results = 'hide', fig.width=10, fig.height=7}
 
 freq_ages2 <- as.data.frame(table(dat$Age_stress_exposure, dat$Age_EE_exposure, dat$Age_assay)) %>% rename(Age_stress = Var1, Age_EE = Var2, Age_assay = Var3)
 
@@ -281,7 +295,11 @@ ggplot(data = freq_ages2,
   ggtitle("Life stages used (set2)")
 
 freq_ages2 %>% filter(Freq != 0) %>% arrange(desc(Freq)) #collapesd table of values, without 0s
+```
 
+### Age at stress, EE, assay, exposure order
+
+```{r, results = 'hide', fig.width=10, fig.height=7}
 freq_ages3 <- as.data.frame(table(dat$Age_stress_exposure, dat$Age_EE_exposure, dat$Age_assay, dat$Stress_vs_EE_timing)) %>% rename(Age_stress = Var1, Age_EE = Var2, Age_assay = Var3, Order = Var4)
 is_alluvia_form(as.data.frame(freq_ages3), axes = 1:4, silent = TRUE)
 
@@ -302,8 +320,12 @@ ggplot(data = freq_ages3,
 
 freq_ages2 %>% filter(Freq != 0) %>% arrange(desc(Freq)) #collapesd table of values, without 0s
 freq_ages3 %>% filter(Freq != 0) %>% arrange(desc(Freq)) #collapesd table of values, without 0s
+```
 
-#Stress variables
+
+### Stress duration and type of stress
+
+```{r, results = 'hide', fig.width=10, fig.height=7}
 freq_stress1 <- as.data.frame(table(dat$Stress_duration, dat$Type_stress_exposure)) %>% rename(Stress_duration = Var1,  Stress_type = Var2)
 is_alluvia_form(as.data.frame(freq_stress1), axes = 1:2, silent = TRUE)
 
@@ -320,8 +342,10 @@ ggplot(data = freq_stress1,
         axis.text.x = element_text(face="bold")) +
   scale_x_discrete(limits = c("Duration", "Type"), expand = c(0.15, 0.05), position = "top") +
   ggtitle("Stress exposure  variables (set1)")
+```
 
-# create frequency table for 3 categorical Stress variables
+### Age at stress, type of stress, stress duration
+```{r, results = 'hide', fig.width=10, fig.height=7}
 freq_stress2 <- as.data.frame(table(dat$Age_stress_exposure, dat$Stress_duration, dat$Type_stress_exposure)) %>% rename(Age_stress = Var1, Duration_stress = Var2, Type_stress = Var3)
 is_alluvia_form(as.data.frame(freq_stress2), axes = 1:3, silent = TRUE)
 
@@ -339,8 +363,10 @@ ggplot(data = freq_stress2,
         axis.text.x = element_text(face="bold")) +
   scale_x_discrete(limits = c("Age", "Duration", "Type"), expand = c(0.1, 0.1), position = "top") +
   ggtitle("Stress exposure variables (set2)")
+```
+### Exercise, Social EE
 
-#EE variables 
+```{r, results = 'hide', fig.width=10, fig.height=7}
 freq_EE1 <- as.data.frame(table(dat$EE_exercise, dat$EE_social)) %>% rename(EE_exercise = Var1, EE_social = Var2)
 is_alluvia_form(as.data.frame(freq_stress1), axes = 1:2, silent = TRUE)
 
@@ -357,9 +383,10 @@ ggplot(data = freq_EE1,
         axis.text.x = element_text(face="bold")) +
   scale_x_discrete(limits = c("Exercise", "Social"), expand = c(0.15, 0.05), position = "top") +
   ggtitle("EE exposure  variables (set1)")
+```
 
-
-# create frequency table for 3 categorical EE variables
+### Age EE, exercise, social
+```{r, results = 'hide', fig.width=10, fig.height=7}
 freq_EE2 <- as.data.frame(table(dat$Age_EE_exposure, dat$EE_exercise, dat$EE_social)) %>% rename(Age_EE = Var1, EE_exercise = Var2, EE_social = Var3)
 is_alluvia_form(as.data.frame(freq_EE2), axes = 1:3, silent = TRUE)
 
@@ -377,8 +404,11 @@ ggplot(data = freq_EE2,
         axis.text.x = element_text(face="bold")) +
   scale_x_discrete(limits = c("Age", "Exercise", "Social"), expand = c(0.1, 0.1), position = "top") +
   ggtitle("EE exposure variables (set2)")
+```
 
-#assay variables
+### Learning vs memory, type of reinforcement
+
+```{r, results = 'hide', fig.width=10, fig.height=7}
 freq_assay1 <- as.data.frame(table(dat$Learning_vs_memory, dat$Appetitive_vs_aversive)) %>% rename(Learning_Memory = Var1, Reinforcement = Var2)
 is_alluvia_form(as.data.frame(freq_assay1), axes = 1:2, silent = TRUE)
 
@@ -395,9 +425,11 @@ ggplot(data = freq_assay1,
         axis.text.x = element_text(face="bold")) +
   scale_x_discrete(limits = c("Learning_Memory", "Reinforcement"), expand = c(0.15, 0.05), position = "top") +
   ggtitle("Behavioural assay  variables (set1)")
+```
 
+### Age at assay, learning vs memory, type of reinforcement
 
-# create frequency table for 3 categorical assay variables
+```{r, results = 'hide', fig.width=10, fig.height=7}
 freq_assay2 <- as.data.frame(table(dat$Age_assay, dat$Learning_vs_memory, dat$Appetitive_vs_aversive)) %>% rename(Age_assay = Var1, Learning_Memory = Var2, Reinforcement = Var3)
 is_alluvia_form(as.data.frame(freq_assay2), axes = 1:3, silent = TRUE)
 
@@ -415,9 +447,11 @@ ggplot(data = freq_assay2,
         axis.text.x = element_text(face="bold")) +
   scale_x_discrete(limits = c("Age", "Learning_Memory", "Reinforcement"), expand = c(0.1, 0.1), position = "top") +
   ggtitle("Behavioural assay  variables (set2)")
+```
 
+### Type of learning, learning vs memory, type of reinforcement
 
-# create frequency table for another 3 categorical assay variables
+```{r, results = 'hide', fig.width=10, fig.height=7}
 freq_assay3 <- as.data.frame(table(dat$Type_learning, dat$Learning_vs_memory, dat$Appetitive_vs_aversive)) %>% rename(Type = Var1, Learning_Memory = Var2, Reinforcement = Var3)
 is_alluvia_form(as.data.frame(freq_assay3), axes = 1:3, silent = TRUE)
 
@@ -437,49 +471,8 @@ ggplot(data = freq_assay3,
   ggtitle("Behavioural assay  variables (set3)")
 ```
 
-
-#### Making Variance VCV
-Used to control for trait relatedness within individuals
-
-``` {r, message = FALSE, warning = FALSE, results = 'hide'}
-##adding data to empty VCV matrix
-
-VCV_E <- impute_covariance_matrix(vi = dat$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
-VCV_S <- impute_covariance_matrix(vi = dat$lnRRV_S, cluster = dat$Study_ID, r = 0.5)
-VCV_ES <- impute_covariance_matrix(vi = dat$lnRRV_ES, cluster = dat$Study_ID, r = 0.5)
-
-VCV_Ea <- impute_covariance_matrix(vi = dat$SMDV_E, cluster = dat$Study_ID, r = 0.5)
-VCV_Sa <- impute_covariance_matrix(vi = dat$SMDV_S, cluster = dat$Study_ID, r = 0.5)
-VCV_ESa <- impute_covariance_matrix(vi = dat$SMDV_ES, cluster = dat$Study_ID, r = 0.5)
-
-```
-
-#### Examining the group of large/positive effect sizes
-Note that I checked the top four most positive interaction effect sizes and the data looks correct.
-Highest ES is study 27, effect size 88, where Maternally separated EE individuals freeze significantly more when given a cue from inhibitory avoidance. 
-Im not sure why the second highest one (ES 16) is so high as the control indivs do the best. 
-EE indivs do best in the 3rd highest ES (ES 10) so not sure about this one either?
-The fourth highest (ES 12) seems correct
-``` {r, message = FALSE, warning = FALSE}
-largeES_S <- dat %>%
-  slice_max(lnRR_S, n = 10)
-
-largeES_E <- dat %>%
-  slice_max(lnRR_E, n = 10)
-
-largeES_ES <-dat %>%
-  slice_max(lnRR_ES, n = 10)
-
-#most of the largest effect sizes come from different papers
-
 ````
-
 # Modelling with lnRR
-Things todo: 
-- Incorporate strain as random effect
-- Consider including VCV
-- Check  outlier
-- Remove moderator levels with k < 5
 
 ## Environmental enrichment
 
@@ -494,8 +487,6 @@ mod_E0 <- rma.mv(yi = lnRR_Ea, V = VCV_E, random = list(~1|Study_ID,
                  data = dat)
 summary(mod_E0) 
 i2_ml(mod_E0) 
-
-#trying orchard plot
 
 orchard_plot(mod_E0, mod = "Int", xlab = "lnRR", alpha=0.4) +  # Orchard plot 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5)+ # prediction intervals
@@ -528,7 +519,6 @@ mod_E1 <- rma.mv(yi = lnRR_Ea, V = VCV_E1, mod = ~Type_learning-1, random = list
 summary(mod_E1)
 r2_ml(mod_E1) 
 
-# Orchard plot 
 Learning_E <- orchard_plot(mod_E1, mod = "Type_learning", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
@@ -554,7 +544,6 @@ mod_E2 <-  rma.mv(yi = lnRR_Ea, V = VCV_E, mod = ~Learning_vs_memory-1, random =
 summary(mod_E2) 
 r2_ml(mod_E2) 
 
-# Orchard plot 
 LvsM_E<- orchard_plot(mod_E2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
@@ -583,7 +572,6 @@ mod_E3 <- rma.mv(yi = lnRR_Ea, V = VCV_E2, mod = ~ Appetitive_vs_aversive-1, ran
 summary(mod_E3)
 r2_ml(mod_E3) 
 
-# Orchard plot 
 Reinforcement_E <-orchard_plot(mod_E3, mod = "Appetitive_vs_aversive", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
@@ -611,7 +599,6 @@ mod_E4<- rma.mv(yi = lnRR_Ea, V = VCV_E5, mod = ~EE_social-1, random = list(~1|S
 summary(mod_E4)
 r2_ml(mod_E4) 
 
-# Orchard plot 
 Social_E <-orchard_plot(mod_E4, mod = "EE_social", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
@@ -636,8 +623,7 @@ mod_E5<- rma.mv(yi = lnRR_Ea, V = VCV_E, mod = ~EE_exercise-1, random = list(~1|
 
 summary(mod_E5)
 r2_ml(mod_E5) 
-
-# Orchard plot 
+ 
 Exercise_E <-orchard_plot(mod_E5, mod = "EE_exercise", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
@@ -665,7 +651,6 @@ mod_E6 <- rma.mv(yi = lnRR_Ea, V = VCV_E6, mod = ~Age_EE_exposure-1, random = li
 summary(mod_E6) 
 r2_ml(mod_E6) 
 
-#Orchard plot 
 Age_E<- orchard_plot(mod_E6, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
@@ -680,7 +665,8 @@ Age_E<- orchard_plot(mod_E6, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) 
 
 ### Full model
 ``` {r, message = FALSE, warning = FALSE}
-#filter data so that all K < 5 are removed
+
+# filter data so that all K < 5 are removed
 dat_Efm <- dat %>%
   filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
          Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"),
@@ -812,7 +798,6 @@ mod_S1 <- rma.mv(yi = lnRR_Sa, V = VCV_S1, mod = ~Type_learning-1, random =   li
 summary(mod_S1)
 r2_ml(mod_S1) 
 
-# Orchard plot 
 Learning_S <-orchard_plot(mod_S1, mod = "Type_learning", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
@@ -838,7 +823,6 @@ mod_S2 <-  rma.mv(yi = lnRR_Sa, V = VCV_S, mod = ~Learning_vs_memory-1, random =
 summary(mod_S2) 
 r2_ml(mod_S2) 
 
-# Orchard plot 
 LvsM_S <- orchard_plot(mod_S2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
@@ -866,7 +850,6 @@ mod_S3 <- rma.mv(yi = lnRR_Sa, V = VCV_S2, mod = ~ Appetitive_vs_aversive-1, ran
 summary(mod_S3)
 r2_ml(mod_S3) 
 
-# Orchard plot 
 Reinforcement_S <-orchard_plot(mod_S3, mod = "Appetitive_vs_aversive", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
@@ -893,7 +876,6 @@ mod_S4 <- rma.mv(yi = lnRR_Sa, V = VCV_S3, mod = ~Type_stress_exposure-1, random
 summary(mod_S4) 
 r2_ml(mod_S4)
 
-# Orchard plot 
 Stressor<- orchard_plot(mod_S4, mod = "Type_stress_exposure", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
@@ -917,7 +899,6 @@ mod_S5 <-rma.mv(yi = lnRR_Sa, V = VCV_S3a, mod = ~Age_stress_exposure-1, random 
 summary(mod_S5) 
 r2_ml(mod_S5) 
 
-# Orchard plot 
 Age_S <- orchard_plot(mod_S5, mod = "Age_stress_exposure", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
@@ -945,7 +926,6 @@ mod_S6 <-rma.mv(yi = lnRR_Sa, V = VCV_S4, mod = ~Stress_duration-1, random = lis
 summary(mod_S6) 
 r2_ml(mod_S6) 
 
-# Orchard plot 
 Duration_S <- orchard_plot(mod_S6, mod = "Stress_duration", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
@@ -1121,7 +1101,6 @@ mod_ES1 <- rma.mv(yi = lnRR_ESa, V = VCV_ES1, mod = ~Type_learning-1, random = l
 summary(mod_ES1)
 r2_ml(mod_ES1) 
 
-# Orchard plot 
 Learning_ES <- orchard_plot(mod_ES1, mod = "Type_learning", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
@@ -1147,7 +1126,6 @@ mod_ES2 <-  rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~Learning_vs_memory-1, rando
 summary(mod_ES2) 
 r2_ml(mod_ES2) 
 
-# Orchard plot 
 LvsM_ES <- orchard_plot(mod_ES2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
@@ -1175,7 +1153,6 @@ mod_ES3 <- rma.mv(yi = lnRR_ESa, V = VCV_ES2, mod = ~ Appetitive_vs_aversive-1, 
 summary(mod_ES3)
 r2_ml(mod_ES3) 
 
-# Orchard plot 
 Reinforcement_ES <- orchard_plot(mod_ES3, mod = "Appetitive_vs_aversive", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
@@ -1201,7 +1178,6 @@ mod_ES4 <- rma.mv(yi = lnRR_ESa, V = VCV_ES3, mod = ~Type_stress_exposure-1, ran
 summary(mod_ES4)
 r2_ml(mod_ES4)
 
-# Orchard plot 
 Stressor_ES <- orchard_plot(mod_ES4, mod = "Type_stress_exposure", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
@@ -1225,7 +1201,6 @@ mod_ES5 <-rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~Age_stress_exposure-1, random
 summary(mod_ES5) 
 r2_ml(mod_ES5) 
 
-# Orchard plot 
 Age_stress_ES<-orchard_plot(mod_ES5, mod = "Age_stress_exposure", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
@@ -1253,7 +1228,7 @@ mod_ES6 <-rma.mv(yi = lnRR_ESa, V = VCV_ES4, mod = ~Stress_duration-1, random = 
 summary(mod_ES6) 
 r2_ml(mod_ES6) 
 
-# Orchard plot 
+
 Duration_ES<- orchard_plot(mod_ES6, mod = "Stress_duration", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
@@ -1280,7 +1255,6 @@ mod_ES7<- rma.mv(yi = lnRR_ESa, V = VCV_ES5, mod = ~EE_social-1, random = list(~
 summary(mod_ES7)
 r2_ml(mod_ES7) 
 
-# Orchard plot 
 Social_ES <- orchard_plot(mod_ES7, mod = "EE_social", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
@@ -1306,7 +1280,6 @@ mod_ES8<- rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~EE_exercise-1, random = list(
 summary(mod_ES8)
 r2_ml(mod_ES8) 
 
-# Orchard plot 
 Exercise_ES <- orchard_plot(mod_ES8, mod = "EE_exercise", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
@@ -1359,7 +1332,6 @@ mod_ES10 <- rma.mv(yi = lnRR_ESa, V = VCV_ES6, mod = ~Age_EE_exposure-1, random 
 summary(mod_ES10) 
 r2_ml(mod_ES10) 
 
-#Orchard plot 
 Age_enrichment_ES <- orchard_plot(mod_ES10, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
@@ -1660,11 +1632,6 @@ ES_mod <- plot_grid(LvsM_ES, Learning_ES, Reinforcement_ES, Age_enrichment_ES, A
   labels = "AUTO", ncol = 5)
 
 ```
-## Panel of funnel plots
-``` {r, message = FALSE, warning = FALSE}
-fp <- plot_grid(Funnel_E, Funnel_S, Funnel_ES, labels = "AUTO", ncol = 3)
-```
-
 
 # Modelling with SMD
 
