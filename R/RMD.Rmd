@@ -1,7 +1,6 @@
 ---
 title: "Stress x EE MA"
 authors: "Erin L Macartney, Malgorzata Lagisz, Shinichi Nakagawa"
-date: "01/07/2021"
 output:
   html_document:
     code_folding: hide
@@ -50,7 +49,7 @@ source(here("R/functions_cleanedup.R"))
 ```
 
 #### Data organisation
-Getting effect sizes from function, 'flipping' effect sizes so that all effect sizes are higher values = individuals do better and learning/memory, and shifting negative values to positive as lnRR cannot use negative values
+Removing study with negative values, getting effect sizes from function, 'flipping' effect sizes so that all effect sizes are higher values = individuals do better and learning/memory, shifting negative values to positive as lnRR cannot use negative values, assigining human readable terms, and creating VCV of variance 
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
 #removing study with negative values as these are unable to be used for lnRR
@@ -112,10 +111,10 @@ dat <- dat %>% mutate(Type_learning = case_when(Type_learning == 1 ~ "Habituatio
                       Learning_vs_memory = case_when(Learning_vs_memory == 1 ~ "Learning",
                                                      Learning_vs_memory == 2 ~ "Memory", 
                                                      Learning_vs_memory == 1 ~ "Unclear"),
-                      Appetitive_vs_aversive = case_when(Appetitive_vs_aversive == 1 ~"Appetitive",
-                                                         Appetitive_vs_aversive == 2 ~ "Aversive",
-                                                         Appetitive_vs_aversive == 3 ~ "Not applicable",
-                                                         Appetitive_vs_aversive == 4 ~ "Unclear"),
+                      Type_reinforcement = case_when(Type_reinforcement== 1 ~"Appetitive",
+                                                         Type_reinforcement== 2 ~ "Aversive",
+                                                         Type_reinforcement== 3 ~ "Not applicable",
+                                                         Type_reinforcement== 4 ~ "Unclear"),
                       Type_stress_exposure = case_when(Type_stress_exposure == 1 ~ "Density",
                                                        Type_stress_exposure == 2 ~ "Scent",
                                                        Type_stress_exposure == 3 ~ "Shock",
@@ -146,10 +145,18 @@ dat <- dat %>% mutate(Type_learning = case_when(Type_learning == 1 ~ "Habituatio
                                                   Age_EE_exposure == 3 ~ "Adolescent", 
                                                   Age_EE_exposure == 4 ~ "Adult",
                                                   Age_EE_exposure == 5 ~ "Unclear"),
-                      Stress_vs_EE_timing = case_when(Stress_vs_EE_timing == 1 ~ "Stress first",
-                                                      Stress_vs_EE_timing == 2 ~ "Enrichment first",
-                                                      Stress_vs_EE_timing == 3 ~ "Concurrently", 
-                                                      Stress_vs_EE_timing == 4 ~ "Unclear"))
+                      Exposure_order = case_when(Exposure_order == 1 ~ "Stress first",
+                                                      Exposure_order == 2 ~ "Enrichment first",
+                                                      Exposure_order == 3 ~ "Concurrently", 
+                                                      Exposure_order == 4 ~ "Unclear"),
+                      Age_assay = case_when(Age_assay == 1 ~ "Early postnatal",
+                                            Age_assay == 2 ~ "Adolescent",
+                                            Age_assay == 3 ~ "Adult", 
+                                            Age_assay == 4 ~ "Unclear"),
+                      Sex = case_when(Sex == 1 ~ "Female", 
+                                      Sex == 2 ~ "Male", 
+                                      Sex == 3 ~ "Mixed", 
+                                      Sex == 4 ~ "Unclear"))
 
 #making variance VCVs
 VCV_E <- impute_covariance_matrix(vi = dat$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
@@ -187,11 +194,11 @@ vis_miss(dat) +
 
 
 #useGoodman and Kruskal’s τ measure of association between categorical predictor variables (function from package GoodmanKruskal: https://cran.r-project.org/web/packages/GoodmanKruskal/vignettes/GoodmanKruskal.html)
-#GKmatrix <- GKtauDataframe(subset(dat, select = c("Sex", "Type_learning", "Learning_vs_memory", #"Appetitive_vs_aversive",  "Type_stress_exposure", "Age_stress_exposure", "Stress_duration", #"EE_social_HR", "EE_exercise", "Age_EE_exposure", "Stress_vs_EE_timing", "Age_assay")))
+#GKmatrix <- GKtauDataframe(subset(dat, select = c("Sex", "Type_learning", "Learning_vs_memory", #"Type_reinforcement",  "Type_stress_exposure", "Age_stress_exposure", "Stress_duration", #"EE_social_HR", "EE_exercise", "Age_EE_exposure", "Exposure_order", "Age_assay")))
 #plot(GKmatrix)
 
 #simple pairwise contingency tables
-table(dat$Type_learning, dat$Appetitive_vs_aversive) 
+table(dat$Type_learning, dat$Type_reinforcement) 
 table(dat$Age_stress_exposure, dat$Age_EE_exposure) 
 table(dat$Type_stress_exposure, dat$Age_stress_exposure)
 table(dat$Type_stress_exposure, dat$Age_assay)
@@ -202,7 +209,7 @@ table(dat$Type_stress_exposure, dat$Stress_duration)
 
 ### Species and strain
 
-```{r, results = 'hide', fig.width=10, fig.height=7}
+```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
 
 # create a frequency table for Species and Strain variables
 freq_1 <- as.data.frame(table(dat$Common_species, dat$Strain)) %>% rename(Species = Var1, Strain = Var2)
@@ -226,7 +233,7 @@ ggplot(data = freq_1,
 
 ### Species, strain and sex
 
-```{r, results = 'hide', fig.width=10, fig.height=7}
+```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
 
 # create frequency table for Sex, Species and Strain
 freq_2 <- as.data.frame(table(dat$Sex, dat$Common_species, dat$Strain)) %>% rename(Sex = Var1, Species = Var2, Strain = Var3)
@@ -250,9 +257,9 @@ ggplot(data = freq_2,
 freq_2 %>% filter(Freq != 0) %>% arrange(desc(Freq)) #collapesd table of values, without 0s
 ```
 
-### Age at strss and EE
+### Age at stress and enrichment
 
-```{r, results = 'hide', fig.width=10, fig.height=7}
+```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
 freq_ages1 <- as.data.frame(table(dat$Age_stress_exposure, dat$Age_EE_exposure)) %>% rename(Age_stress = Var1, Age_EE = Var2)
 is_alluvia_form(as.data.frame(freq_ages1), axes = 1:2, silent = TRUE)
 
@@ -271,9 +278,9 @@ ggplot(data = freq_ages1,
   ggtitle("Life stages used (set1)")
 ```
 
-### Age at stress, EE, assay
+### Age at stress, enrichment, and assay
 
-```{r, results = 'hide', fig.width=10, fig.height=7}
+```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
 
 freq_ages2 <- as.data.frame(table(dat$Age_stress_exposure, dat$Age_EE_exposure, dat$Age_assay)) %>% rename(Age_stress = Var1, Age_EE = Var2, Age_assay = Var3)
 
@@ -297,10 +304,10 @@ ggplot(data = freq_ages2,
 freq_ages2 %>% filter(Freq != 0) %>% arrange(desc(Freq)) #collapesd table of values, without 0s
 ```
 
-### Age at stress, EE, assay, exposure order
+### Age at stress, enrichment, assay, and exposure order
 
-```{r, results = 'hide', fig.width=10, fig.height=7}
-freq_ages3 <- as.data.frame(table(dat$Age_stress_exposure, dat$Age_EE_exposure, dat$Age_assay, dat$Stress_vs_EE_timing)) %>% rename(Age_stress = Var1, Age_EE = Var2, Age_assay = Var3, Order = Var4)
+```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
+freq_ages3 <- as.data.frame(table(dat$Age_stress_exposure, dat$Age_EE_exposure, dat$Age_assay, dat$Exposure_order)) %>% rename(Age_stress = Var1, Age_EE = Var2, Age_assay = Var3, Order = Var4)
 is_alluvia_form(as.data.frame(freq_ages3), axes = 1:4, silent = TRUE)
 
 ggplot(data = freq_ages3,
@@ -325,7 +332,7 @@ freq_ages3 %>% filter(Freq != 0) %>% arrange(desc(Freq)) #collapesd table of val
 
 ### Stress duration and type of stress
 
-```{r, results = 'hide', fig.width=10, fig.height=7}
+```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
 freq_stress1 <- as.data.frame(table(dat$Stress_duration, dat$Type_stress_exposure)) %>% rename(Stress_duration = Var1,  Stress_type = Var2)
 is_alluvia_form(as.data.frame(freq_stress1), axes = 1:2, silent = TRUE)
 
@@ -345,7 +352,7 @@ ggplot(data = freq_stress1,
 ```
 
 ### Age at stress, type of stress, stress duration
-```{r, results = 'hide', fig.width=10, fig.height=7}
+```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
 freq_stress2 <- as.data.frame(table(dat$Age_stress_exposure, dat$Stress_duration, dat$Type_stress_exposure)) %>% rename(Age_stress = Var1, Duration_stress = Var2, Type_stress = Var3)
 is_alluvia_form(as.data.frame(freq_stress2), axes = 1:3, silent = TRUE)
 
@@ -364,9 +371,10 @@ ggplot(data = freq_stress2,
   scale_x_discrete(limits = c("Age", "Duration", "Type"), expand = c(0.1, 0.1), position = "top") +
   ggtitle("Stress exposure variables (set2)")
 ```
-### Exercise, Social EE
 
-```{r, results = 'hide', fig.width=10, fig.height=7}
+### Exercise and social enrichment
+
+```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
 freq_EE1 <- as.data.frame(table(dat$EE_exercise, dat$EE_social)) %>% rename(EE_exercise = Var1, EE_social = Var2)
 is_alluvia_form(as.data.frame(freq_stress1), axes = 1:2, silent = TRUE)
 
@@ -385,8 +393,9 @@ ggplot(data = freq_EE1,
   ggtitle("EE exposure  variables (set1)")
 ```
 
-### Age EE, exercise, social
-```{r, results = 'hide', fig.width=10, fig.height=7}
+### Age  at enrichment, exercise and social enrichment
+
+```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
 freq_EE2 <- as.data.frame(table(dat$Age_EE_exposure, dat$EE_exercise, dat$EE_social)) %>% rename(Age_EE = Var1, EE_exercise = Var2, EE_social = Var3)
 is_alluvia_form(as.data.frame(freq_EE2), axes = 1:3, silent = TRUE)
 
@@ -406,10 +415,10 @@ ggplot(data = freq_EE2,
   ggtitle("EE exposure variables (set2)")
 ```
 
-### Learning vs memory, type of reinforcement
+### Learning vs memory and type of reinforcement
 
-```{r, results = 'hide', fig.width=10, fig.height=7}
-freq_assay1 <- as.data.frame(table(dat$Learning_vs_memory, dat$Appetitive_vs_aversive)) %>% rename(Learning_Memory = Var1, Reinforcement = Var2)
+```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
+freq_assay1 <- as.data.frame(table(dat$Learning_vs_memory, dat$Type_reinforcement)) %>% rename(Learning_Memory = Var1, Reinforcement = Var2)
 is_alluvia_form(as.data.frame(freq_assay1), axes = 1:2, silent = TRUE)
 
 ggplot(data = freq_assay1,
@@ -427,10 +436,10 @@ ggplot(data = freq_assay1,
   ggtitle("Behavioural assay  variables (set1)")
 ```
 
-### Age at assay, learning vs memory, type of reinforcement
+### Age at assay, learning vs memory, and type of reinforcement
 
-```{r, results = 'hide', fig.width=10, fig.height=7}
-freq_assay2 <- as.data.frame(table(dat$Age_assay, dat$Learning_vs_memory, dat$Appetitive_vs_aversive)) %>% rename(Age_assay = Var1, Learning_Memory = Var2, Reinforcement = Var3)
+```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
+freq_assay2 <- as.data.frame(table(dat$Age_assay, dat$Learning_vs_memory, dat$Type_reinforcement)) %>% rename(Age_assay = Var1, Learning_Memory = Var2, Reinforcement = Var3)
 is_alluvia_form(as.data.frame(freq_assay2), axes = 1:3, silent = TRUE)
 
 ggplot(data = freq_assay2,
@@ -451,8 +460,8 @@ ggplot(data = freq_assay2,
 
 ### Type of learning, learning vs memory, type of reinforcement
 
-```{r, results = 'hide', fig.width=10, fig.height=7}
-freq_assay3 <- as.data.frame(table(dat$Type_learning, dat$Learning_vs_memory, dat$Appetitive_vs_aversive)) %>% rename(Type = Var1, Learning_Memory = Var2, Reinforcement = Var3)
+```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
+freq_assay3 <- as.data.frame(table(dat$Type_learning, dat$Learning_vs_memory, dat$Type_reinforcement)) %>% rename(Type = Var1, Learning_Memory = Var2, Reinforcement = Var3)
 is_alluvia_form(as.data.frame(freq_assay3), axes = 1:3, silent = TRUE)
 
 ggplot(data = freq_assay3,
@@ -471,7 +480,6 @@ ggplot(data = freq_assay3,
   ggtitle("Behavioural assay  variables (set3)")
 ```
 
-````
 # Modelling with lnRR
 
 ## Environmental enrichment
@@ -501,12 +509,14 @@ orchard_plot(mod_E0, mod = "Int", xlab = "lnRR", alpha=0.4) +  # Orchard plot
         legend.text = element_text(size = 13)) 
 ```
 
-### Meta-regression
+### Metaregression
+
+### Uni-Moderator metaregression {.tabset}
 
 #### Type of learning
 The type of learning/memory response
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE,  fig.width=10, fig.height=7}
 dat1 <- filter(dat, Type_learning %in% c("Recognition", "Habituation", "Conditioning"))
 VCV_E1 <- impute_covariance_matrix(vi = dat1$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
 
@@ -529,12 +539,14 @@ Learning_E <- orchard_plot(mod_E1, mod = "Type_learning", xlab = "lnRR", alpha=0
         text = element_text(size = 15), # change font sizes
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10)) 
+
+Learning_E
 ```
 
 #### Learning vs Memory
 Is the assay broadly measuring learning or memory? 
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 mod_E2 <-  rma.mv(yi = lnRR_Ea, V = VCV_E, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID,
                                                                                         ~1|ES_ID,
                                                                                         ~1|Strain),
@@ -554,16 +566,18 @@ LvsM_E<- orchard_plot(mod_E2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0
         text = element_text(size = 15), # change font sizes
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10)) 
+
+LvsM_E
 ```
 
 #### Type of reinforcement 
 The type of cue used 
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE,  fig.width=10, fig.height=7}
 
-dat2 <- filter(dat, Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"))
+dat2 <- filter(dat, Type_reinforcement %in% c("Appetitive", "Aversive", "Not applicable"))
 VCV_E2 <- impute_covariance_matrix(vi = dat2$lnRRV_E, cluster = dat2$Study_ID, r = 0.5)
-mod_E3 <- rma.mv(yi = lnRR_Ea, V = VCV_E2, mod = ~ Appetitive_vs_aversive-1, random = list(~1|Study_ID,
+mod_E3 <- rma.mv(yi = lnRR_Ea, V = VCV_E2, mod = ~ Type_reinforcement-1, random = list(~1|Study_ID,
                                                                                             ~1|ES_ID,
                                                                                             ~1|Strain),
                  test = "t",
@@ -572,7 +586,7 @@ mod_E3 <- rma.mv(yi = lnRR_Ea, V = VCV_E2, mod = ~ Appetitive_vs_aversive-1, ran
 summary(mod_E3)
 r2_ml(mod_E3) 
 
-Reinforcement_E <-orchard_plot(mod_E3, mod = "Appetitive_vs_aversive", xlab = "lnRR", alpha=0.4) + 
+Reinforcement_E <-orchard_plot(mod_E3, mod = "Type_reinforcement", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   xlim(-0.5, 2) + 
@@ -582,12 +596,14 @@ Reinforcement_E <-orchard_plot(mod_E3, mod = "Appetitive_vs_aversive", xlab = "l
         text = element_text(size = 15), # change font sizes
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10)) 
+
+Reinforcement_E
 ````
 
 #### Social enrichment
 Does EE also include a manipulation of social environment? Note that we excluded any studies that exclusively used social enrichment.s
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE,  fig.width=10, fig.height=7}
 dat5 <- filter(dat, EE_social %in% c("Social", "Non-social"))
 VCV_E5 <- impute_covariance_matrix(vi = dat5$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
   
@@ -609,12 +625,14 @@ Social_E <-orchard_plot(mod_E4, mod = "EE_social", xlab = "lnRR", alpha=0.4) +
        text = element_text(size = 15), # change font sizes
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10)) 
+
+Social_E 
 ```
 
 #### Exercise enrichment
 Does the form of enrichment include exercise through a running wheel or treadmill?
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE,  fig.width=10, fig.height=7}
 mod_E5<- rma.mv(yi = lnRR_Ea, V = VCV_E, mod = ~EE_exercise-1, random = list(~1|Study_ID,
                                                                                ~1|ES_ID,
                                                                                ~1|Strain),
@@ -634,10 +652,13 @@ Exercise_E <-orchard_plot(mod_E5, mod = "EE_exercise", xlab = "lnRR", alpha=0.4)
         text = element_text(size = 15), # change font sizes
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10)) 
+
+Exercise_E
 ```
+
 #### Age of enrichment
 The age at which the individuals were exposed to environmental enrichment.
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 dat6 <- filter(dat, Age_EE_exposure %in% c("Adult", "Adolescent"))
 VCV_E6 <- impute_covariance_matrix(vi = dat6$lnRRV_E, cluster = dat6$Study_ID, r = 0.5)
 
@@ -661,27 +682,29 @@ Age_E<- orchard_plot(mod_E6, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) 
         text = element_text(size = 15), # change font sizes
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10))  
+
+Age_E
 ```
 
-### Full model
+### multi-moderator Full model
 ``` {r, message = FALSE, warning = FALSE}
 
 # filter data so that all K < 5 are removed
 dat_Efm <- dat %>%
   filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
-         Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"),
+         Type_reinforcement %in% c("Appetitive", "Aversive", "Not applicable"),
          EE_social %in% c("Social", "Non-social"), 
          Age_EE_exposure %in% c("Adult", "Adolescent"))
 
 VCV_Efm <- impute_covariance_matrix(vi = dat_Efm$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
                  
-mod_Efm <- rma.mv(yi = lnRR_Sa, V = VCV_Efm, mod = ~Type_learning-1 + Learning_vs_memory-1 + Appetitive_vs_aversive-1 + EE_social-1 + EE_exercise-1 + Age_EE_exposure-1 , random =   list(~1|Study_ID,
+mod_Efm <- rma.mv(yi = lnRR_Sa, V = VCV_Efm, mod = ~Type_learning-1 + Learning_vs_memory-1 + Type_reinforcement-1 + EE_social-1 + EE_exercise-1 + Age_EE_exposure-1 , random =   list(~1|Study_ID,
                                                                                     ~1|ES_ID,
                                                                                     ~1|Strain),
                     test = "t",
                  data = dat_Efm)
-summary(mod_Efm)
-r2_ml(mod_Efm) 
+#summary(mod_Efm)
+#r2_ml(mod_Efm) 
 
 res_Efm <- dredge(mod_Efm, trace=2)
 res_Efm2<- subset(res_Efm, delta <= 6, recalc.weights=FALSE)
@@ -696,7 +719,7 @@ Funnel_E<-funnel(mod_Efm, xlab = "lnRR", ylab = "Standard Error")
 
 dat_Efm$sqrt_inv_e_n <- with(dat_Efm, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
 
-PB_MR_E<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  Year_published + Type_learning + Appetitive_vs_aversive + EE_social + EE_exercise + Age_stress_exposure, random = list(~1|Study_ID,
+PB_MR_E<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  Year_published + Type_learning + Type_reinforcement + EE_social + EE_exercise + Age_stress_exposure, random = list(~1|Study_ID,
                                                           ~1|ES_ID,
                                                           ~1|Strain), method = "REML", test = "t", 
     data = dat_Efm)
@@ -778,12 +801,14 @@ orchard_plot(mod_S0, mod = "Int", xlab = "lnRR", alpha=0.4) +
         legend.text = element_text(size = 13)) 
 ```
 
-### Meta-regression
+###Metaregression
+
+### Uni-moderator metaregression {.tabset}
 
 #### Type of learning
 The type of learning/memory response 
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 dat$Type_learning<-as.factor(dat$Type_learning)
 
 VCV_S1 <- impute_covariance_matrix(vi = dat1$lnRRV_S, cluster = dat$Study_ID, r = 0.5)
@@ -807,12 +832,14 @@ Learning_S <-orchard_plot(mod_S1, mod = "Type_learning", xlab = "lnRR", alpha=0.
         text = element_text(size = 15), # change font sizes
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10)) 
+
+Learning_S
 ```
 
 #### Learning vs Memory
 Is the assay broadly measuring learning or memory? 
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 
 mod_S2 <-  rma.mv(yi = lnRR_Sa, V = VCV_S, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID,
                                                                                         ~1|ES_ID,
@@ -832,16 +859,18 @@ LvsM_S <- orchard_plot(mod_S2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=
        text = element_text(size = 15), # change font sizes
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10)) 
+
+LvsM_S 
 ```
 
 #### Type of reinforcement
 The type of cue used 
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 
 VCV_S2 <- VCV_E <- impute_covariance_matrix(vi = dat2$lnRRV_S, cluster = dat$Study_ID, r = 0.5)
 
-mod_S3 <- rma.mv(yi = lnRR_Sa, V = VCV_S2, mod = ~ Appetitive_vs_aversive-1, random = list(~1|Study_ID,
+mod_S3 <- rma.mv(yi = lnRR_Sa, V = VCV_S2, mod = ~ Type_reinforcement-1, random = list(~1|Study_ID,
                                                                                             ~1|ES_ID,
                                                                                             ~1|Strain),
                  test = "t",
@@ -850,7 +879,7 @@ mod_S3 <- rma.mv(yi = lnRR_Sa, V = VCV_S2, mod = ~ Appetitive_vs_aversive-1, ran
 summary(mod_S3)
 r2_ml(mod_S3) 
 
-Reinforcement_S <-orchard_plot(mod_S3, mod = "Appetitive_vs_aversive", xlab = "lnRR", alpha=0.4) + 
+Reinforcement_S <-orchard_plot(mod_S3, mod = "Type_reinforcement", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
@@ -859,12 +888,14 @@ Reinforcement_S <-orchard_plot(mod_S3, mod = "Appetitive_vs_aversive", xlab = "l
        text = element_text(size = 15), # change font sizes
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10)) 
+
+Reinforcement_S
 ````
 
 #### Type of stress
 The type of stress manipulation 
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 dat3 <- filter(dat, Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"))
 VCV_S3 <- impute_covariance_matrix(vi = dat3$lnRRV_S, cluster = dat$Study_ID, r = 0.5)
 
@@ -885,10 +916,12 @@ Stressor<- orchard_plot(mod_S4, mod = "Type_stress_exposure", xlab = "lnRR", alp
         text = element_text(size = 15), # change font sizes
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10)) 
+
+Stressor
 ````
 
 #### Age of stress
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 VCV_S3a <- impute_covariance_matrix(vi = dat$lnRRV_S, cluster = dat$Study_ID, r = 0.5)
 
 mod_S5 <-rma.mv(yi = lnRR_Sa, V = VCV_S3a, mod = ~Age_stress_exposure-1, random = list(~1|Study_ID,
@@ -908,13 +941,15 @@ Age_S <- orchard_plot(mod_S5, mod = "Age_stress_exposure", xlab = "lnRR", alpha=
         text = element_text(size = 15), # change font sizes
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10)) 
+
+Age_S 
 ```
 
 #### Stess duration
 How long was the stress applied for (chronic = every day for 7 days or more)?
 This has the highest marginal R2
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 dat4 <- filter(dat, Stress_duration %in% c("Chronic", "Acute"))
 VCV_S4 <- impute_covariance_matrix(vi = dat4$lnRRV_S, cluster = dat$Study_ID, r = 0.5)
 
@@ -935,32 +970,33 @@ Duration_S <- orchard_plot(mod_S6, mod = "Stress_duration", xlab = "lnRR", alpha
         text = element_text(size = 15), # change font sizes
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10)) 
+
+Duration_S 
 ```
 
-
-### Full model
+### Multi-moderator fullmodel
 ``` {r, message = FALSE, warning = FALSE}
 
 #selecting moderator levels with k >=5
 dat_Sfm <- dat %>%
   filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
-         Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"),
+         Type_reinforcement %in% c("Appetitive", "Aversive", "Not applicable"),
          Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"),
          Stress_duration %in% c("Chronic", "Acute"))
 
 VCV_Sfm <- impute_covariance_matrix(vi = dat_Sfm$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
                  
-mod_Sfm <- rma.mv(yi = lnRR_Sa, V = VCV_Sfm, mod = ~ Type_learning -1 + Learning_vs_memory + Appetitive_vs_aversive + Type_stress_exposure + Age_stress_exposure + Stress_duration, random =   list(~1|Study_ID,
+mod_Sfm <- rma.mv(yi = lnRR_Sa, V = VCV_Sfm, mod = ~ Type_learning -1 + Learning_vs_memory + Type_reinforcement + Type_stress_exposure + Age_stress_exposure + Stress_duration, random =   list(~1|Study_ID,
                                                                                     ~1|ES_ID,
                                                                                     ~1|Strain),
                     test = "t",
                  data = dat_Sfm)
-summary(mod_Sfm)
-r2_ml(mod_Sfm) 
+#summary(mod_Sfm)
+#r2_ml(mod_Sfm) 
 
 res_Sfm <- dredge(mod_Sfm, trace=2)
 res_Sfm2<- subset(res_Sfm, delta <= 6, recalc.weights=FALSE)
-importance(res_Sfm2) #only consists of one model with delta <=2
+importance(res_Sfm2) 
 ```
 
 ### Publication bias & sensitivity analysis
@@ -975,7 +1011,7 @@ dat_Sfm$sqrt_inv_e_n <- with(dat_Sfm, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
 #time lag bias and eggers regression
 dat_Sfm$c_Year_published <- as.vector(scale(dat_Sfm$Year_published, scale = F))
 
-PB_MR_S<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  c_Year_published + Type_learning + Appetitive_vs_aversive + Type_stress_exposure + Age_stress_exposure, random = list(~1|Study_ID,
+PB_MR_S<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  c_Year_published + Type_learning + Type_reinforcement + Type_stress_exposure + Age_stress_exposure, random = list(~1|Study_ID,
                                                           ~1|ES_ID,
                                                           ~1|Strain), 
                  method = "REML", 
@@ -1037,7 +1073,6 @@ dat$Study_ID <- as.integer(dat$Study_ID)
 
 ### Intercept
 Enriched and stress animals are better at learning and memory. 
-Note: interaction is slightly non-significant after including Wang et al (study that we shifted up due to negative values)
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_ES0 <- rma.mv(yi = lnRR_ESa, V = VCV_ES, random = list(~1|Study_ID,
@@ -1058,8 +1093,11 @@ orchard_plot(mod_ES0, mod = "Int", xlab = "lnRR", alpha=0.4) +
         text = element_text(size = 24), # change font sizes
         legend.title = element_text(size = 15),
         legend.text = element_text(size = 13)) 
+````
 
-#running the model again with the extreme outlier removed
+#### Intercept with outlier removed
+
+``` {r, message = FALSE, warning = FALSE}
 dat_outliers <- dat %>%
   filter(ES_ID != 88)
 
@@ -1084,12 +1122,14 @@ orchard_plot(mod_ESoutlier, mod = "Int", xlab = "lnRR", alpha=0.4) +
         legend.text = element_text(size = 13))   
 ```
 
-### Meta-regression
+### Metaregression
+
+### Uni-moderator metaregression {.tabset}
 
 #### Type of learning
 The type of learning/memory response 
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 VCV_ES1 <- impute_covariance_matrix(vi = dat1$lnRRV_ES, cluster = dat$Study_ID, r = 0.5)
 
 mod_ES1 <- rma.mv(yi = lnRR_ESa, V = VCV_ES1, mod = ~Type_learning-1, random = list(~1|Study_ID,
@@ -1111,12 +1151,14 @@ Learning_ES <- orchard_plot(mod_ES1, mod = "Type_learning", xlab = "lnRR", alpha
         axis.text.y = element_text(size = 10),
         legend.title = element_text(size = 7),
         legend.text = element_text(size = 7)) 
+
+Learning_ES
 ```
 
 #### Learning vs Memory
 Is the assay broadly measuring learning or memory? 
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 mod_ES2 <-  rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID, 
                                                                                            ~1|ES_ID,
                                                                                            ~1|Strain),
@@ -1136,15 +1178,17 @@ LvsM_ES <- orchard_plot(mod_ES2, mod = "Learning_vs_memory", xlab = "lnRR", alph
         axis.text.y = element_text(size = 10),
         legend.title = element_text(size = 7),
         legend.text = element_text(size = 7)) 
+
+LvsM_ES 
 ```
 
 #### Type of reinforcement
 The type of conditioning used
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 VCV_ES2 <- impute_covariance_matrix(vi = dat2$lnRRV_ES, cluster = dat2$Study_ID, r = 0.5)
 
-mod_ES3 <- rma.mv(yi = lnRR_ESa, V = VCV_ES2, mod = ~ Appetitive_vs_aversive-1, random = list(~1|Study_ID,
+mod_ES3 <- rma.mv(yi = lnRR_ESa, V = VCV_ES2, mod = ~ Type_reinforcement-1, random = list(~1|Study_ID,
                                                                                                ~1|ES_ID,
                                                                                                ~1|Strain),
                   test = "t",
@@ -1153,7 +1197,7 @@ mod_ES3 <- rma.mv(yi = lnRR_ESa, V = VCV_ES2, mod = ~ Appetitive_vs_aversive-1, 
 summary(mod_ES3)
 r2_ml(mod_ES3) 
 
-Reinforcement_ES <- orchard_plot(mod_ES3, mod = "Appetitive_vs_aversive", xlab = "lnRR", alpha=0.4) + 
+Reinforcement_ES <- orchard_plot(mod_ES3, mod = "Type_reinforcement", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
@@ -1163,12 +1207,14 @@ Reinforcement_ES <- orchard_plot(mod_ES3, mod = "Appetitive_vs_aversive", xlab =
         axis.text.y = element_text(size = 10),
         legend.title = element_text(size = 7),
         legend.text = element_text(size = 7)) 
+
+Reinforcement_ES 
 ````
 
 #### Type of stress
 The type of stress manipulation 
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 VCV_ES3 <- impute_covariance_matrix(vi = dat3$lnRRV_ES, cluster = dat$Study_ID, r = 0.5)
 mod_ES4 <- rma.mv(yi = lnRR_ESa, V = VCV_ES3, mod = ~Type_stress_exposure-1, random = list(~1|Study_ID,
                                                                                             ~1|ES_ID,
@@ -1188,11 +1234,13 @@ Stressor_ES <- orchard_plot(mod_ES4, mod = "Type_stress_exposure", xlab = "lnRR"
         axis.text.y = element_text(size = 10),
         legend.title = element_text(size = 7),
         legend.text = element_text(size = 7))  
+
+Stressor_ES 
 ````
 
 #### Age of stress
 The age at which the individuals were exposed to the stressor.
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 mod_ES5 <-rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~Age_stress_exposure-1, random = list(~1|Study_ID,
                                                                                           ~1|ES_ID,
                                                                                           ~1|Strain),
@@ -1211,13 +1259,15 @@ Age_stress_ES<-orchard_plot(mod_ES5, mod = "Age_stress_exposure", xlab = "lnRR",
         axis.text.y = element_text(size = 10),
         legend.title = element_text(size = 7),
         legend.text = element_text(size = 7)) 
+
+Age_stress_ES
 ```
 
 #### Stress duration
 How long was the stress applied for (chronic = every day for 7 days or more)?
 This has the highest marginal R2 (currentl nearly 43%) - need to redo without outlier
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 VCV_ES4 <- impute_covariance_matrix(vi = dat4$lnRRV_ES, cluster = dat4$Study_ID, r = 0.5)
 
 mod_ES6 <-rma.mv(yi = lnRR_ESa, V = VCV_ES4, mod = ~Stress_duration-1, random = list(~1|Study_ID,
@@ -1239,12 +1289,14 @@ Duration_ES<- orchard_plot(mod_ES6, mod = "Stress_duration", xlab = "lnRR", alph
         axis.text.y = element_text(size = 10),
         legend.title = element_text(size = 7),
         legend.text = element_text(size = 7)) 
+
+Duration_ES
 ```
 
 #### Social enrichment
 Does EE also include a manipulation of social environment (i.e., number of individuals in EE relative to control)? 
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 VCV_ES5 <- impute_covariance_matrix(vi = dat5$lnRRV_ES, cluster = dat5$Study_ID, r = 0.5)
 mod_ES7<- rma.mv(yi = lnRR_ESa, V = VCV_ES5, mod = ~EE_social-1, random = list(~1|Study_ID,
                                                                                 ~1|ES_ID,
@@ -1265,12 +1317,14 @@ Social_ES <- orchard_plot(mod_ES7, mod = "EE_social", xlab = "lnRR", alpha=0.4) 
         axis.text.y = element_text(size = 10),
         legend.title = element_text(size = 7),
         legend.text = element_text(size = 7)) 
+
+Social_ES
 ```
 
 #### Exercise enrichment
 Does the form of enrichment include exercise through a running wheel or treadmill? 
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 mod_ES8<- rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~EE_exercise-1, random = list(~1|Study_ID, 
     ~1|ES_ID,
     ~1|Strain),
@@ -1290,13 +1344,15 @@ Exercise_ES <- orchard_plot(mod_ES8, mod = "EE_exercise", xlab = "lnRR", alpha=0
         axis.text.y = element_text(size = 10),
         legend.title = element_text(size = 7),
         legend.text = element_text(size = 7)) 
+
+Exercise_ES
 ```
 
 #### Order to treatment exposure
 What order were animals exposed to stress and EE
 
-``` {r, message = FALSE, warning = FALSE}
-mod_ES9 <- rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~Stress_vs_EE_timing -1, random = list(~1|Study_ID, 
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+mod_ES9 <- rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~Exposure_order -1, random = list(~1|Study_ID, 
     ~1|ES_ID,
     ~1|Strain),
      test = "t",
@@ -1305,7 +1361,7 @@ mod_ES9 <- rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~Stress_vs_EE_timing -1, rand
 summary(mod_ES9)
 r2_ml(mod_ES9)
 
-Order_ES <- orchard_plot(mod_ES9, mod = "Stress_vs_EE_timing", xlab = "lnRR", alpha=0.4) + 
+Order_ES <- orchard_plot(mod_ES9, mod = "Exposure_order", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
@@ -1316,11 +1372,12 @@ Order_ES <- orchard_plot(mod_ES9, mod = "Stress_vs_EE_timing", xlab = "lnRR", al
         legend.title = element_text(size = 7),
         legend.text = element_text(size = 7)) 
 
+Order_ES 
 ```
 
-### Age of enrichment
+#### Age of enrichment
 What age were individuals exposed to EE
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 VCV_ES6 <- impute_covariance_matrix(vi = dat6$lnRRV_ES, cluster = dat6$Study_ID, r = 0.5)
 
 mod_ES10 <- rma.mv(yi = lnRR_ESa, V = VCV_ES6, mod = ~Age_EE_exposure-1, random = list(~1|Study_ID,
@@ -1343,15 +1400,14 @@ Age_enrichment_ES <- orchard_plot(mod_ES10, mod = "Age_EE_exposure", xlab = "lnR
         legend.title = element_text(size = 7),
         legend.text = element_text(size = 7)) 
 
-
+Age_enrichment_ES
 ```
 
-
-### Full model
+### Multi-moderator fullmodel
 ``` {r, message = FALSE, warning = FALSE}
 dat_ESfm <- dat %>%
   filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
-         Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"),
+         Type_reinforcement %in% c("Appetitive", "Aversive", "Not applicable"),
          EE_social %in% c("Social", "Non-social"),
          Age_EE_exposure %in% c("Adult", "Adolescent"),
          Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"),
@@ -1360,13 +1416,13 @@ dat_ESfm <- dat %>%
 
 VCV_ESfm <- impute_covariance_matrix(vi = dat_ESfm$lnRRV_ES, cluster = dat$Study_ID, r = 0.5)
                  
-mod_ESfm <- rma.mv(yi = lnRR_Sa, V = VCV_ESfm, mod = ~Type_learning-1 + Learning_vs_memory-1 + Appetitive_vs_aversive-1 + EE_social-1 + EE_exercise-1 + Age_EE_exposure-1 + Type_stress_exposure-1 + Age_stress_exposure-1 + Stress_duration-1 + Stress_vs_EE_timing, random =   list(~1|Study_ID,
+mod_ESfm <- rma.mv(yi = lnRR_Sa, V = VCV_ESfm, mod = ~Type_learning-1 + Learning_vs_memory-1 + Type_reinforcement-1 + EE_social-1 + EE_exercise-1 + Age_EE_exposure-1 + Type_stress_exposure-1 + Age_stress_exposure-1 + Stress_duration-1 + Exposure_order, random =   list(~1|Study_ID,
                                                                                     ~1|ES_ID,
                                                                                     ~1|Strain),
                     test = "t",
                  data = dat_ESfm)
-summary(mod_ESfm)
-r2_ml(mod_ESfm) 
+#summary(mod_ESfm)
+#r2_ml(mod_ESfm) 
 
 
 res_ESfm <- dredge(mod_ESfm, trace=2)
@@ -1382,7 +1438,7 @@ Funnel_ES<-funnel(mod_ESfm, xlab = "lnRR", ylab = "Standard Error")
 
 dat_ESfm$sqrt_inv_e_n <- with(dat_ESfm, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
 
-PB_MR_ES<- rma.mv(lnRR_ESa, lnRRV_ES, mods = ~1 + sqrt_inv_e_n +  Year_published + Type_learning + Appetitive_vs_aversive + EE_social + EE_exercise + Age_stress_exposure, random = list(~1|Study_ID,
+PB_MR_ES<- rma.mv(lnRR_ESa, lnRRV_ES, mods = ~1 + sqrt_inv_e_n +  Year_published + Type_learning + Type_reinforcement + EE_social + EE_exercise + Age_stress_exposure, random = list(~1|Study_ID,
                                                           ~1|ES_ID,
                                                           ~1|Strain), method = "REML", test = "t", 
     data = dat_ESfm)
@@ -1437,7 +1493,7 @@ leaveoneout_ES
 dat$Study_ID <- as.integer(dat$Study_ID)
 ```
 
-## Combined orchard plot
+### Combined orchard plot
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_list1 <- list(mod_E0, mod_S0, mod_ES0)
@@ -1493,14 +1549,11 @@ orchard_plot(mod_ES9, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) +
         legend.text = element_text(size = 13)) 
 ```
 
-# 'Pairwise effect sizes'
-Comparing ES relative to stress we can see that the increase is about 18% but ES relative to control is 12% (i.e., this is the interaction). 
+## 'Pairwise' effect sizes {.tabset}
 
-We can also see that ES relative to control 9% so these individuals actually do better than baseline individuals. There is also no significant difference between ES and EC individuals (although estimate is slightly lower), meaning that enrichment in the presence of stress can result in learning and memory that is just as good as enriched individuals without stress
+### Enrichment relative to control
 
-## Enrichment relative to control
-
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 
 VCV_E20 <- impute_covariance_matrix(vi = dat$lnRRV_E2, cluster = dat$Study_ID, r = 0.5)
 
@@ -1518,9 +1571,9 @@ i2_ml(mod_E20)
 orchard_plot(mod_E20, mod = "Int", xlab = "lnRR")
 ```
 
-## Stress relative to control
+### Stress relative to control
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 VCV_S20 <- impute_covariance_matrix(vi = dat$lnRRV_S2, cluster = dat$Study_ID, r = 0.5)
 
 mod_S20 <- rma.mv(yi = lnRR_S2a, V = VCV_S20, random = list(~1|Study_ID, 
@@ -1535,9 +1588,9 @@ i2_ml(mod_S20)
 orchard_plot(mod_S20, mod = "Int", xlab = "lnRR")
 ```
 
-## Enrichment + stress relative to control
+### Enrichment + stress relative to control
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 VCV_ES20 <- impute_covariance_matrix(vi = dat$lnRRV_ES2, cluster = dat$Study_ID, r = 0.5)
 
 mod_ES20 <- rma.mv(yi = lnRR_ES2a, V = VCV_ES20, random = list(~1|Study_ID,
@@ -1551,9 +1604,9 @@ i2_ml(mod_ES20)
 orchard_plot(mod_ES20, mod = "Int", xlab = "lnRR")
 ```
 
-## Enrichment + stress relative to stress
+### Enrichment + stress relative to stress
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 VCV_E30 <- impute_covariance_matrix(vi = dat$lnRRV_E3, cluster = dat$Study_ID, r = 0.5)
 
 mod_E30 <- rma.mv(yi = lnRR_E3a, V = VCV_E30, random = list(~1|Study_ID,
@@ -1567,9 +1620,9 @@ i2_ml(mod_E30)
 orchard_plot(mod_E30, mod = "Int", xlab = "lnRR")
 ```
 
-## Enrichment + stress relative to enrichment
+### Enrichment + stress relative to enrichment
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 VCV_S30 <- impute_covariance_matrix(vi = dat$lnRRV_S3, cluster = dat$Study_ID, r = 0.5)
 
 mod_S30 <- rma.mv(yi = lnRR_S3a, V = VCV_S30, random = list(~1|Study_ID,
@@ -1584,8 +1637,8 @@ i2_ml(mod_S30)
 orchard_plot(mod_S30, mod = "Int", xlab = "lnRR")
 ```
 
-## Combined orchard plot
-``` {r, message = FALSE, warning = FALSE}
+### Combined orchard plot
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 
 mod_list2 <- list(mod_S30, mod_E30, mod_ES20, mod_S20, mod_E20) #rearranged the order so that it matches intext results
 
@@ -1613,27 +1666,57 @@ orchard2 <- orchard_plot(merged2, mod = "Int", xlab = "lnRR", angle = 0) +
         legend.text = element_text(size = 10)) 
 
 orchard2
-
 ```
-## Panel of both orchard plots
+
+## Panel of 'focal' ES and 'pairwise' ES orchard plots
 ``` {r, message = FALSE, warning = FALSE}
+
+
 p1 <- orchard1 + orchard2 +  plot_annotation(tag_levels = 'A')
 p1
 ```
 
-## Panel of metagressions
-``` {r, message = FALSE, warning = FALSE}
+## Panel of metaregressions {.tabset}
+
+### Environmental enrichment
+``` {r, message = FALSE, warning = FALSE,  fig.width=10, fig.height=7}
 #Enrichment
 E_mod <- (LvsM_E + Learning_E + Reinforcement_E)/ (Age_E + Exercise_E + Social_E) +  plot_annotation(tag_levels = 'A')
 
+E_mod
+```
+
+### Stress
+``` {r, message = FALSE, warning = FALSE,  fig.width=10, fig.height=7}
 S_mod <- (LvsM_S + Learning_S + Reinforcement_S) / (Age_S + Stressor + Duration_S) + plot_annotation(tag_levels = 'A')
 
+S_mod
+```
+
+### Interaction
+``` {r, message = FALSE, warning = FALSE,  fig.width=10, fig.height=7}
 ES_mod <- plot_grid(LvsM_ES, Learning_ES, Reinforcement_ES, Age_enrichment_ES, Age_stress_ES, Order_ES, Exercise_ES, Social_ES, Stressor_ES, Duration_ES,
   labels = "AUTO", ncol = 5)
 
+ES_mod
 ```
 
 # Modelling with SMD
+
+## Environmental Enrichment
+
+### Intercept model
+Why does the funnel plot look so strange and why is I2 higher?
+``` {r, message = FALSE, warning = FALSE}
+mod_E0a <- rma.mv(yi = SMD_Ea, V = VCV_Ea, random = list(~1|Study_ID,
+                                                         ~1|ES_ID, 
+                                                         ~1|Strain),
+                 test = "t",
+                 data = dat)
+summary(mod_E0a)
+i2_ml(mod_E0a)
+
+```
 
 ## Stress
 
@@ -1647,31 +1730,12 @@ mod_S0a <- rma.mv(yi = SMD_Sa, V = VCV_Sa, random = list(~1|Study_ID,
                 data = dat)
 summary(mod_S0a) 
 i2_ml(mod_S0a) 
-funnel(mod_S0a) 
-
-funnel(mod_S0a, yaxis="seinv",) 
-
 
 ```
 
-### Environmental Enrichment
+## Interaction
 
-#### Intercept model
-Why does the funnel plot look so strange and why is I2 higher?
-``` {r, message = FALSE, warning = FALSE}
-mod_E0a <- rma.mv(yi = SMD_Ea, V = VCV_Ea, random = list(~1|Study_ID,
-                                                         ~1|ES_ID, 
-                                                         ~1|Strain),
-                 test = "t",
-                 data = dat)
-summary(mod_E0a)
-i2_ml(mod_E0a)
-funnel(mod_E0a) 
-```
-
-### Interaction
-
-#### Intercept model
+### Intercept model
 Why does the funnel plot look so strange and why is I2 higher?
 ``` {r, message = FALSE, warning = FALSE}
 mod_ES0a <- rma.mv(yi = SMD_ESa, V = VCV_ESa, random = list(~1|Study_ID,
@@ -1680,6 +1744,6 @@ mod_ES0a <- rma.mv(yi = SMD_ESa, V = VCV_ESa, random = list(~1|Study_ID,
                   test = "t",
                   data = dat)
 summary(mod_ES0a)
-i2_ml(mod_ES0a) #I2 is very high! 99.37%
-funnel(mod_ES0a)
+i2_ml(mod_ES0a) 
+
 ```
