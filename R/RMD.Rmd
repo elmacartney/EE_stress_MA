@@ -12,11 +12,21 @@ output:
     YAML: rmdformats::robobook
 ---
 
+```{r, include = FALSE}
+#TODO added 
+knitr::opts_chunk$set(
+message = FALSE,
+warning = FALSE, # no warnings
+cache = TRUE,# TODO - tell Erin about this - Caching to save time when kniting - this is extremely useful 
+tidy = TRUE, # this is very nice for tidying up code chuncks
+echo = TRUE
+)
+```
 #### Loading packages
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
-
-knitr::opts_chunk$set(echo = TRUE)
+# TODO please include pacakges which you did uss (do it at the end)
+#knitr::opts_chunk$set(echo = TRUE)
 pacman::p_load(tidyverse, 
                here,
                metafor,
@@ -186,6 +196,7 @@ max(dat$Year_published)
 ## Explore associations among predictor variables   
 
 ```{r, results = 'hide'}
+#TODO please adjust this fig siz and also check - other bigs too see all fig sizes look fine in HTML
 #see columns with missing values
 vis_miss(dat) +
   theme(plot.title = element_text(hjust = 0.5, vjust = 3), 
@@ -687,8 +698,10 @@ Age_E
 ```
 
 ### multi-moderator Full model
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, eval = FALSE}
 
+# TODO - I am saving the results from dredge and reopening it so that we do not need to redo this again and again (of course we need to do this again if data changes). This will become increasingly important as you do mroe complex models or write a lot of models
+# TODO - please do this for other mulit-moderator model sections
 # filter data so that all K < 5 are removed
 dat_Efm <- dat %>%
   filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
@@ -707,14 +720,26 @@ mod_Efm <- rma.mv(yi = lnRR_Sa, V = VCV_Efm, mod = ~Type_learning-1 + Learning_v
 #r2_ml(mod_Efm) 
 
 res_Efm <- dredge(mod_Efm, trace=2)
+saveRDS(res_Efm, file = here("Rdata", "res_Efm.rds"))
+# also saving the full model and data
+saveRDS(mod_Efm, file = here("Rdata", "mod_Efm.rds"))
+saveRDS(dat_Efm, file = here("Rdata", "dat_Efm.rds"))
+```
+
+```{r, message = FALSE, warning = FALSE}
+dat_Efm <- readRDS(file = here("Rdata", "dat_Efm.rds"))
+mod_Efm <- readRDS(file = here("Rdata", "mod_Efm.rds"))
+res_Efm <- readRDS(file = here("Rdata", "res_Efm.rds"))
 res_Efm2<- subset(res_Efm, delta <= 6, recalc.weights=FALSE)
 importance(res_Efm2)
 ```
 
 ### Publication bias & sensitivity analysis
 ``` {r, message = FALSE, warning = FALSE}
+#TODO - probably - you can save leave1out stuff - it saves still like I did above (this will be a good practice so in the future you can plan more complex RMD files ) 
+# funnel plot
 Funnel_E<-funnel(mod_Efm, xlab = "lnRR", ylab = "Standard Error")
-
+Funnel_E
 #year published was scaled previously  under stress PB
 
 dat_Efm$sqrt_inv_e_n <- with(dat_Efm, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
@@ -1002,8 +1027,9 @@ importance(res_Sfm2)
 ### Publication bias & sensitivity analysis
 
 ``` {r, message = FALSE, warning = FALSE}
-
-funnel(mod_Sfm, xlab = "lnRR", ylab = "Standard Error")
+# funnel plot
+Funnel_S <- funnel(mod_Sfm, xlab = "lnRR", ylab = "Standard Error")
+Funnel_S
 
 #calculating inv effective sample size for use in full meta-regression
 dat_Sfm$sqrt_inv_e_n <- with(dat_Sfm, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
@@ -1433,7 +1459,7 @@ importance(res_ESfm2)
 ### Publication bias & sensitivity analysis
 ``` {r, message = FALSE, warning = FALSE}
 Funnel_ES<-funnel(mod_ESfm, xlab = "lnRR", ylab = "Standard Error")
-
+Funnel_ES
 #year published was scaled previously under stress PB
 
 dat_ESfm$sqrt_inv_e_n <- with(dat_ESfm, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
@@ -1699,6 +1725,48 @@ ES_mod <- plot_grid(LvsM_ES, Learning_ES, Reinforcement_ES, Age_enrichment_ES, A
   labels = "AUTO", ncol = 5)
 
 ES_mod
+```
+
+## Panel of funnel plots
+``` {r, message = FALSE, warning = FALSE,  fig.width=12, fig.height=6}
+# TODO - please save figures which you use for the MS in the "fig" folder
+# TODO - I have not tried knitting yet - actually I did
+# TODO - it does not look quite right - you may want to save "funnels" object and disable this chuck or save pic and read it in (we can chat)
+# EE
+
+pdf(NULL)
+dev.control(displaylist="enable")
+par(mar=c(4,4,0.1,0))
+funnel(mod_Sfm, xlab = "lnRR", ylab = "Standard Error",
+        xlim = c(-2,2),
+        ylim = c(0,1.05))
+A <- recordPlot()
+invisible(dev.off())
+
+# Stress
+
+pdf(NULL)
+dev.control(displaylist="enable")
+par(mar=c(4,4,0.1,0))
+funnel(mod_Sfm, xlab = "lnRR", ylab = "Standard Error",
+        xlim = c(-2,2),
+        ylim = c(0,1.05))
+B <- recordPlot()
+invisible(dev.off())
+
+# Interaction
+pdf(NULL)
+dev.control(displaylist="enable")
+par(mar=c(4,4,0.1,0))
+funnel(mod_ESfm, xlab = "lnRR", ylab = "Standard Error",
+        xlim = c(-2,2),
+        ylim = c(0,1.05))
+C <- recordPlot()
+invisible(dev.off())
+
+# putting together
+funnels <- (ggdraw(A) + ggdraw(B) + ggdraw(C)) + plot_annotation(tag_levels = 'A')
+funnels
 ```
 
 # Modelling with SMD
