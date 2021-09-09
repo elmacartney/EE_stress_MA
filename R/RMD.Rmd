@@ -182,7 +182,7 @@ VCV_ESa <- impute_covariance_matrix(vi = dat$SMDV_ES, cluster = dat$Study_ID, r 
 # Data exploration
 
 ## General  
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, eval = FALSE}
 #Number of effect sizes
 length(unique(dat$ES_ID))  
 
