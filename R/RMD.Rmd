@@ -1788,6 +1788,11 @@ funnels
 
 saveRDS(funnels, file = here("Rdata", "funnels.rds"))
 funnels <- readRDS(file = here("Rdata", "funnels.rds"))
+
+par(mfrows = c(2, 2))
+plot(A)
+plot(B)
+plot(C)
 ```
 
 # Modelling with SMD
@@ -1806,8 +1811,7 @@ summary(mod_E0a)
 i2_ml(mod_E0a)
 funnel(mod_E0a)
 
-#looking at funnel plot on full model to see if it looks the same
-``` {r, message = FALSE, warning = FALSE}
+#looking at funnel plot on full model to see if it looks better
 mod_E0b <- rma.mv(yi = SMD_Ea, V = VCV_Efm, mod = ~Type_learning-1 + Learning_vs_memory-1 + Type_reinforcement-1 + EE_social-1 + EE_exercise-1 + Age_EE_exposure-1, random = list(~1|Study_ID,~1|ES_ID,~1|Strain),
                  test = "t",
                  data = dat_Efm)
@@ -1830,7 +1834,7 @@ summary(mod_S0a)
 i2_ml(mod_S0a) 
 funnel(mod_S0a)
 
-#assessing funnel 
+#assessing funnel on model model
 mod_S0b <- rma.mv(yi = SMD_Sa, V = VCV_Sfm, mod = ~ Type_learning -1 + Learning_vs_memory + Type_reinforcement + Type_stress_exposure + Age_stress_exposure + Stress_duration, random =   list(~1|Study_ID,
                                                                                     ~1|ES_ID,
                                                                                     ~1|Strain),
