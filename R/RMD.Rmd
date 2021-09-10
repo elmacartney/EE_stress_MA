@@ -734,7 +734,7 @@ res_Efm2<- subset(res_Efm, delta <= 6, recalc.weights=FALSE)
 importance(res_Efm2)
 ```
 
-### Publication bias & sensitivity analysis
+### Publication bias
 ``` {r, message = FALSE, warning = FALSE}
 #TODO - probably - you can save leave1out stuff - it saves still like I did above (this will be a good practice so in the future you can plan more complex RMD files ) 
 # funnel plot
@@ -753,8 +753,10 @@ estimates_PB_MR_E<- estimates.CI(PB_MR_E)
 estimates_PB_MR_E
 
 #no effect of inv_effective sample size or year published
+```
 
-#leave-one-out analysis
+### Leave-one-out Sensitivity analysis
+``` {r, message = FALSE, warning = FALSE, eval = FALSE}
 dat$Study_ID <- as.factor(dat$Study_ID)
 
 LeaveOneOut_effectsize <- list()
@@ -773,14 +775,22 @@ est.func <- function(mod_E0){
 
 
 #using dplyr to form data frame
-MA_CVR <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$Study_ID))
+MA_CVR_E <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$Study_ID))
 
+
+saveRDS(MA_CVR_E,file = here("Rdata", "MA_CVR_E.rds"))
+```
+
+``` {r, message = FALSE, warning = FALSE}
 #telling ggplot to stop reordering factors
-MA_CVR$left_out<- as.factor(MA_CVR$left_out)
-MA_CVR$left_out<-factor(MA_CVR$left_out, levels = MA_CVR$left_out)
+MA_CVR_E <- readRDS(file = here("Rdata", "MA_CVR_E.rds"))
+
+MA_CVR_E$left_out<- as.factor(MA_CVR_E$left_out)
+MA_CVR_E$left_out<-factor(MA_CVR_E$left_out, levels = MA_CVR_E$left_out)
+
 
 #plotting
-leaveoneout_E <- ggplot(MA_CVR) +
+leaveoneout_E <- ggplot(MA_CVR_E) +
   geom_hline(yintercept = 0, lty = 2, lwd = 1) +
   geom_hline(yintercept = mod_E0$ci.lb, lty = 3, lwd = 0.75, colour = "black") +
   geom_hline(yintercept = mod_E0$b, lty = 1, lwd = 0.75, colour = "black") +
@@ -1034,7 +1044,7 @@ res_Sfm2<- subset(res_Sfm, delta <= 6, recalc.weights=FALSE)
 importance(res_Sfm2) 
 ```
 
-### Publication bias & sensitivity analysis
+### Publication bias
 
 ``` {r, message = FALSE, warning = FALSE}
 # funnel plot
@@ -1058,8 +1068,11 @@ PB_MR_S<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  c_Year_published 
 estimates_PB_MR_S<- estimates.CI(PB_MR_S)
 estimates_PB_MR_S
 #no effect of inv_effective sample size or year published
+```
 
-#leave-one-out analysis
+### Leave-one-out sensitivity analysis
+
+``` {r, message = FALSE, warning = FALSE, eval = FALSE}
 dat$Study_ID <- as.factor(dat$Study_ID)
 
 LeaveOneOut_effectsize <- list()
@@ -1078,14 +1091,21 @@ est.func <- function(mod_E0){
 
 
 #using dplyr to form data frame
-MA_CVR <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$Study_ID))
+MA_CVR_S <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$Study_ID))
+
+saveRDS(MA_CVR_S,file = here("Rdata", "MA_CVR_S.rds"))
+
+```
+
+``` {r, message = FALSE, warning = FALSE}
+MA_CVR_S <- readRDS(file = here("Rdata", "MA_CVR_S.rds"))
 
 #telling ggplot to stop reordering factors
-MA_CVR$left_out<- as.factor(MA_CVR$left_out)
-MA_CVR$left_out<-factor(MA_CVR$left_out, levels = MA_CVR$left_out)
+MA_CVR_S$left_out<- as.factor(MA_CVR_S$left_out)
+MA_CVR_S$left_out<-factor(MA_CVR_S$left_out, levels = MA_CVR_S$left_out)
 
 #plotting
-leaveoneout_S <- ggplot(MA_CVR) +
+leaveoneout_S <- ggplot(MA_CVR_S) +
   geom_hline(yintercept = 0, lty = 2, lwd = 1) +
   geom_hline(yintercept = mod_S0$ci.lb, lty = 3, lwd = 0.75, colour = "black") +
   geom_hline(yintercept = mod_S0$b, lty = 1, lwd = 0.75, colour = "black") +
@@ -1475,7 +1495,8 @@ res_ESfm2<- subset(res_ESfm, delta <= 6, recalc.weights=FALSE)
 importance(res_ESfm2) 
 ```
 
-### Publication bias & sensitivity analysis
+### Publication bias
+
 ``` {r, message = FALSE, warning = FALSE}
 Funnel_ES<-funnel(mod_ESfm, xlab = "lnRR", ylab = "Standard Error")
 Funnel_ES
@@ -1492,8 +1513,11 @@ estimates_PB_MR_ES<- estimates.CI(PB_MR_ES)
 estimates_PB_MR_ES
 
 #no effect of inv_effective sample size or year published
+```
 
-#leave-one-out analysis
+### Leave-one-out sensitivity analysis
+
+``` {r, message = FALSE, warning = FALSE, eval = FALSE}
 dat$Study_ID <- as.factor(dat$Study_ID)
 
 LeaveOneOut_effectsize <- list()
@@ -1512,14 +1536,21 @@ est.func <- function(mod_E0){
 
 
 #using dplyr to form data frame
-MA_CVR <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$Study_ID))
+MA_CVR_ES <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$Study_ID))
+
+saveRDS(MA_CVR_ES, ,file = here("Rdata", "MA_CVR_ES.rds"))
+
+```
+
+``` {r, message = FALSE, warning = FALSE}
+MA_CVR_ES<- readRDS(here("Rdata", "MA_CVR_ES.rds"))
 
 #telling ggplot to stop reordering factors
-MA_CVR$left_out<- as.factor(MA_CVR$left_out)
-MA_CVR$left_out<-factor(MA_CVR$left_out, levels = MA_CVR$left_out)
+MA_CVR_ES$left_out<- as.factor(MA_CVR_ES$left_out)
+MA_CVR_ES$left_out<-factor(MA_CVR_ES$left_out, levels = MA_CVR_ES$left_out)
 
 #plotting
-leaveoneout_ES <- ggplot(MA_CVR) +
+leaveoneout_ES <- ggplot(MA_CVR_ES) +
   geom_hline(yintercept = 0, lty = 2, lwd = 1) +
   geom_hline(yintercept = mod_E0$ci.lb, lty = 3, lwd = 0.75, colour = "black") +
   geom_hline(yintercept = mod_E0$b, lty = 1, lwd = 0.75, colour = "black") +
