@@ -1788,11 +1788,6 @@ funnels
 
 saveRDS(funnels, file = here("Rdata", "funnels.rds"))
 funnels <- readRDS(file = here("Rdata", "funnels.rds"))
-
-par(mfrows = c(2, 2))
-plot(A)
-plot(B)
-plot(C)
 ```
 
 # Modelling with SMD
