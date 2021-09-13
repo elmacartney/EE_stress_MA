@@ -1571,7 +1571,7 @@ dat$Study_ID <- as.integer(dat$Study_ID)
 
 ### Combined orchard plot
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 mod_list1 <- list(mod_E0, mod_S0, mod_ES0)
 
 mod_res1 <- lapply(mod_list1, function(x) mod_results(x, mod = "Int"))
@@ -1589,8 +1589,10 @@ orchard1<- orchard_plot(merged1, mod = "Int", xlab = "lnRR", angle = 0) +
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals 
   xlim(-2,4.5) +
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
-  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  geom_point(aes(fill = name),  size = 4, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling +
+  scale_colour_manual(values = c("#00AEEF","#00A651","#ED1C24"))+ # change colours
+  scale_fill_manual(values=c("#00AEEF","#00A651","#ED1C24"))+
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
         text = element_text(size = 15), # change font sizes
         legend.title = element_text(size = 10),
@@ -1734,8 +1736,10 @@ orchard2 <- orchard_plot(merged2, mod = "Int", xlab = "lnRR", angle = 0) +
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals 
   xlim(-2,4.5) +
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  geom_point(aes(fill = name),  size = 4, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
+  scale_colour_manual(values = c("#7B81BE","#D7DF23","#F37158","#75CBF2","#97D2B4"))+ # change colours
+  scale_fill_manual(values=c("#7B81BE","#D7DF23","#F37158","#75CBF2","#97D2B4"))+
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
         text = element_text(size = 15), # change font sizes
         legend.title = element_text(size = 10),
@@ -1750,7 +1754,10 @@ orchard2
 
 p1 <- orchard1 + orchard2 +  plot_annotation(tag_levels = 'A')
 p1
+
+#saved as PDF: 6 x 15 inches
 ```
+
 
 ## Panel of metaregressions {.tabset}
 
@@ -1760,6 +1767,7 @@ p1
 E_mod <- (LvsM_E + Learning_E + Reinforcement_E)/ (Age_E + Exercise_E + Social_E) +  plot_annotation(tag_levels = 'A')
 
 E_mod
+#saved as pdf 10 x 15 inches
 ```
 
 ### Stress
@@ -1767,6 +1775,7 @@ E_mod
 S_mod <- (LvsM_S + Learning_S + Reinforcement_S) / (Age_S + Stressor + Duration_S) + plot_annotation(tag_levels = 'A')
 
 S_mod
+#saved as pdf 10 x 15 inches
 ```
 
 ### Interaction
@@ -1775,12 +1784,11 @@ ES_mod <- plot_grid(LvsM_ES, Learning_ES, Reinforcement_ES, Age_enrichment_ES, A
   labels = "AUTO", ncol = 5)
 
 ES_mod
+#saved as 10 x 20 inches
 ```
 
 ## Panel of funnel plots
-``` {r, message = FALSE, warning = FALSE,  fig.width=12, fig.height=6}
-# TODO - please save figures which you use for the MS in the "fig" folder
-# TODO - it does not look quite right - you may want to save "funnels" object and disable this chuck or save pic and read it in (we can chat)
+``` {r, message = FALSE, warning = FALSE,  fig.width=12, fig.height=6,echo = FALSE, eval = FALSE}
 # EE
 
 pdf(NULL)
@@ -1817,8 +1825,6 @@ invisible(dev.off())
 funnels <- (ggdraw(A) + ggdraw(B) + ggdraw(C)) + plot_annotation(tag_levels = 'A')
 funnels
 
-saveRDS(funnels, file = here("Rdata", "funnels.rds"))
-funnels <- readRDS(file = here("Rdata", "funnels.rds"))
 ```
 
 # Modelling with SMD
