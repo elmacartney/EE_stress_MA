@@ -198,7 +198,7 @@ dat_effect2 <- dat_effect2 %>% mutate(Sex_HR = case_when(Sex == 1 ~ "Female",
 ### General  
 
 - Number of effect sizes: `r length(unique(dat_effect2$ES_ID))`  
-- Number of studies: `r length(dat_effect2$Study_ID)`  
+- Number of studies: `r length(unique(dat_effect2$Study_ID))`  
 - Publication years: from `r min(dat_effect2$Year_published)` to `r max(dat_effect2$Year_published)`    
 
 
@@ -284,6 +284,26 @@ ggplot(data = freq_2,
 
 freq_2 %>% filter(Freq != 0) %>% arrange(desc(Freq)) #collapesd table of values, without 0s
 
+#same, but change order for sex to be last
+freq_2 <- as.data.frame(table(dat_effect2$Common_species, dat_effect2$Strain, dat_effect2$Sex_HR)) %>% rename(Species = Var1, Strain = Var2, Sex = Var3)
+is_alluvia_form(as.data.frame(freq_2), axes = 1:3, silent = TRUE)
+
+ggplot(data = freq_2,
+  aes(axis1 = Species, axis2 = Strain, axis3 = Sex, y = Freq)) +
+  geom_alluvium(aes(fill = Species)) +
+  geom_flow() +
+  geom_stratum(aes(fill = Species)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  #theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold")) +
+  scale_x_discrete(limits = c("Species", "Strain", "Sex"), expand = c(0.15, 0.05), position = "top") +
+  ggtitle("Species, strains and sex used (set2)")
+
+freq_2 %>% filter(Freq != 0) %>% arrange(desc(Freq)) #collapesd table of values, without 0s
 ```
 
 
@@ -475,6 +495,9 @@ ggplot(data = freq_EE3,
 freq_assay1 <- as.data.frame(table(dat_effect2$Learning_vs_memory_HR, dat_effect2$Appetitive_vs_aversive_HR)) %>% rename(Learning_Memory = Var1, Reinforcement = Var2)
 is_alluvia_form(as.data.frame(freq_assay1), axes = 1:2, silent = TRUE)
 
+install.packages("viridis")
+library(viridis)
+
 ggplot(data = freq_assay1,
   aes(axis1 = Learning_Memory, axis2 = Reinforcement, y = Freq)) +
   geom_alluvium(aes(fill = Learning_Memory)) +
@@ -528,14 +551,106 @@ ggplot(data = freq_assay3,
         axis.text.x = element_text(face="bold")) +
   scale_x_discrete(limits = c("Type", "Learning_Memory", "Reinforcement"), expand = c(0.1, 0.1), position = "top") +
   ggtitle("Behavioural assay  variables (set3)")
+
+# same but change order
+freq_assay4 <- as.data.frame(table(dat_effect2$Learning_vs_memory_HR, dat_effect2$Type_learning_HR, dat_effect2$Appetitive_vs_aversive_HR)) %>% rename(Learning_Memory = Var1, Type = Var2, Reinforcement = Var3)
+is_alluvia_form(as.data.frame(freq_assay4), axes = 1:3, silent = TRUE)
+
+ggplot(data = freq_assay4,
+  aes(axis1 = Learning_Memory, axis2 = Type, axis3 = Reinforcement, y = Freq)) +
+  geom_alluvium(aes(fill = Learning_Memory)) +
+  geom_flow() +
+  geom_stratum(aes(fill = Learning_Memory)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  #theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold")) +
+  scale_x_discrete(limits = c("Learning_Memory", "Type", "Reinforcement"), expand = c(0.1, 0.1), position = "top") +
+  ggtitle("Behavioural assay  variables (set4)")
 ```
 
 
 
-```{r assemble plots , results = 'hide'}
-#p_F0_Parent_Exposed / p_Offspring_Sex / p_Trait + plot_layout(ncol = 1, heights = c(1,1,3))
-#ggsave(file = "Figure_explorae_predictors_v0.pdf", width = 16, height = 23, units = "cm", dpi = 300, scale = 1.8,device = cairo_pdf)
+```{r redo and assemble plots , results = 'hide'}
+#species-strain-sex
+p1 <- ggplot(data = freq_2,
+  aes(axis1 = Sex, axis2 = Species, axis3 = Strain, y = Freq)) +
+  geom_alluvium(aes(fill = Sex)) +
+  geom_flow() +
+  geom_stratum(aes(fill = Sex)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  #theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold"),
+        plot.margin = unit(c(1, 1, 0, 1), "cm")) +
+  scale_x_discrete(limits = c("Sex", "Species", "Strain"), expand = c(0.15, 0.05), position = "top") +
+  ggtitle("A  study subjects")
+
+#age-duration-type stress
+p2 <- ggplot(data = freq_stress2,
+  aes(axis1 = Age_stress, axis2 = Duration_stress, axis3 = Type_stress, y = Freq)) +
+  geom_alluvium(aes(fill = Age_stress)) +
+  geom_flow() +
+  geom_stratum(aes(fill = Age_stress)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  #theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold"),
+        plot.margin = unit(c(1, 1, 0, 1), "cm")) +
+  scale_x_discrete(limits = c("Age", "Duration", "Type"), expand = c(0.1, 0.1), position = "top") +
+  ggtitle("B  stress exposure")
+
+#type-exercise-social EE
+p3 <- ggplot(data = freq_EE3,
+  aes(axis1 = Type_EE, axis2 = EE_exercise, axis3 = EE_social, y = Freq)) +
+  geom_alluvium(aes(fill = Type_EE)) +
+  geom_flow() +
+  geom_stratum(aes(fill = Type_EE)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  #theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold"),
+        plot.margin = unit(c(1, 1, 0, 1), "cm")) +
+  scale_x_discrete(limits = c("Type", "Exercise", "Social"), expand = c(0.1, 0.1), position = "top") +
+  ggtitle("C  environmental enrichment")
+
+#L/M-type-reinforcement
+p4 <- ggplot(data = freq_assay4,
+  aes(axis1 = Learning_Memory, axis2 = Type, axis3 = Reinforcement, y = Freq)) +
+  geom_alluvium(aes(fill = Learning_Memory)) +
+  geom_flow() +
+  geom_stratum(aes(fill = Learning_Memory)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  #theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold"),
+        plot.margin = unit(c(1, 1, 0, 1), "cm")) +
+  scale_x_discrete(limits = c("Learning_Memory", "Type", "Reinforcement"), expand = c(0.1, 0.1), position = "top") +
+  ggtitle("D  behavioural assay")
+
+#p1 + scale_fill_brewer(palette = "Set3") #Pastel1
+
+(p1 + scale_fill_brewer(palette = "Set3")) / (p2 + scale_fill_brewer(palette = "Set3")) / (p3 + scale_fill_brewer(palette = "Set3")) / (p4 + scale_fill_brewer(palette = "Set3")) + plot_layout(ncol = 1, heights = c(1,1,1,1,1))
+
+ggsave(file = "./figs/Figure_explore_predictors_v0.pdf", width = 10, height = 12, units = "cm", dpi = 300, scale = 2, device = cairo_pdf)
 
 # scale_fill_manual(values=c("#BAB3B3EB", "red", "yellow", "blue"))+ #note for manual colour assignment
 #https://r-charts.com/flow/ggalluvial/
+#more at : https://heads0rtai1s.github.io/2019/06/06/visuals-alluvial-ggalluvial/
+ + scale_fill_brewer(YlGnBu)
 ```
