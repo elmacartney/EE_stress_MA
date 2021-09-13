@@ -81,8 +81,8 @@ $$
 $$
 
 $$
-\frac {1} { \tilde{N} }  =
-\frac {1} { N_\text{ES}} + \frac{1}{N_\text{EC}} + 
-\frac {1}{N_\text{CS}} + \frac{1}{N_\text{CC}}.
+\sqrt{\frac {1} { \tilde{N} }}  =
+\sqrt{\frac {1} { N_\text{ES}} + \frac{1}{N_\text{EC}} + 
+\frac {1}{N_\text{CS}} + \frac{1}{N_\text{CC}}},
 $$
 $1 /\tilde{N}$ $\sqrt{1 /\tilde{N}}$ 

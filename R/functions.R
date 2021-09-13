@@ -131,9 +131,9 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
                          (2*SD_pool))
   
   
-  SMDV_E <- as.numeric(0.25*((1/data[[ES_n]] + 1/data[[EC_n]] + 1/data[[CS_n]] + 1/data[[CC_n]]
-                                  + SMD_E^2) / 
-                                    (2*(data[[ES_n]] + data[[EC_n]] + data[[CS_n]] + data[[CC_n]]))))
+  SMDV_E <- as.numeric(0.25*((1/data[[ES_n]] + 1/data[[EC_n]] + 1/data[[CS_n]] + 1/data[[CC_n]])
+                                  + (SMD_E^2 / 
+                                    2*(data[[ES_n]] + data[[EC_n]] + data[[CS_n]] + data[[CC_n]]))))
   
 
   
@@ -148,8 +148,8 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
                           SD_pool)
   
   SMDV_ES <- as.numeric((1/data[[ES_n]] + 1/data[[EC_n]] + 1/data[[CS_n]] + 1/data[[CC_n]]
-                              + SMD_E^2) / 
-                                (2*(data[[ES_n]] + data[[EC_n]] + data[[CS_n]] + data[[CC_n]])))
+                              + (SMD_E^2 / 
+                                (2*(data[[ES_n]] + data[[EC_n]] + data[[CS_n]] + data[[CC_n]])))))
   
   effect <- tibble(# lnRR
                    lnRR_E = lnRR_E,

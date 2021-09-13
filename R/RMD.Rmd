@@ -1,7 +1,6 @@
 ---
 title: "Stress x EE MA"
 authors: "Erin L Macartney, Malgorzata Lagisz, Shinichi Nakagawa"
-date: "01/07/2021"
 output:
   html_document:
     code_folding: hide
@@ -13,11 +12,21 @@ output:
     YAML: rmdformats::robobook
 ---
 
+```{r, include = FALSE}
+#TODO added 
+knitr::opts_chunk$set(
+message = FALSE,
+warning = FALSE, # no warnings
+cache = TRUE,# TODO - tell Erin about this - Caching to save time when kniting - this is extremely useful 
+tidy = TRUE, # this is very nice for tidying up code chuncks
+echo = TRUE
+)
+```
 #### Loading packages
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
-
-knitr::opts_chunk$set(echo = TRUE)
+# TODO please include pacakges which you did uss (do it at the end)
+#knitr::opts_chunk$set(echo = TRUE)
 pacman::p_load(tidyverse, 
                here,
                metafor,
@@ -27,7 +36,14 @@ pacman::p_load(tidyverse,
                corpcor,
                clubSandwich,
                MuMIn, 
-               patchwork)
+               patchwork,
+               naniar,
+               GoodmanKruskal,
+               networkD3,
+               ggplot2,
+               ggalluvial,
+               ggthemr,
+               cowplot)
 # needed for model selection using MuMin within metafor
 eval(metafor:::.MuMIn)
 
@@ -38,12 +54,12 @@ eval(metafor:::.MuMIn)
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
 dat <- read_csv(here("Data","Full_data.csv"))
 # Load custom function to extract data 
-#source(here("R/functions.R")) 
-source(here("R/functions_cleanedup.R")) 
+source(here("R/functions.R")) 
+#source(here("R/functions_cleanedup.R")) 
 ```
 
 #### Data organisation
-Getting effect sizes from function, 'flipping' effect sizes so that all effect sizes are higher values = individuals do better and learning/memory, and shifting negative values to positive as lnRR cannot use negative values
+Removing study with negative values, getting effect sizes from function, 'flipping' effect sizes so that all effect sizes are higher values = individuals do better and learning/memory, shifting negative values to positive as lnRR cannot use negative values, assigining human readable terms, and creating VCV of variance 
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
 #removing study with negative values as these are unable to be used for lnRR
@@ -96,10 +112,8 @@ dat$CC_n <- floor(dat$CC_n)
 dat$EC_n <- floor(dat$EC_n)
 dat$CS_n <- floor(dat$CS_n)
 dat$ES_n <- floor(dat$CS_n)
-```
 
-#### Assigning human readable words to moderators
-```{r, message = FALSE, warning = FALSE, results = 'hide'}
+#assigning human readable terms
 dat <- dat %>% mutate(Type_learning = case_when(Type_learning == 1 ~ "Habituation",
                                                 Type_learning == 2 ~ "Conditioning",
                                                 Type_learning == 3 ~ "Recognition", 
@@ -107,10 +121,10 @@ dat <- dat %>% mutate(Type_learning = case_when(Type_learning == 1 ~ "Habituatio
                       Learning_vs_memory = case_when(Learning_vs_memory == 1 ~ "Learning",
                                                      Learning_vs_memory == 2 ~ "Memory", 
                                                      Learning_vs_memory == 1 ~ "Unclear"),
-                      Appetitive_vs_aversive = case_when(Appetitive_vs_aversive == 1 ~"Appetitive",
-                                                         Appetitive_vs_aversive == 2 ~ "Aversive",
-                                                         Appetitive_vs_aversive == 3 ~ "Not applicable",
-                                                         Appetitive_vs_aversive == 4 ~ "Unclear"),
+                      Type_reinforcement = case_when(Type_reinforcement== 1 ~"Appetitive",
+                                                         Type_reinforcement== 2 ~ "Aversive",
+                                                         Type_reinforcement== 3 ~ "Not applicable",
+                                                         Type_reinforcement== 4 ~ "Unclear"),
                       Type_stress_exposure = case_when(Type_stress_exposure == 1 ~ "Density",
                                                        Type_stress_exposure == 2 ~ "Scent",
                                                        Type_stress_exposure == 3 ~ "Shock",
@@ -141,19 +155,20 @@ dat <- dat %>% mutate(Type_learning = case_when(Type_learning == 1 ~ "Habituatio
                                                   Age_EE_exposure == 3 ~ "Adolescent", 
                                                   Age_EE_exposure == 4 ~ "Adult",
                                                   Age_EE_exposure == 5 ~ "Unclear"),
-                      Stress_vs_EE_timing = case_when(Stress_vs_EE_timing == 1 ~ "Stress first",
-                                                      Stress_vs_EE_timing == 2 ~ "Enrichment first",
-                                                      Stress_vs_EE_timing == 3 ~ "Concurrently", 
-                                                      Stress_vs_EE_timing == 4 ~ "Unclear"))
+                      Exposure_order = case_when(Exposure_order == 1 ~ "Stress first",
+                                                      Exposure_order == 2 ~ "Enrichment first",
+                                                      Exposure_order == 3 ~ "Concurrently", 
+                                                      Exposure_order == 4 ~ "Unclear"),
+                      Age_assay = case_when(Age_assay == 1 ~ "Early postnatal",
+                                            Age_assay == 2 ~ "Adolescent",
+                                            Age_assay == 3 ~ "Adult", 
+                                            Age_assay == 4 ~ "Unclear"),
+                      Sex = case_when(Sex == 1 ~ "Female", 
+                                      Sex == 2 ~ "Male", 
+                                      Sex == 3 ~ "Mixed", 
+                                      Sex == 4 ~ "Unclear"))
 
-```
-
-#### Making Variance VCV
-Used to control for trait relatedness within individuals
-
-``` {r, message = FALSE, warning = FALSE, results = 'hide'}
-##adding data to empty VCV matrix
-
+#making variance VCVs
 VCV_E <- impute_covariance_matrix(vi = dat$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
 VCV_S <- impute_covariance_matrix(vi = dat$lnRRV_S, cluster = dat$Study_ID, r = 0.5)
 VCV_ES <- impute_covariance_matrix(vi = dat$lnRRV_ES, cluster = dat$Study_ID, r = 0.5)
@@ -164,32 +179,635 @@ VCV_ESa <- impute_covariance_matrix(vi = dat$SMDV_ES, cluster = dat$Study_ID, r 
 
 ```
 
-#### Examining the group of large/positive effect sizes
-Note that I checked the top four most positive interaction effect sizes and the data looks correct.
-Highest ES is study 27, effect size 88, where Maternally separated EE individuals freeze significantly more when given a cue from inhibitory avoidance. 
-Im not sure why the second highest one (ES 16) is so high as the control indivs do the best. 
-EE indivs do best in the 3rd highest ES (ES 10) so not sure about this one either?
-The fourth highest (ES 12) seems correct
-``` {r, message = FALSE, warning = FALSE}
-largeES_S <- dat %>%
-  slice_max(lnRR_S, n = 10)
+# Data exploration
 
-largeES_E <- dat %>%
-  slice_max(lnRR_E, n = 10)
+## General  
+``` {r, message = FALSE, warning = FALSE, eval = FALSE}
+#Number of effect sizes
+length(unique(dat$ES_ID))  
 
-largeES_ES <-dat %>%
-  slice_max(lnRR_ES, n = 10)
+#Number of studies
+length(unique(dat$Study_ID))
 
-#most of the largest effect sizes come from different papers
+#Publication years
+min(dat$Year_published) 
+max(dat$Year_published)
+```
+## Explore associations among predictor variables   
 
-````
+```{r, results = 'hide'}
+#TODO please adjust this fig siz and also check - other bigs too see all fig sizes look fine in HTML
+#see columns with missing values
+vis_miss(dat) +
+  theme(plot.title = element_text(hjust = 0.5, vjust = 3), 
+        plot.margin = margin(t = 0.5, r = 3, b = 1, l = 1, unit = "cm")) +
+  ggtitle("Missing data in the selected predictors") #no mising values
+
+
+#useGoodman and Kruskal’s τ measure of association between categorical predictor variables (function from package GoodmanKruskal: https://cran.r-project.org/web/packages/GoodmanKruskal/vignettes/GoodmanKruskal.html)
+#GKmatrix <- GKtauDataframe(subset(dat, select = c("Sex", "Type_learning", "Learning_vs_memory", #"Type_reinforcement",  "Type_stress_exposure", "Age_stress_exposure", "Stress_duration", #"EE_social_HR", "EE_exercise", "Age_EE_exposure", "Exposure_order", "Age_assay")))
+#plot(GKmatrix)
+
+#simple pairwise contingency tables
+table(dat$Type_learning, dat$Type_reinforcement) 
+table(dat$Age_stress_exposure, dat$Age_EE_exposure) 
+table(dat$Type_stress_exposure, dat$Age_stress_exposure)
+table(dat$Type_stress_exposure, dat$Age_assay)
+table(dat$Type_stress_exposure, dat$Stress_duration)
+```
+
+## Alluvial diagrams {.tabset}
+
+### Species and strain
+
+```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
+
+# create a frequency table for Species and Strain variables
+freq_1 <- as.data.frame(table(dat$Common_species, dat$Strain)) %>% rename(Species = Var1, Strain = Var2)
+
+is_alluvia_form(as.data.frame(freq_1), axes = 1:2, silent = TRUE)
+
+ggplot(data = freq_1,
+  aes(axis1 = Species, axis2 = Strain, y = Freq)) +
+  geom_alluvium(aes(fill = Strain)) +
+  geom_stratum(aes(fill = Species)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+#theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold")) +
+  scale_x_discrete(limits = c("Species", "Strain"), expand = c(0.15, 0.05), position = "top") +
+  ggtitle("Species and strains used (set1)")
+```
+
+### Species, strain and sex
+
+```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
+
+# create frequency table for Sex, Species and Strain
+freq_2 <- as.data.frame(table(dat$Sex, dat$Common_species, dat$Strain)) %>% rename(Sex = Var1, Species = Var2, Strain = Var3)
+is_alluvia_form(as.data.frame(freq_2), axes = 1:3, silent = TRUE)
+
+ggplot(data = freq_2,
+  aes(axis1 = Sex, axis2 = Species, axis3 = Strain, y = Freq)) +
+  geom_alluvium(aes(fill = Sex)) +
+  geom_flow() +
+  geom_stratum(aes(fill = Sex)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  #theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold")) +
+  scale_x_discrete(limits = c("Sex", "Species", "Strain"), expand = c(0.15, 0.05), position = "top") +
+  ggtitle("Species, strains and sex used (set2)")
+
+freq_2 %>% filter(Freq != 0) %>% arrange(desc(Freq)) #collapesd table of values, without 0s
+```
+
+### Age at stress and enrichment
+
+```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
+freq_ages1 <- as.data.frame(table(dat$Age_stress_exposure, dat$Age_EE_exposure)) %>% rename(Age_stress = Var1, Age_EE = Var2)
+is_alluvia_form(as.data.frame(freq_ages1), axes = 1:2, silent = TRUE)
+
+ggplot(data = freq_ages1,
+  aes(axis1 = Age_stress, axis2 = Age_EE, y = Freq)) +
+  geom_alluvium(aes(fill = Age_EE)) +
+  geom_stratum(aes(fill = Age_stress)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+#theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold")) +
+  scale_x_discrete(limits = c("Stress", "Enrichment"), expand = c(0.15, 0.05), position = "top") +
+  ggtitle("Life stages used (set1)")
+```
+
+### Age at stress, enrichment, and assay
+
+```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
+
+freq_ages2 <- as.data.frame(table(dat$Age_stress_exposure, dat$Age_EE_exposure, dat$Age_assay)) %>% rename(Age_stress = Var1, Age_EE = Var2, Age_assay = Var3)
+
+is_alluvia_form(as.data.frame(freq_ages2), axes = 1:3, silent = TRUE)
+
+ggplot(data = freq_ages2,
+  aes(axis1 = Age_stress, axis2 = Age_EE, axis3 = Age_assay, y = Freq)) +
+  geom_alluvium(aes(fill = Age_stress)) +
+  geom_flow() +
+  geom_stratum(aes(fill = Age_stress)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  #theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold")) +
+  scale_x_discrete(limits = c("Stress", "Enrichment", "Assay"), expand = c(0.15, 0.05), position = "top") +
+  ggtitle("Life stages used (set2)")
+
+freq_ages2 %>% filter(Freq != 0) %>% arrange(desc(Freq)) #collapesd table of values, without 0s
+```
+
+### Age at stress, enrichment, assay, and exposure order
+
+```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
+freq_ages3 <- as.data.frame(table(dat$Age_stress_exposure, dat$Age_EE_exposure, dat$Age_assay, dat$Exposure_order)) %>% rename(Age_stress = Var1, Age_EE = Var2, Age_assay = Var3, Order = Var4)
+is_alluvia_form(as.data.frame(freq_ages3), axes = 1:4, silent = TRUE)
+
+ggplot(data = freq_ages3,
+  aes(axis1 = Age_stress, axis2 = Age_EE, axis3 = Age_assay, axis4 = Order,  y = Freq)) +
+  geom_alluvium(aes(fill = Age_stress)) +
+  geom_flow() +
+  geom_stratum(aes(fill = Age_stress)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  #theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold")) +
+  scale_x_discrete(limits = c("Stress", "Enrichment", "Assay", "Order"), expand = c(0.15, 0.05), position = "top") +
+  ggtitle("Life stages used and order (set3)")
+
+freq_ages2 %>% filter(Freq != 0) %>% arrange(desc(Freq)) #collapesd table of values, without 0s
+freq_ages3 %>% filter(Freq != 0) %>% arrange(desc(Freq)) #collapesd table of values, without 0s
+```
+
+
+### Stress duration and type of stress
+
+```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
+freq_stress1 <- as.data.frame(table(dat$Stress_duration, dat$Type_stress_exposure)) %>% rename(Stress_duration = Var1,  Stress_type = Var2)
+is_alluvia_form(as.data.frame(freq_stress1), axes = 1:2, silent = TRUE)
+
+ggplot(data = freq_stress1,
+  aes(axis1 = Stress_duration, axis2 = Stress_type, y = Freq)) +
+  geom_alluvium(aes(fill = Stress_duration)) +
+  geom_stratum(aes(fill = Stress_duration)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+#theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold")) +
+  scale_x_discrete(limits = c("Duration", "Type"), expand = c(0.15, 0.05), position = "top") +
+  ggtitle("Stress exposure  variables (set1)")
+```
+
+### Age at stress, type of stress, stress duration
+```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
+freq_stress2 <- as.data.frame(table(dat$Age_stress_exposure, dat$Stress_duration, dat$Type_stress_exposure)) %>% rename(Age_stress = Var1, Duration_stress = Var2, Type_stress = Var3)
+is_alluvia_form(as.data.frame(freq_stress2), axes = 1:3, silent = TRUE)
+
+ggplot(data = freq_stress2,
+  aes(axis1 = Age_stress, axis2 = Duration_stress, axis3 = Type_stress, y = Freq)) +
+  geom_alluvium(aes(fill = Age_stress)) +
+  geom_flow() +
+  geom_stratum(aes(fill = Age_stress)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  #theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold")) +
+  scale_x_discrete(limits = c("Age", "Duration", "Type"), expand = c(0.1, 0.1), position = "top") +
+  ggtitle("Stress exposure variables (set2)")
+```
+
+### Exercise and social enrichment
+
+```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
+freq_EE1 <- as.data.frame(table(dat$EE_exercise, dat$EE_social)) %>% rename(EE_exercise = Var1, EE_social = Var2)
+is_alluvia_form(as.data.frame(freq_stress1), axes = 1:2, silent = TRUE)
+
+ggplot(data = freq_EE1,
+  aes(axis1 = EE_exercise, axis2 = EE_social, y = Freq)) +
+  geom_alluvium(aes(fill = EE_exercise)) +
+  geom_stratum(aes(fill = EE_exercise)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+#theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold")) +
+  scale_x_discrete(limits = c("Exercise", "Social"), expand = c(0.15, 0.05), position = "top") +
+  ggtitle("EE exposure  variables (set1)")
+```
+
+### Age  at enrichment, exercise and social enrichment
+
+```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
+freq_EE2 <- as.data.frame(table(dat$Age_EE_exposure, dat$EE_exercise, dat$EE_social)) %>% rename(Age_EE = Var1, EE_exercise = Var2, EE_social = Var3)
+is_alluvia_form(as.data.frame(freq_EE2), axes = 1:3, silent = TRUE)
+
+ggplot(data = freq_EE2,
+  aes(axis1 = Age_EE, axis2 = EE_exercise, axis3 = EE_social, y = Freq)) +
+  geom_alluvium(aes(fill = Age_EE)) +
+  geom_flow() +
+  geom_stratum(aes(fill = Age_EE)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  #theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold")) +
+  scale_x_discrete(limits = c("Age", "Exercise", "Social"), expand = c(0.1, 0.1), position = "top") +
+  ggtitle("EE exposure variables (set2)")
+```
+
+### Learning vs memory and type of reinforcement
+
+```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
+freq_assay1 <- as.data.frame(table(dat$Learning_vs_memory, dat$Type_reinforcement)) %>% rename(Learning_Memory = Var1, Reinforcement = Var2)
+is_alluvia_form(as.data.frame(freq_assay1), axes = 1:2, silent = TRUE)
+
+ggplot(data = freq_assay1,
+  aes(axis1 = Learning_Memory, axis2 = Reinforcement, y = Freq)) +
+  geom_alluvium(aes(fill = Learning_Memory)) +
+  geom_stratum(aes(fill = Learning_Memory)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+#theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold")) +
+  scale_x_discrete(limits = c("Learning_Memory", "Reinforcement"), expand = c(0.15, 0.05), position = "top") +
+  ggtitle("Behavioural assay  variables (set1)")
+```
+
+### Age at assay, learning vs memory, and type of reinforcement
+
+```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
+freq_assay2 <- as.data.frame(table(dat$Age_assay, dat$Learning_vs_memory, dat$Type_reinforcement)) %>% rename(Age_assay = Var1, Learning_Memory = Var2, Reinforcement = Var3)
+is_alluvia_form(as.data.frame(freq_assay2), axes = 1:3, silent = TRUE)
+
+ggplot(data = freq_assay2,
+  aes(axis1 = Age_assay, axis2 = Learning_Memory, axis3 = Reinforcement, y = Freq)) +
+  geom_alluvium(aes(fill = Age_assay)) +
+  geom_flow() +
+  geom_stratum(aes(fill = Age_assay)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  #theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold")) +
+  scale_x_discrete(limits = c("Age", "Learning_Memory", "Reinforcement"), expand = c(0.1, 0.1), position = "top") +
+  ggtitle("Behavioural assay  variables (set2)")
+```
+
+### Type of learning, learning vs memory, type of reinforcement
+
+```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
+freq_assay3 <- as.data.frame(table(dat$Type_learning, dat$Learning_vs_memory, dat$Type_reinforcement)) %>% rename(Type = Var1, Learning_Memory = Var2, Reinforcement = Var3)
+is_alluvia_form(as.data.frame(freq_assay3), axes = 1:3, silent = TRUE)
+
+ggplot(data = freq_assay3,
+  aes(axis1 = Type, axis2 = Learning_Memory, axis3 = Reinforcement, y = Freq)) +
+  geom_alluvium(aes(fill = Type)) +
+  geom_flow() +
+  geom_stratum(aes(fill = Type)) +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  #theme_minimal() +
+  theme_void() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5, vjust = 3),
+        axis.title.x = element_text(),
+        axis.text.x = element_text(face="bold")) +
+  scale_x_discrete(limits = c("Type", "Learning_Memory", "Reinforcement"), expand = c(0.1, 0.1), position = "top") +
+  ggtitle("Behavioural assay  variables (set3)")
+```
 
 # Modelling with lnRR
-Things todo: 
-- Incorporate strain as random effect
-- Consider including VCV
-- Check  outlier
-- Remove moderator levels with k < 5
+
+## Environmental enrichment
+
+### Intercept model
+Learning and memory are significantly improved when housed with environmnetal enrichment
+
+``` {r, message = FALSE, warning = FALSE}
+mod_E0 <- rma.mv(yi = lnRR_Ea, V = VCV_E, random = list(~1|Study_ID,
+                                                          ~1|ES_ID,
+                                                          ~1|Strain),
+                 test = "t",
+                 data = dat)
+summary(mod_E0) 
+i2_ml(mod_E0) 
+
+orchard_plot(mod_E0, mod = "Int", xlab = "lnRR", alpha=0.4) +  # Orchard plot 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5)+ # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2)+ # confidence intervals
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_colour_manual(values = "darkorange")+ # change colours
+  scale_fill_manual(values="darkorange")+ 
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 24), # change font sizes
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 13)) 
+```
+
+### Metaregression
+
+### Uni-Moderator metaregression {.tabset}
+
+#### Type of learning
+The type of learning/memory response
+
+``` {r, message = FALSE, warning = FALSE,  fig.width=10, fig.height=7}
+dat1 <- filter(dat, Type_learning %in% c("Recognition", "Habituation", "Conditioning"))
+VCV_E1 <- impute_covariance_matrix(vi = dat1$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
+
+mod_E1 <- rma.mv(yi = lnRR_Ea, V = VCV_E1, mod = ~Type_learning-1, random = list(~1|Study_ID,
+                                                                                  ~1|ES_ID,
+                                                                                  ~1|Strain),
+                 test = "t",
+                 data = dat1)
+
+summary(mod_E1)
+r2_ml(mod_E1) 
+
+Learning_E <- orchard_plot(mod_E1, mod = "Type_learning", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  xlim(-0.5, 2) + 
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
+
+Learning_E
+```
+
+#### Learning vs Memory
+Is the assay broadly measuring learning or memory? 
+
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+mod_E2 <-  rma.mv(yi = lnRR_Ea, V = VCV_E, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID,
+                                                                                        ~1|ES_ID,
+                                                                                        ~1|Strain),
+                  test = "t",
+                  data = dat)
+
+summary(mod_E2) 
+r2_ml(mod_E2) 
+
+LvsM_E<- orchard_plot(mod_E2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  xlim(-0.5, 2) + 
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
+
+LvsM_E
+```
+
+#### Type of reinforcement 
+The type of cue used 
+
+``` {r, message = FALSE, warning = FALSE,  fig.width=10, fig.height=7}
+
+dat2 <- filter(dat, Type_reinforcement %in% c("Appetitive", "Aversive", "Not applicable"))
+VCV_E2 <- impute_covariance_matrix(vi = dat2$lnRRV_E, cluster = dat2$Study_ID, r = 0.5)
+mod_E3 <- rma.mv(yi = lnRR_Ea, V = VCV_E2, mod = ~ Type_reinforcement-1, random = list(~1|Study_ID,
+                                                                                            ~1|ES_ID,
+                                                                                            ~1|Strain),
+                 test = "t",
+                 data = dat2)
+
+summary(mod_E3)
+r2_ml(mod_E3) 
+
+Reinforcement_E <-orchard_plot(mod_E3, mod = "Type_reinforcement", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  xlim(-0.5, 2) + 
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
+
+Reinforcement_E
+````
+
+#### Social enrichment
+Does EE also include a manipulation of social environment? Note that we excluded any studies that exclusively used social enrichment.s
+
+``` {r, message = FALSE, warning = FALSE,  fig.width=10, fig.height=7}
+dat5 <- filter(dat, EE_social %in% c("Social", "Non-social"))
+VCV_E5 <- impute_covariance_matrix(vi = dat5$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
+  
+mod_E4<- rma.mv(yi = lnRR_Ea, V = VCV_E5, mod = ~EE_social-1, random = list(~1|Study_ID, 
+                                                                             ~1|ES_ID,
+                                                                             ~1|Strain),
+                test = "t",data = dat5)
+
+summary(mod_E4)
+r2_ml(mod_E4) 
+
+Social_E <-orchard_plot(mod_E4, mod = "EE_social", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  xlim(-0.5, 2) + 
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+       text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
+
+Social_E 
+```
+
+#### Exercise enrichment
+Does the form of enrichment include exercise through a running wheel or treadmill?
+
+``` {r, message = FALSE, warning = FALSE,  fig.width=10, fig.height=7}
+mod_E5<- rma.mv(yi = lnRR_Ea, V = VCV_E, mod = ~EE_exercise-1, random = list(~1|Study_ID,
+                                                                               ~1|ES_ID,
+                                                                               ~1|Strain),
+                test = "t",
+                data = dat)
+
+summary(mod_E5)
+r2_ml(mod_E5) 
+ 
+Exercise_E <-orchard_plot(mod_E5, mod = "EE_exercise", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  xlim(-0.5, 2) + 
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
+
+Exercise_E
+```
+
+#### Age of enrichment
+The age at which the individuals were exposed to environmental enrichment.
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+dat6 <- filter(dat, Age_EE_exposure %in% c("Adult", "Adolescent"))
+VCV_E6 <- impute_covariance_matrix(vi = dat6$lnRRV_E, cluster = dat6$Study_ID, r = 0.5)
+
+
+mod_E6 <- rma.mv(yi = lnRR_Ea, V = VCV_E6, mod = ~Age_EE_exposure-1, random = list(~1|Study_ID,
+                                                                                    ~1|ES_ID,
+                                                                                    ~1|Strain),
+                 test = "t",
+                 data = dat6)
+
+summary(mod_E6) 
+r2_ml(mod_E6) 
+
+Age_E<- orchard_plot(mod_E6, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  xlim(-0.5, 2) + 
+  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10))  
+
+Age_E
+```
+
+### multi-moderator Full model
+``` {r, message = FALSE, warning = FALSE, eval = FALSE}
+
+# TODO - I am saving the results from dredge and reopening it so that we do not need to redo this again and again (of course we need to do this again if data changes). This will become increasingly important as you do mroe complex models or write a lot of models
+# TODO - please do this for other mulit-moderator model sections
+# filter data so that all K < 5 are removed
+dat_Efm <- dat %>%
+  filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
+         Type_reinforcement %in% c("Appetitive", "Aversive", "Not applicable"),
+         EE_social %in% c("Social", "Non-social"), 
+         Age_EE_exposure %in% c("Adult", "Adolescent"))
+
+VCV_Efm <- impute_covariance_matrix(vi = dat_Efm$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
+                 
+mod_Efm <- rma.mv(yi = lnRR_Sa, V = VCV_Efm, mod = ~Type_learning-1 + Learning_vs_memory + Type_reinforcement + EE_social + EE_exercise + Age_EE_exposure , random =   list(~1|Study_ID,
+                                                                                    ~1|ES_ID,
+                                                                                    ~1|Strain),
+                    test = "t",
+                 data = dat_Efm)
+#summary(mod_Efm)
+#r2_ml(mod_Efm) 
+
+res_Efm <- dredge(mod_Efm, trace=2)
+saveRDS(res_Efm, file = here("Rdata", "res_Efm.rds"))
+# also saving the full model and data
+saveRDS(mod_Efm, file = here("Rdata", "mod_Efm.rds"))
+saveRDS(dat_Efm, file = here("Rdata", "dat_Efm.rds"))
+```
+
+```{r, message = FALSE, warning = FALSE}
+dat_Efm <- readRDS(file = here("Rdata", "dat_Efm.rds"))
+mod_Efm <- readRDS(file = here("Rdata", "mod_Efm.rds"))
+res_Efm <- readRDS(file = here("Rdata", "res_Efm.rds"))
+res_Efm2<- subset(res_Efm, delta <= 6, recalc.weights=FALSE)
+importance(res_Efm2)
+```
+
+### Publication bias
+``` {r, message = FALSE, warning = FALSE}
+#TODO - probably - you can save leave1out stuff - it saves still like I did above (this will be a good practice so in the future you can plan more complex RMD files ) 
+# funnel plot
+Funnel_E<-funnel(mod_Efm, xlab = "lnRR", ylab = "Standard Error")
+Funnel_E
+#year published was scaled previously  under stress PB
+
+dat_Efm$sqrt_inv_e_n <- with(dat_Efm, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
+
+PB_MR_E<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  Year_published + Type_learning + Type_reinforcement + EE_social + EE_exercise + Age_stress_exposure, random = list(~1|Study_ID,
+                                                          ~1|ES_ID,
+                                                          ~1|Strain), method = "REML", test = "t", 
+    data = dat_Efm)
+
+estimates_PB_MR_E<- estimates.CI(PB_MR_E)
+estimates_PB_MR_E
+
+#no effect of inv_effective sample size or year published
+```
+
+### Leave-one-out Sensitivity analysis
+``` {r, message = FALSE, warning = FALSE, eval = FALSE}
+dat$Study_ID <- as.factor(dat$Study_ID)
+
+LeaveOneOut_effectsize <- list()
+for(i in 1:length(levels(dat$Study_ID))){
+  LeaveOneOut_effectsize[[i]] <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, 
+                                        random = list(~1 | Study_ID,~1| ES_ID, ~1 | Strain), 
+                                        method = "REML", data = dat[dat$Study_ID
+                                                                    != levels(dat$Study_ID)[i], ])}
+
+
+# writing function for extracting est, ci.lb, and ci.ub from all models
+est.func <- function(mod_E0){
+  df <- data.frame(est = mod_E0$b, lower = mod_E0$ci.lb, upper = mod_E0$ci.ub)
+  return(df)
+}
+
+
+#using dplyr to form data frame
+MA_CVR_E <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$Study_ID))
+
+
+saveRDS(MA_CVR_E,file = here("Rdata", "MA_CVR_E.rds"))
+```
+
+``` {r, message = FALSE, warning = FALSE}
+#telling ggplot to stop reordering factors
+MA_CVR_E <- readRDS(file = here("Rdata", "MA_CVR_E.rds"))
+
+MA_CVR_E$left_out<- as.factor(MA_CVR_E$left_out)
+MA_CVR_E$left_out<-factor(MA_CVR_E$left_out, levels = MA_CVR_E$left_out)
+
+
+#plotting
+leaveoneout_E <- ggplot(MA_CVR_E) +
+  geom_hline(yintercept = 0, lty = 2, lwd = 1) +
+  geom_hline(yintercept = mod_E0$ci.lb, lty = 3, lwd = 0.75, colour = "black") +
+  geom_hline(yintercept = mod_E0$b, lty = 1, lwd = 0.75, colour = "black") +
+  geom_hline(yintercept = mod_E0$ci.ub, lty = 3, lwd = 0.75, colour = "black") +
+  geom_pointrange(aes(x = left_out, y = est, ymin = lower, ymax = upper)) +
+  xlab("Study left out") + 
+  ylab("lnRR, 95% CI") + 
+  coord_flip() +
+  theme(panel.grid.minor = element_blank())+
+  theme_bw() + theme(panel.grid.major = element_blank()) +
+  theme(panel.grid.minor.x = element_blank() ) +
+  theme(axis.text.y = element_text(size = 6))
+
+leaveoneout_E
+
+dat$Study_ID <- as.integer(dat$Study_ID)
+```
 
 ## Stress
 
@@ -218,41 +836,16 @@ orchard_plot(mod_S0, mod = "Int", xlab = "lnRR", alpha=0.4) +
         legend.text = element_text(size = 13)) 
 ```
 
-### Meta-regression
+###Metaregression
 
-### Full model
-``` {r, message = FALSE, warning = FALSE}
-dat$Study_ID <-as.integer(dat$Study_ID)
-#selecting moderator levels with k >=5
-dat_Sfm <- dat %>%
-  filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
-         Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"),
-         Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"),
-         Stress_duration %in% c("Chronic", "Acute"))
-
-VCV_Sfm <- impute_covariance_matrix(vi = dat_Sfm$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
-                 
-mod_Sfm <- rma.mv(yi = lnRR_Sa, V = VCV_Sfm, mod = ~ Type_learning -1 + Learning_vs_memory + Appetitive_vs_aversive + Type_stress_exposure + Age_stress_exposure + Stress_duration, random =   list(~1|Study_ID,
-                                                                                    ~1|ES_ID,
-                                                                                    ~1|Strain),
-                    test = "t",
-                 data = dat_Sfm)
-summary(mod_Sfm)
-r2_ml(mod_Sfm) 
-
-res_Sfm <- dredge(mod_Sfm, trace=2)
-res_Sfm2<- subset(res_Sfm, delta <= 2, recalc.weights=FALSE)
-importance(res_Sfm2)
-```
-
+### Uni-moderator metaregression {.tabset}
 
 #### Type of learning
 The type of learning/memory response 
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 dat$Type_learning<-as.factor(dat$Type_learning)
 
-dat1 <- filter(dat, Type_learning %in% c("Recognition", "Habituation", "Conditioning"))
 VCV_S1 <- impute_covariance_matrix(vi = dat1$lnRRV_S, cluster = dat$Study_ID, r = 0.5)
 
 
@@ -265,22 +858,23 @@ mod_S1 <- rma.mv(yi = lnRR_Sa, V = VCV_S1, mod = ~Type_learning-1, random =   li
 summary(mod_S1)
 r2_ml(mod_S1) 
 
-# Orchard plot 
-orchard_plot(mod_S1, mod = "Type_learning", xlab = "lnRR", alpha=0.4) + 
+Learning_S <-orchard_plot(mod_S1, mod = "Type_learning", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
+
+Learning_S
 ```
 
 #### Learning vs Memory
 Is the assay broadly measuring learning or memory? 
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 
 mod_S2 <-  rma.mv(yi = lnRR_Sa, V = VCV_S, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID,
                                                                                         ~1|ES_ID,
@@ -291,27 +885,27 @@ mod_S2 <-  rma.mv(yi = lnRR_Sa, V = VCV_S, mod = ~Learning_vs_memory-1, random =
 summary(mod_S2) 
 r2_ml(mod_S2) 
 
-# Orchard plot 
-orchard_plot(mod_S2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) + 
+LvsM_S <- orchard_plot(mod_S2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+       text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
+
+LvsM_S 
 ```
 
-#### Appetitive vs aversive 
+#### Type of reinforcement
 The type of cue used 
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 
-dat2 <- filter(dat, Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"))
 VCV_S2 <- VCV_E <- impute_covariance_matrix(vi = dat2$lnRRV_S, cluster = dat$Study_ID, r = 0.5)
 
-mod_S3 <- rma.mv(yi = lnRR_Sa, V = VCV_S2, mod = ~ Appetitive_vs_aversive-1, random = list(~1|Study_ID,
+mod_S3 <- rma.mv(yi = lnRR_Sa, V = VCV_S2, mod = ~ Type_reinforcement-1, random = list(~1|Study_ID,
                                                                                             ~1|ES_ID,
                                                                                             ~1|Strain),
                  test = "t",
@@ -320,22 +914,23 @@ mod_S3 <- rma.mv(yi = lnRR_Sa, V = VCV_S2, mod = ~ Appetitive_vs_aversive-1, ran
 summary(mod_S3)
 r2_ml(mod_S3) 
 
-# Orchard plot 
-orchard_plot(mod_S3, mod = "Appetitive_vs_aversive", xlab = "lnRR", alpha=0.4) + 
+Reinforcement_S <-orchard_plot(mod_S3, mod = "Type_reinforcement", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+       text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
+
+Reinforcement_S
 ````
 
 #### Type of stress
 The type of stress manipulation 
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 dat3 <- filter(dat, Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"))
 VCV_S3 <- impute_covariance_matrix(vi = dat3$lnRRV_S, cluster = dat$Study_ID, r = 0.5)
 
@@ -347,50 +942,49 @@ mod_S4 <- rma.mv(yi = lnRR_Sa, V = VCV_S3, mod = ~Type_stress_exposure-1, random
 summary(mod_S4) 
 r2_ml(mod_S4)
 
-# Orchard plot 
-orchard_plot(mod_S4, mod = "Type_stress_exposure", xlab = "lnRR", alpha=0.4) + 
+Stressor<- orchard_plot(mod_S4, mod = "Type_stress_exposure", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
+
+Stressor
 ````
 
 #### Age of stress
-The age at which the individuals were exposed to the stressor.
-Note there are a lot of 'unkown' age as authors only report PND which needs to be researched. I'm wondering if this also needs an 'adolescence' category as this seesm to be popular in rodent research
-
-``` {r, message = FALSE, warning = FALSE}
-VCV_S3a <- impute_covariance_matrix(vi = dat3a$lnRRV_S, cluster = dat$Study_ID, r = 0.5)
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+VCV_S3a <- impute_covariance_matrix(vi = dat$lnRRV_S, cluster = dat$Study_ID, r = 0.5)
 
 mod_S5 <-rma.mv(yi = lnRR_Sa, V = VCV_S3a, mod = ~Age_stress_exposure-1, random = list(~1|Study_ID,
                                                                                        ~1|ES_ID,
                                                                                        ~1|Strain),
                 test = "t",
-                data = dat3a)
+                data = dat)
 summary(mod_S5) 
 r2_ml(mod_S5) 
 
-# Orchard plot 
-orchard_plot(mod_S5, mod = "Age_stress_exposure", xlab = "lnRR", alpha=0.4) + 
+Age_S <- orchard_plot(mod_S5, mod = "Age_stress_exposure", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
+
+Age_S 
 ```
 
-#### Acute vs chronic stress
+#### Stess duration
 How long was the stress applied for (chronic = every day for 7 days or more)?
 This has the highest marginal R2
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 dat4 <- filter(dat, Stress_duration %in% c("Chronic", "Acute"))
 VCV_S4 <- impute_covariance_matrix(vi = dat4$lnRRV_S, cluster = dat$Study_ID, r = 0.5)
 
@@ -402,33 +996,68 @@ mod_S6 <-rma.mv(yi = lnRR_Sa, V = VCV_S4, mod = ~Stress_duration-1, random = lis
 summary(mod_S6) 
 r2_ml(mod_S6) 
 
-# Orchard plot 
-orchard_plot(mod_S6, mod = "Stress_duration", xlab = "lnRR", alpha=0.4) + 
+Duration_S <- orchard_plot(mod_S6, mod = "Stress_duration", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
+
+Duration_S 
 ```
 
-### Publication bias & sensitivity analysis
+### Multi-moderator fullmodel
+``` {r, message = FALSE, warning = FALSE, eval = FALSE}
+
+#selecting moderator levels with k >=5
+dat_Sfm <- dat %>%
+  filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
+         Type_reinforcement %in% c("Appetitive", "Aversive", "Not applicable"),
+         Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"),
+         Stress_duration %in% c("Chronic", "Acute"))
+
+VCV_Sfm <- impute_covariance_matrix(vi = dat_Sfm$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
+                 
+mod_Sfm <- rma.mv(yi = lnRR_Sa, V = VCV_Sfm, mod = ~ Type_learning -1 + Learning_vs_memory + Type_reinforcement + Type_stress_exposure + Age_stress_exposure + Stress_duration, random =   list(~1|Study_ID,
+                                                                                    ~1|ES_ID,
+                                                                                    ~1|Strain),
+                    test = "t",
+                 data = dat_Sfm)
+#summary(mod_Sfm)
+#r2_ml(mod_Sfm) 
+
+res_Sfm <- dredge(mod_Sfm, trace=2)
+saveRDS(res_Sfm, file = here("Rdata", "res_Sfm.rds"))
+# also saving the full model and data
+saveRDS(mod_Sfm, file = here("Rdata", "mod_Sfm.rds"))
+saveRDS(dat_Sfm, file = here("Rdata", "dat_Sfm.rds"))
+```
+
+```{r, message = FALSE, warning = FALSE}
+dat_Sfm <- readRDS(file = here("Rdata", "dat_Sfm.rds"))
+mod_Sfm <- readRDS(file = here("Rdata", "mod_Sfm.rds"))
+res_Sfm <- readRDS(file = here("Rdata", "res_Sfm.rds"))
+res_Sfm2<- subset(res_Sfm, delta <= 6, recalc.weights=FALSE)
+importance(res_Sfm2) 
+```
+
+### Publication bias
 
 ``` {r, message = FALSE, warning = FALSE}
-funnel(mod_S0)
+# funnel plot
+Funnel_S <- funnel(mod_Sfm, xlab = "lnRR", ylab = "Standard Error")
+Funnel_S
 
 #calculating inv effective sample size for use in full meta-regression
-# TODO - I will add this to the method too -  in these caes - probably not really n_tilda
-dat$sqrt_inv_e_n <- with(dat, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
+dat_Sfm$sqrt_inv_e_n <- with(dat_Sfm, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
 
 #time lag bias and eggers regression
 dat_Sfm$c_Year_published <- as.vector(scale(dat_Sfm$Year_published, scale = F))
 
-#TODO - should we do this for the full model or just put key moderators indentified by our analysis
-# this is why it is good to have this at the end 
-PB_MR_S<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  c_Year_published + Type_learning + Appetitive_vs_aversive + Type_stress_exposure + Age_stress_exposure, random = list(~1|Study_ID,
+PB_MR_S<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  c_Year_published + Type_learning + Type_reinforcement + Type_stress_exposure + Age_stress_exposure, random = list(~1|Study_ID,
                                                           ~1|ES_ID,
                                                           ~1|Strain), 
                  method = "REML", 
@@ -439,8 +1068,11 @@ PB_MR_S<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  c_Year_published 
 estimates_PB_MR_S<- estimates.CI(PB_MR_S)
 estimates_PB_MR_S
 #no effect of inv_effective sample size or year published
+```
 
-#leave-one-out analysis
+### Leave-one-out sensitivity analysis
+
+``` {r, message = FALSE, warning = FALSE, eval = FALSE}
 dat$Study_ID <- as.factor(dat$Study_ID)
 
 LeaveOneOut_effectsize <- list()
@@ -459,14 +1091,21 @@ est.func <- function(mod_E0){
 
 
 #using dplyr to form data frame
-MA_CVR <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$Study_ID))
+MA_CVR_S <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$Study_ID))
+
+saveRDS(MA_CVR_S,file = here("Rdata", "MA_CVR_S.rds"))
+
+```
+
+``` {r, message = FALSE, warning = FALSE}
+MA_CVR_S <- readRDS(file = here("Rdata", "MA_CVR_S.rds"))
 
 #telling ggplot to stop reordering factors
-MA_CVR$left_out<- as.factor(MA_CVR$left_out)
-MA_CVR$left_out<-factor(MA_CVR$left_out, levels = MA_CVR$left_out)
+MA_CVR_S$left_out<- as.factor(MA_CVR_S$left_out)
+MA_CVR_S$left_out<-factor(MA_CVR_S$left_out, levels = MA_CVR_S$left_out)
 
 #plotting
-leaveoneout_S <- ggplot(MA_CVR) +
+leaveoneout_S <- ggplot(MA_CVR_S) +
   geom_hline(yintercept = 0, lty = 2, lwd = 1) +
   geom_hline(yintercept = mod_S0$ci.lb, lty = 3, lwd = 0.75, colour = "black") +
   geom_hline(yintercept = mod_S0$b, lty = 1, lwd = 0.75, colour = "black") +
@@ -485,281 +1124,11 @@ leaveoneout_S
 dat$Study_ID <- as.integer(dat$Study_ID)
 ```
 
-## Environmental enrichment
-
-### Intercept model
-Learning and memory are significantly improved when housed with environmnetal enrichment
-
-``` {r, message = FALSE, warning = FALSE}
-mod_E0 <- rma.mv(yi = lnRR_Ea, V = VCV_E, random = list(~1|Study_ID,
-                                                          ~1|ES_ID,
-                                                          ~1|Strain),
-                 test = "t",
-                 data = dat)
-summary(mod_E0) 
-i2_ml(mod_E0) 
-
-#trying orchard plot
-
-orchard_plot(mod_E0, mod = "Int", xlab = "lnRR", alpha=0.4) +  # Orchard plot 
-  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5)+ # prediction intervals
-  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2)+ # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
-  scale_colour_manual(values = "darkorange")+ # change colours
-  scale_fill_manual(values="darkorange")+ 
-  scale_size_continuous(range = c(1, 7))+ # change point scaling
-  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
-```
-
-### Meta-regression
-
-### Full model
-``` {r, message = FALSE, warning = FALSE}
-#filter data so that all K < 5 are removed
-dat_Efm <- dat %>%
-  filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
-         Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"),
-         EE_social %in% c("Social", "Non-social"))
-
-VCV_Efm <- impute_covariance_matrix(vi = dat_Efm$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
-                 
-mod_Efm <- rma.mv(yi = lnRR_Sa, V = VCV_Efm, mod = ~Type_learning-1 + Learning_vs_memory-1 + Appetitive_vs_aversive-1 + EE_social-1 + EE_exercise-1 + Age_EE_exposure-1 , random =   list(~1|Study_ID,
-                                                                                    ~1|ES_ID,
-                                                                                    ~1|Strain),
-                    test = "t",
-                 data = dat_Efm)
-summary(mod_Efm)
-r2_ml(mod_Efm) 
-
-res_Efm <- dredge(mod_Efm, trace=2)
-res_Efm2<- subset(res_Efm, delta <= 2, recalc.weights=FALSE)
-importance(res_Efm2)
-```
-
-
-#### Type of learning
-The type of learning/memory response
-
-``` {r, message = FALSE, warning = FALSE}
-VCV_E1 <- impute_covariance_matrix(vi = dat1$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
-
-mod_E1 <- rma.mv(yi = lnRR_Ea, V = VCV_E1, mod = ~Type_learning-1, random = list(~1|Study_ID,
-                                                                                  ~1|ES_ID,
-                                                                                  ~1|Strain),
-                 test = "t",
-                 data = dat1)
-
-summary(mod_E1)
-r2_ml(mod_E1) 
-
-# Orchard plot 
-orchard_plot(mod_E1, mod = "Type_learning", xlab = "lnRR", alpha=0.4) + 
-  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
-  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
-  scale_size_continuous(range = c(1, 7))+ # change point scaling
-  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
-```
-
-#### Learning vs Memory
-Is the assay broadly measuring learning or memory? 
-
-``` {r, message = FALSE, warning = FALSE}
-mod_E2 <-  rma.mv(yi = lnRR_Ea, V = VCV_E, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID,
-                                                                                        ~1|ES_ID,
-                                                                                        ~1|Strain),
-                  test = "t",
-                  data = dat)
-
-summary(mod_E2) 
-r2_ml(mod_E2) 
-
-# Orchard plot 
-orchard_plot(mod_E2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) + 
-  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
-  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
-  scale_size_continuous(range = c(1, 7))+ # change point scaling
-  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
-```
-
-#### Appetitive vs aversive 
-The type of cue used 
-
-``` {r, message = FALSE, warning = FALSE}
-VCV_E2 <- impute_covariance_matrix(vi = dat2$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
-mod_E3 <- rma.mv(yi = lnRR_Ea, V = VCV_E2, mod = ~ Appetitive_vs_aversive-1, random = list(~1|Study_ID,
-                                                                                            ~1|ES_ID,
-                                                                                            ~1|Strain),
-                 test = "t",
-                 data = dat2)
-
-summary(mod_E3)
-r2_ml(mod_E3) 
-
-# Orchard plot 
-orchard_plot(mod_E3, mod = "Appetitive_vs_aversive", xlab = "lnRR", alpha=0.4) + 
-  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
-  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
-  scale_size_continuous(range = c(1, 7))+ # change point scaling
-  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
-````
-
-#### Social enrichment
-Does EE also include a manipulation of social environment? Note that we excluded any studies that exclusively used social enrichment.s
-
-``` {r, message = FALSE, warning = FALSE}
-dat5 <- filter(dat, EE_social %in% c("Social", "Non-social"))
-VCV_E5 <- impute_covariance_matrix(vi = dat5$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
-  
-mod_E4<- rma.mv(yi = lnRR_Ea, V = VCV_E5, mod = ~EE_social-1, random = list(~1|Study_ID, 
-                                                                             ~1|ES_ID,
-                                                                             ~1|Strain),
-                test = "t",data = dat5)
-
-summary(mod_E4)
-r2_ml(mod_E4) 
-
-# Orchard plot 
-orchard_plot(mod_E4, mod = "EE_social", xlab = "lnRR", alpha=0.4) + 
-  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
-  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
-  scale_size_continuous(range = c(1, 7))+ # change point scaling
-  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
-```
-
-#### Exercise enrichment
-Does the form of enrichment include exercise through a running wheel or treadmill?
-
-``` {r, message = FALSE, warning = FALSE}
-mod_E5<- rma.mv(yi = lnRR_Ea, V = VCV_E, mod = ~EE_exercise-1, random = list(~1|Study_ID,
-                                                                               ~1|ES_ID,
-                                                                               ~1|Strain),
-                test = "t",
-                data = dat)
-
-summary(mod_E5)
-r2_ml(mod_E5) 
-
-# Orchard plot 
-orchard_plot(mod_E5, mod = "EE_exercise", xlab = "lnRR", alpha=0.4) + 
-  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
-  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
-  scale_size_continuous(range = c(1, 7))+ # change point scaling
-  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
-```
-
-#### Age of enrichment
-The age at which the individuals were exposed to environmental enrichment.
-``` {r, message = FALSE, warning = FALSE}
-mod_E6 <- rma.mv(yi = lnRR_Ea, V = VCV_E, mod = ~Age_EE_exposure-1, random = list(~1|Study_ID,
-                                                                                    ~1|ES_ID,
-                                                                                    ~1|Strain),
-                 test = "t",
-                 data = dat)
-
-summary(mod_E6) 
-r2_ml(mod_E6) 
-
-#Orchard plot 
-orchard_plot(mod_E6, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) + 
-  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
-  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
-  scale_size_continuous(range = c(1, 7))+ # change point scaling
-  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
-```
-
-### Publication bias & sensitivity analysis
-``` {r, message = FALSE, warning = FALSE}
-funnel(mod_E0)
-
-#year published was scaled previously and sqrt_inv_e_n already calculated under stress PB
-
-PB_MR_E<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  Year_published + Type_learning + Appetitive_vs_aversive + EE_social + EE_exercise + Age_stress_exposure, random = list(~1|Study_ID,
-                                                          ~1|ES_ID,
-                                                          ~1|Strain), method = "REML", test = "t", 
-    data = dat_Efm)
-
-estimates_PB_MR_E<- estimates.CI(PB_MR_E)
-estimates_PB_MR_E
-
-#no effect of inv_effective sample size or year published
-
-#leave-one-out analysis
-dat$Study_ID <- as.factor(dat$Study_ID)
-
-LeaveOneOut_effectsize <- list()
-for(i in 1:length(levels(dat$Study_ID))){
-  LeaveOneOut_effectsize[[i]] <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, 
-                                        random = list(~1 | Study_ID,~1| ES_ID, ~1 | Strain), 
-                                        method = "REML", data = dat[dat$Study_ID
-                                                                    != levels(dat$Study_ID)[i], ])}
-
-
-# writing function for extracting est, ci.lb, and ci.ub from all models
-est.func <- function(mod_E0){
-  df <- data.frame(est = mod_E0$b, lower = mod_E0$ci.lb, upper = mod_E0$ci.ub)
-  return(df)
-}
-
-
-#using dplyr to form data frame
-MA_CVR <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$Study_ID))
-
-#telling ggplot to stop reordering factors
-MA_CVR$left_out<- as.factor(MA_CVR$left_out)
-MA_CVR$left_out<-factor(MA_CVR$left_out, levels = MA_CVR$left_out)
-
-#plotting
-leaveoneout_E <- ggplot(MA_CVR) +
-  geom_hline(yintercept = 0, lty = 2, lwd = 1) +
-  geom_hline(yintercept = mod_E0$ci.lb, lty = 3, lwd = 0.75, colour = "black") +
-  geom_hline(yintercept = mod_E0$b, lty = 1, lwd = 0.75, colour = "black") +
-  geom_hline(yintercept = mod_E0$ci.ub, lty = 3, lwd = 0.75, colour = "black") +
-  geom_pointrange(aes(x = left_out, y = est, ymin = lower, ymax = upper)) +
-  xlab("Study left out") + 
-  ylab("lnRR, 95% CI") + 
-  coord_flip() +
-  theme(panel.grid.minor = element_blank())+
-  theme_bw() + theme(panel.grid.major = element_blank()) +
-  theme(panel.grid.minor.x = element_blank() ) +
-  theme(axis.text.y = element_text(size = 6))
-
-leaveoneout_E
-
-dat$Study_ID <- as.integer(dat$Study_ID)
-```
 
 ## Interaction of stress and EE
 
 ### Intercept
 Enriched and stress animals are better at learning and memory. 
-Note: interaction is slightly non-significant after including Wang et al (study that we shifted up due to negative values)
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_ES0 <- rma.mv(yi = lnRR_ESa, V = VCV_ES, random = list(~1|Study_ID,
@@ -780,8 +1149,11 @@ orchard_plot(mod_ES0, mod = "Int", xlab = "lnRR", alpha=0.4) +
         text = element_text(size = 24), # change font sizes
         legend.title = element_text(size = 15),
         legend.text = element_text(size = 13)) 
+````
 
-#running the model again with the extreme outlier removed
+#### Intercept with outlier removed
+
+``` {r, message = FALSE, warning = FALSE}
 dat_outliers <- dat %>%
   filter(ES_ID != 88)
 
@@ -806,39 +1178,14 @@ orchard_plot(mod_ESoutlier, mod = "Int", xlab = "lnRR", alpha=0.4) +
         legend.text = element_text(size = 13))   
 ```
 
-### Meta-regression
+### Metaregression
 
-### Full model
-``` {r, message = FALSE, warning = FALSE}
-dat_ESfm <- dat %>%
-  filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
-         Appetitive_vs_aversive %in% c("Appetitive", "Aversive", "Not applicable"),
-         EE_social %in% c("Social", "Non-social"),
-         Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"),
-         Stress_duration %in% c("Chronic", "Acute"), 
-         Age_stress_exposure %in% c("Prenatal", "Early postnatal", "Adult"))
-
-VCV_ESfm <- impute_covariance_matrix(vi = dat_ESfm$lnRRV_ES, cluster = dat$Study_ID, r = 0.5)
-                 
-mod_ESfm <- rma.mv(yi = lnRR_Sa, V = VCV_ESfm, mod = ~Type_learning-1 + Learning_vs_memory-1 + Appetitive_vs_aversive-1 + EE_social-1 + EE_exercise-1 + Age_EE_exposure-1 + Type_stress_exposure-1 + Age_stress_exposure-1 + Stress_duration-1, random =   list(~1|Study_ID,
-                                                                                    ~1|ES_ID,
-                                                                                    ~1|Strain),
-                    test = "t",
-                 data = dat_ESfm)
-summary(mod_ESfm)
-r2_ml(mod_ESfm) 
-
-
-res_ESfm <- dredge(mod_ESfm, trace=2)
-res_ESfm2<- subset(res_ESfm, delta <= 2, recalc.weights=FALSE)
-importance(res_Sfm2)
-```
-
+### Uni-moderator metaregression {.tabset}
 
 #### Type of learning
 The type of learning/memory response 
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 VCV_ES1 <- impute_covariance_matrix(vi = dat1$lnRRV_ES, cluster = dat$Study_ID, r = 0.5)
 
 mod_ES1 <- rma.mv(yi = lnRR_ESa, V = VCV_ES1, mod = ~Type_learning-1, random = list(~1|Study_ID,
@@ -850,22 +1197,24 @@ mod_ES1 <- rma.mv(yi = lnRR_ESa, V = VCV_ES1, mod = ~Type_learning-1, random = l
 summary(mod_ES1)
 r2_ml(mod_ES1) 
 
-# Orchard plot 
-orchard_plot(mod_ES1, mod = "Type_learning", xlab = "lnRR", alpha=0.4) + 
+Learning_ES <- orchard_plot(mod_ES1, mod = "Type_learning", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        axis.text.x = element_text(size = 10), # change font sizes
+        axis.text.y = element_text(size = 10),
+        legend.title = element_text(size = 7),
+        legend.text = element_text(size = 7)) 
+
+Learning_ES
 ```
 
 #### Learning vs Memory
 Is the assay broadly measuring learning or memory? 
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 mod_ES2 <-  rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID, 
                                                                                            ~1|ES_ID,
                                                                                            ~1|Strain),
@@ -875,25 +1224,27 @@ mod_ES2 <-  rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~Learning_vs_memory-1, rando
 summary(mod_ES2) 
 r2_ml(mod_ES2) 
 
-# Orchard plot 
-orchard_plot(mod_ES2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) + 
+LvsM_ES <- orchard_plot(mod_ES2, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        axis.text.x = element_text(size = 10), # change font sizes
+        axis.text.y = element_text(size = 10),
+        legend.title = element_text(size = 7),
+        legend.text = element_text(size = 7)) 
+
+LvsM_ES 
 ```
 
-#### Appetitive vs aversive 
-The type of cue used 
+#### Type of reinforcement
+The type of conditioning used
 
-``` {r, message = FALSE, warning = FALSE}
-VCV_ES2 <- impute_covariance_matrix(vi = dat2$lnRRV_ES, cluster = dat$Study_ID, r = 0.5)
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+VCV_ES2 <- impute_covariance_matrix(vi = dat2$lnRRV_ES, cluster = dat2$Study_ID, r = 0.5)
 
-mod_ES3 <- rma.mv(yi = lnRR_ESa, V = VCV_ES2, mod = ~ Appetitive_vs_aversive-1, random = list(~1|Study_ID,
+mod_ES3 <- rma.mv(yi = lnRR_ESa, V = VCV_ES2, mod = ~ Type_reinforcement-1, random = list(~1|Study_ID,
                                                                                                ~1|ES_ID,
                                                                                                ~1|Strain),
                   test = "t",
@@ -902,22 +1253,24 @@ mod_ES3 <- rma.mv(yi = lnRR_ESa, V = VCV_ES2, mod = ~ Appetitive_vs_aversive-1, 
 summary(mod_ES3)
 r2_ml(mod_ES3) 
 
-# Orchard plot 
-orchard_plot(mod_ES3, mod = "Appetitive_vs_aversive", xlab = "lnRR", alpha=0.4) + 
+Reinforcement_ES <- orchard_plot(mod_ES3, mod = "Type_reinforcement", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        axis.text.x = element_text(size = 10), # change font sizes
+        axis.text.y = element_text(size = 10),
+        legend.title = element_text(size = 7),
+        legend.text = element_text(size = 7)) 
+
+Reinforcement_ES 
 ````
 
 #### Type of stress
 The type of stress manipulation 
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 VCV_ES3 <- impute_covariance_matrix(vi = dat3$lnRRV_ES, cluster = dat$Study_ID, r = 0.5)
 mod_ES4 <- rma.mv(yi = lnRR_ESa, V = VCV_ES3, mod = ~Type_stress_exposure-1, random = list(~1|Study_ID,
                                                                                             ~1|ES_ID,
@@ -927,23 +1280,23 @@ mod_ES4 <- rma.mv(yi = lnRR_ESa, V = VCV_ES3, mod = ~Type_stress_exposure-1, ran
 summary(mod_ES4)
 r2_ml(mod_ES4)
 
-# Orchard plot 
-orchard_plot(mod_ES4, mod = "Type_stress_exposure", xlab = "lnRR", alpha=0.4) + 
+Stressor_ES <- orchard_plot(mod_ES4, mod = "Type_stress_exposure", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        axis.text.x = element_text(size = 10), # change font sizes
+        axis.text.y = element_text(size = 10),
+        legend.title = element_text(size = 7),
+        legend.text = element_text(size = 7))  
+
+Stressor_ES 
 ````
 
 #### Age of stress
 The age at which the individuals were exposed to the stressor.
-Note there are a lot of 'unkown' age as authors only report PND which needs to be researched. I'm wondering if this also needs an 'adolescence' category as this seesm to be popular in rodent research
-This nees to be redone after age categories are re done
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 mod_ES5 <-rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~Age_stress_exposure-1, random = list(~1|Study_ID,
                                                                                           ~1|ES_ID,
                                                                                           ~1|Strain),
@@ -952,24 +1305,27 @@ mod_ES5 <-rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~Age_stress_exposure-1, random
 summary(mod_ES5) 
 r2_ml(mod_ES5) 
 
-# Orchard plot 
-orchard_plot(mod_ES5, mod = "Age_stress_exposure", xlab = "lnRR", alpha=0.4) + 
+Age_stress_ES<-orchard_plot(mod_ES5, mod = "Age_stress_exposure", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+       axis.text.x = element_text(size = 10), # change font sizes
+        axis.text.y = element_text(size = 10),
+        legend.title = element_text(size = 7),
+        legend.text = element_text(size = 7)) 
+
+Age_stress_ES
 ```
 
-#### Acute vs chronic stress
+#### Stress duration
 How long was the stress applied for (chronic = every day for 7 days or more)?
 This has the highest marginal R2 (currentl nearly 43%) - need to redo without outlier
 
-``` {r, message = FALSE, warning = FALSE}
-VCV_ES4 <- impute_covariance_matrix(vi = dat_ES4$lnRRV_ES, cluster = dat$Study_ID, r = 0.5)
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+VCV_ES4 <- impute_covariance_matrix(vi = dat4$lnRRV_ES, cluster = dat4$Study_ID, r = 0.5)
+
 mod_ES6 <-rma.mv(yi = lnRR_ESa, V = VCV_ES4, mod = ~Stress_duration-1, random = list(~1|Study_ID,
                                                                                       ~1|ES_ID,
                                                                                       ~1|Strain),
@@ -978,23 +1334,26 @@ mod_ES6 <-rma.mv(yi = lnRR_ESa, V = VCV_ES4, mod = ~Stress_duration-1, random = 
 summary(mod_ES6) 
 r2_ml(mod_ES6) 
 
-# Orchard plot 
-orchard_plot(mod_ES6, mod = "Stress_duration", xlab = "lnRR", alpha=0.4) + 
+
+Duration_ES<- orchard_plot(mod_ES6, mod = "Stress_duration", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        axis.text.x = element_text(size = 10), # change font sizes
+        axis.text.y = element_text(size = 10),
+        legend.title = element_text(size = 7),
+        legend.text = element_text(size = 7)) 
+
+Duration_ES
 ```
 
 #### Social enrichment
 Does EE also include a manipulation of social environment (i.e., number of individuals in EE relative to control)? 
 
-``` {r, message = FALSE, warning = FALSE}
-VCV_ES5 <- impute_covariance_matrix(vi = dat5$lnRRV_ES, cluster = dat$Study_ID, r = 0.5)
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+VCV_ES5 <- impute_covariance_matrix(vi = dat5$lnRRV_ES, cluster = dat5$Study_ID, r = 0.5)
 mod_ES7<- rma.mv(yi = lnRR_ESa, V = VCV_ES5, mod = ~EE_social-1, random = list(~1|Study_ID,
                                                                                 ~1|ES_ID,
                                                                                 ~1|Strain),
@@ -1004,22 +1363,24 @@ mod_ES7<- rma.mv(yi = lnRR_ESa, V = VCV_ES5, mod = ~EE_social-1, random = list(~
 summary(mod_ES7)
 r2_ml(mod_ES7) 
 
-# Orchard plot 
-orchard_plot(mod_ES7, mod = "EE_social", xlab = "lnRR", alpha=0.4) + 
+Social_ES <- orchard_plot(mod_ES7, mod = "EE_social", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        axis.text.x = element_text(size = 10), # change font sizes
+        axis.text.y = element_text(size = 10),
+        legend.title = element_text(size = 7),
+        legend.text = element_text(size = 7)) 
+
+Social_ES
 ```
 
 #### Exercise enrichment
 Does the form of enrichment include exercise through a running wheel or treadmill? 
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 mod_ES8<- rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~EE_exercise-1, random = list(~1|Study_ID, 
     ~1|ES_ID,
     ~1|Strain),
@@ -1029,23 +1390,25 @@ mod_ES8<- rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~EE_exercise-1, random = list(
 summary(mod_ES8)
 r2_ml(mod_ES8) 
 
-# Orchard plot 
-orchard_plot(mod_ES8, mod = "EE_exercise", xlab = "lnRR", alpha=0.4) + 
+Exercise_ES <- orchard_plot(mod_ES8, mod = "EE_exercise", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+       axis.text.x = element_text(size = 10), # change font sizes
+        axis.text.y = element_text(size = 10),
+        legend.title = element_text(size = 7),
+        legend.text = element_text(size = 7)) 
+
+Exercise_ES
 ```
 
-#### Timing of EE relative to stress 
+#### Order to treatment exposure
 What order were animals exposed to stress and EE
 
-``` {r, message = FALSE, warning = FALSE}
-mod_ES9 <- rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~Stress_vs_EE_timing -1, random = list(~1|Study_ID, 
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+mod_ES9 <- rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~Exposure_order -1, random = list(~1|Study_ID, 
     ~1|ES_ID,
     ~1|Strain),
      test = "t",
@@ -1054,25 +1417,94 @@ mod_ES9 <- rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~Stress_vs_EE_timing -1, rand
 summary(mod_ES9)
 r2_ml(mod_ES9)
 
-orchard_plot(mod_ES9, mod = "Stress_vs_EE_timing", xlab = "lnRR", alpha=0.4) + 
+Order_ES <- orchard_plot(mod_ES9, mod = "Exposure_order", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+  geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 24), # change font sizes
-        legend.title = element_text(size = 15),
-        legend.text = element_text(size = 13)) 
+        axis.text.x = element_text(size = 10), # change font sizes
+        axis.text.y = element_text(size = 10),
+        legend.title = element_text(size = 7),
+        legend.text = element_text(size = 7)) 
 
+Order_ES 
 ```
 
-### Publication bias & sensitivity analysis
+#### Age of enrichment
+What age were individuals exposed to EE
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+VCV_ES6 <- impute_covariance_matrix(vi = dat6$lnRRV_ES, cluster = dat6$Study_ID, r = 0.5)
+
+mod_ES10 <- rma.mv(yi = lnRR_ESa, V = VCV_ES6, mod = ~Age_EE_exposure-1, random = list(~1|Study_ID,
+                                                                                    ~1|ES_ID,
+                                                                                    ~1|Strain),
+                 test = "t",
+                 data = dat6)
+
+summary(mod_ES10) 
+r2_ml(mod_ES10) 
+
+Age_enrichment_ES <- orchard_plot(mod_ES10, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+       axis.text.x = element_text(size = 10), # change font sizes
+        axis.text.y = element_text(size = 10),
+        legend.title = element_text(size = 7),
+        legend.text = element_text(size = 7)) 
+
+Age_enrichment_ES
+```
+
+### Multi-moderator fullmodel
+``` {r, message = FALSE, warning = FALSE, eval = FALSE}
+dat_ESfm <- dat %>%
+  filter(Type_learning %in% c("Recognition", "Habituation", "Conditioning"),
+         Type_reinforcement %in% c("Appetitive", "Aversive", "Not applicable"),
+         EE_social %in% c("Social", "Non-social"),
+         Age_EE_exposure %in% c("Adult", "Adolescent"),
+         Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"),
+         Stress_duration %in% c("Chronic", "Acute"), 
+         Age_stress_exposure %in% c("Prenatal", "Early postnatal", "Adult"))
+
+VCV_ESfm <- impute_covariance_matrix(vi = dat_ESfm$lnRRV_ES, cluster = dat$Study_ID, r = 0.5)
+                 
+mod_ESfm <- rma.mv(yi = lnRR_Sa, V = VCV_ESfm, mod = ~Type_learning-1 + Learning_vs_memory + Type_reinforcement + EE_social + EE_exercise + Age_EE_exposure + Type_stress_exposure + Age_stress_exposure + Stress_duration + Exposure_order, random =   list(~1|Study_ID,
+                                                                                    ~1|ES_ID,
+                                                                                    ~1|Strain),
+                    test = "t",
+                 data = dat_ESfm)
+#summary(mod_ESfm)
+#r2_ml(mod_ESfm) 
+
+
+res_ESfm <- dredge(mod_ESfm, trace=2)
+saveRDS(res_ESfm, file = here("Rdata", "res_ESfm.rds"))
+# also saving the full model and data
+saveRDS(mod_ESfm, file = here("Rdata", "mod_ESfm.rds"))
+saveRDS(dat_ESfm, file = here("Rdata", "dat_ESfm.rds"))
+```
+```{r, message = FALSE, warning = FALSE}
+dat_Sfm <- readRDS(file = here("Rdata", "dat_ESfm.rds"))
+mod_Sfm <- readRDS(file = here("Rdata", "mod_ESfm.rds"))
+res_Sfm <- readRDS(file = here("Rdata", "res_ESfm.rds"))
+res_ESfm2<- subset(res_ESfm, delta <= 6, recalc.weights=FALSE)
+importance(res_ESfm2) 
+```
+
+### Publication bias
+
 ``` {r, message = FALSE, warning = FALSE}
-funnel(mod_ES0)
+Funnel_ES<-funnel(mod_ESfm, xlab = "lnRR", ylab = "Standard Error")
+Funnel_ES
+#year published was scaled previously under stress PB
 
-#year published was scaled previously and sqrt_inv_e_n already calculated under stress PB
+dat_ESfm$sqrt_inv_e_n <- with(dat_ESfm, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
 
-PB_MR_ES<- rma.mv(lnRR_ESa, lnRRV_ES, mods = ~1 + sqrt_inv_e_n +  Year_published + Type_learning + Appetitive_vs_aversive + EE_social + EE_exercise + Age_stress_exposure, random = list(~1|Study_ID,
+PB_MR_ES<- rma.mv(lnRR_ESa, lnRRV_ES, mods = ~1 + sqrt_inv_e_n +  Year_published + Type_learning + Type_reinforcement + EE_social + EE_exercise + Age_stress_exposure, random = list(~1|Study_ID,
                                                           ~1|ES_ID,
                                                           ~1|Strain), method = "REML", test = "t", 
     data = dat_ESfm)
@@ -1081,8 +1513,11 @@ estimates_PB_MR_ES<- estimates.CI(PB_MR_ES)
 estimates_PB_MR_ES
 
 #no effect of inv_effective sample size or year published
+```
 
-#leave-one-out analysis
+### Leave-one-out sensitivity analysis
+
+``` {r, message = FALSE, warning = FALSE, eval = FALSE}
 dat$Study_ID <- as.factor(dat$Study_ID)
 
 LeaveOneOut_effectsize <- list()
@@ -1101,14 +1536,21 @@ est.func <- function(mod_E0){
 
 
 #using dplyr to form data frame
-MA_CVR <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$Study_ID))
+MA_CVR_ES <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$Study_ID))
+
+saveRDS(MA_CVR_ES, ,file = here("Rdata", "MA_CVR_ES.rds"))
+
+```
+
+``` {r, message = FALSE, warning = FALSE}
+MA_CVR_ES<- readRDS(here("Rdata", "MA_CVR_ES.rds"))
 
 #telling ggplot to stop reordering factors
-MA_CVR$left_out<- as.factor(MA_CVR$left_out)
-MA_CVR$left_out<-factor(MA_CVR$left_out, levels = MA_CVR$left_out)
+MA_CVR_ES$left_out<- as.factor(MA_CVR_ES$left_out)
+MA_CVR_ES$left_out<-factor(MA_CVR_ES$left_out, levels = MA_CVR_ES$left_out)
 
 #plotting
-leaveoneout_ES <- ggplot(MA_CVR) +
+leaveoneout_ES <- ggplot(MA_CVR_ES) +
   geom_hline(yintercept = 0, lty = 2, lwd = 1) +
   geom_hline(yintercept = mod_E0$ci.lb, lty = 3, lwd = 0.75, colour = "black") +
   geom_hline(yintercept = mod_E0$b, lty = 1, lwd = 0.75, colour = "black") +
@@ -1127,9 +1569,9 @@ leaveoneout_ES
 dat$Study_ID <- as.integer(dat$Study_ID)
 ```
 
-## Combined orchard plot
+### Combined orchard plot
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 mod_list1 <- list(mod_E0, mod_S0, mod_ES0)
 
 mod_res1 <- lapply(mod_list1, function(x) mod_results(x, mod = "Int"))
@@ -1137,17 +1579,26 @@ mod_res1 <- lapply(mod_list1, function(x) mod_results(x, mod = "Int"))
 merged1 <- submerge(mod_res1[[3]], mod_res1[[2]],  mod_res1[[1]], mix = T)
 merged1$mod_table$name <- factor(merged1$mod_table$name, levels = c("Intrcpt1", 
     "Intrcpt2", "Intrcpt3"), 
-    labels = rev(c("Enrichment main effect", "Stress main effect", "Enrichment x stress interaction")))
+    labels = rev(c("Enrichment ME", "Stress ME", "Interaction")))
 
 merged1$data$moderator <- factor(merged1$data$moderator, levels = c("Intrcpt1", 
     "Intrcpt2", "Intrcpt3"), 
-    labels = rev(c("Enrichment main effect", "Stress main effect", "Enrichment x stress interaction")))
+    labels = rev(c("Enrichment ME", "Stress ME", "Interaction")))
 
-orchard1<- orchard_plot(merged1, mod = "Int", xlab = "lnRR", angle = 0) 
+orchard1<- orchard_plot(merged1, mod = "Int", xlab = "lnRR", angle = 0) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals 
+  xlim(-2,4.5) +
+  geom_point(aes(fill = name),  size = 4, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling +
+  scale_colour_manual(values = c("#00AEEF","#00A651","#ED1C24"))+ # change colours
+  scale_fill_manual(values=c("#00AEEF","#00A651","#ED1C24"))+
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
 
 orchard1
-
-#TODO CI not clear and the alignment of the yaxis is strange
 ```
 
 #### Age of enrichment
@@ -1176,14 +1627,11 @@ orchard_plot(mod_ES9, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) +
         legend.text = element_text(size = 13)) 
 ```
 
-# 'Pairwise effect sizes'
-Comparing ES relative to stress we can see that the increase is about 18% but ES relative to control is 12% (i.e., this is the interaction). 
+## 'Pairwise' effect sizes {.tabset}
 
-We can also see that ES relative to control 9% so these individuals actually do better than baseline individuals. There is also no significant difference between ES and EC individuals (although estimate is slightly lower), meaning that enrichment in the presence of stress can result in learning and memory that is just as good as enriched individuals without stress
+### Enrichment relative to control
 
-## Enrichment relative to control
-
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 
 VCV_E20 <- impute_covariance_matrix(vi = dat$lnRRV_E2, cluster = dat$Study_ID, r = 0.5)
 
@@ -1201,9 +1649,9 @@ i2_ml(mod_E20)
 orchard_plot(mod_E20, mod = "Int", xlab = "lnRR")
 ```
 
-## Stress relative to control
+### Stress relative to control
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 VCV_S20 <- impute_covariance_matrix(vi = dat$lnRRV_S2, cluster = dat$Study_ID, r = 0.5)
 
 mod_S20 <- rma.mv(yi = lnRR_S2a, V = VCV_S20, random = list(~1|Study_ID, 
@@ -1218,9 +1666,9 @@ i2_ml(mod_S20)
 orchard_plot(mod_S20, mod = "Int", xlab = "lnRR")
 ```
 
-## Enrichment + stress relative to control
+### Enrichment + stress relative to control
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 VCV_ES20 <- impute_covariance_matrix(vi = dat$lnRRV_ES2, cluster = dat$Study_ID, r = 0.5)
 
 mod_ES20 <- rma.mv(yi = lnRR_ES2a, V = VCV_ES20, random = list(~1|Study_ID,
@@ -1234,9 +1682,9 @@ i2_ml(mod_ES20)
 orchard_plot(mod_ES20, mod = "Int", xlab = "lnRR")
 ```
 
-## Enrichment + stress relative to stress
+### Enrichment + stress relative to stress
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 VCV_E30 <- impute_covariance_matrix(vi = dat$lnRRV_E3, cluster = dat$Study_ID, r = 0.5)
 
 mod_E30 <- rma.mv(yi = lnRR_E3a, V = VCV_E30, random = list(~1|Study_ID,
@@ -1250,9 +1698,9 @@ i2_ml(mod_E30)
 orchard_plot(mod_E30, mod = "Int", xlab = "lnRR")
 ```
 
-## Enrichment + stress relative to enrichment
+### Enrichment + stress relative to enrichment
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 VCV_S30 <- impute_covariance_matrix(vi = dat$lnRRV_S3, cluster = dat$Study_ID, r = 0.5)
 
 mod_S30 <- rma.mv(yi = lnRR_S3a, V = VCV_S30, random = list(~1|Study_ID,
@@ -1267,8 +1715,8 @@ i2_ml(mod_S30)
 orchard_plot(mod_S30, mod = "Int", xlab = "lnRR")
 ```
 
-## Combined orchard plot
-``` {r, message = FALSE, warning = FALSE}
+### Combined orchard plot
+``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 
 mod_list2 <- list(mod_S30, mod_E30, mod_ES20, mod_S20, mod_E20) #rearranged the order so that it matches intext results
 
@@ -1276,29 +1724,133 @@ mod_res2 <- lapply(mod_list2, function(x) mod_results(x, mod = "Int"))
 
 merged2 <- submerge(mod_res2[[1]], mod_res2[[2]],  mod_res2[[3]], mod_res2[[4]],  mod_res2[[5]], mix = T)
 
-# TODO - renamed - you may want to play with this
 merged2$mod_table$name <- factor(merged2$mod_table$name, levels = c("Intrcpt1", 
     "Intrcpt2", "Intrcpt3", "Intrcpt4", "Intrcpt5"), 
-    labels = rev(c("EC/CC", "CS/CC", "ES/CC", "ES/EC", "ES/CS")))
+    labels = rev(c("EC/CC", "CS/CC", "ES/CC", "ES/CS", "ES/EC")))
 
 merged2$data$moderator <- factor(merged2$data$moderator, levels = c("Intrcpt1", 
     "Intrcpt2", "Intrcpt3", "Intrcpt4", "Intrcpt5"), 
-    labels = rev(c("EC/CC", "CS/CC", "ES/CC", "ES/EC", "ES/CS")))
+    labels = rev(c("EC/CC", "CS/CC", "ES/CC", "ES/CS", "ES/EC")))
 
-#merged$mod_table$name2 <- c("EC vs CC", "CS vs CC", "ES vs CC", "ES vs EC", "ES vs CS")
-
-orchard2 <- orchard_plot(merged2, mod = "Int", xlab = "lnRR", angle = 0) #+ geom_point(data = merged$mod_table, aes(y = name2, x = estimate))
+orchard2 <- orchard_plot(merged2, mod = "Int", xlab = "lnRR", angle = 0) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals 
+  xlim(-2,4.5) +
+  geom_point(aes(fill = name),  size = 4, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  scale_colour_manual(values = c("#7B81BE","#D7DF23","#F37158","#75CBF2","#97D2B4"))+ # change colours
+  scale_fill_manual(values=c("#7B81BE","#D7DF23","#F37158","#75CBF2","#97D2B4"))+
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
 
 orchard2
-
 ```
-## panel of both orchard plots
+
+## Panel of 'focal' ES and 'pairwise' ES orchard plots
 ``` {r, message = FALSE, warning = FALSE}
-p1 <- orchard1|orchard2 + plot_annotation(tag_levels = "a")
+
+
+p1 <- orchard1 + orchard2 +  plot_annotation(tag_levels = 'A')
 p1
+
+#saved as PDF: 6 x 15 inches
+```
+
+
+## Panel of metaregressions {.tabset}
+
+### Environmental enrichment
+``` {r, message = FALSE, warning = FALSE,  fig.width=10, fig.height=7}
+#Enrichment
+E_mod <- (LvsM_E + Learning_E + Reinforcement_E)/ (Age_E + Exercise_E + Social_E) +  plot_annotation(tag_levels = 'A')
+
+E_mod
+#saved as pdf 10 x 15 inches
+```
+
+### Stress
+``` {r, message = FALSE, warning = FALSE,  fig.width=10, fig.height=7}
+S_mod <- (LvsM_S + Learning_S + Reinforcement_S) / (Age_S + Stressor + Duration_S) + plot_annotation(tag_levels = 'A')
+
+S_mod
+#saved as pdf 10 x 15 inches
+```
+
+### Interaction
+``` {r, message = FALSE, warning = FALSE,  fig.width=10, fig.height=7}
+ES_mod <- plot_grid(LvsM_ES, Learning_ES, Reinforcement_ES, Age_enrichment_ES, Age_stress_ES, Order_ES, Exercise_ES, Social_ES, Stressor_ES, Duration_ES,
+  labels = "AUTO", ncol = 5)
+
+ES_mod
+#saved as 10 x 20 inches
+```
+
+## Panel of funnel plots
+``` {r, message = FALSE, warning = FALSE,  fig.width=12, fig.height=6,echo = FALSE, eval = FALSE}
+# EE
+
+pdf(NULL)
+dev.control(displaylist="enable")
+par(mar=c(4,4,0.1,0))
+funnel(mod_Sfm, xlab = "lnRR", ylab = "Standard Error",
+        xlim = c(-2,2),
+        ylim = c(0,1.05))
+A <- recordPlot()
+invisible(dev.off())
+
+# Stress
+
+pdf(NULL)
+dev.control(displaylist="enable")
+par(mar=c(4,4,0.1,0))
+funnel(mod_Sfm, xlab = "lnRR", ylab = "Standard Error",
+        xlim = c(-2,2),
+        ylim = c(0,1.05))
+B <- recordPlot()
+invisible(dev.off())
+
+# Interaction
+pdf(NULL)
+dev.control(displaylist="enable")
+par(mar=c(4,4,0.1,0))
+funnel(mod_ESfm, xlab = "lnRR", ylab = "Standard Error",
+        xlim = c(-2,2),
+        ylim = c(0,1.05))
+C <- recordPlot()
+invisible(dev.off())
+
+# putting together
+funnels <- (ggdraw(A) + ggdraw(B) + ggdraw(C)) + plot_annotation(tag_levels = 'A')
+funnels
+
 ```
 
 # Modelling with SMD
+
+## Environmental Enrichment
+
+### Intercept model
+Why does the funnel plot look so strange and why is I2 higher?
+``` {r, message = FALSE, warning = FALSE}
+mod_E0a <- rma.mv(yi = SMD_Ea, V = VCV_Ea, random = list(~1|Study_ID,
+                                                         ~1|ES_ID, 
+                                                         ~1|Strain),
+                 test = "t",
+                 data = dat)
+summary(mod_E0a)
+i2_ml(mod_E0a)
+funnel(mod_E0a)
+
+#looking at funnel plot on full model to see if it looks better
+mod_E0b <- rma.mv(yi = SMD_Ea, V = VCV_Efm, mod = ~Type_learning-1 + Learning_vs_memory-1 + Type_reinforcement-1 + EE_social-1 + EE_exercise-1 + Age_EE_exposure-1, random = list(~1|Study_ID,~1|ES_ID,~1|Strain),
+                 test = "t",
+                 data = dat_Efm)
+
+
+funnel(mod_E0b)
+```
 
 ## Stress
 
@@ -1312,31 +1864,20 @@ mod_S0a <- rma.mv(yi = SMD_Sa, V = VCV_Sa, random = list(~1|Study_ID,
                 data = dat)
 summary(mod_S0a) 
 i2_ml(mod_S0a) 
-funnel(mod_S0a) 
+funnel(mod_S0a)
 
-funnel(mod_S0a, yaxis="seinv",) 
-
-
+#assessing funnel on model model
+mod_S0b <- rma.mv(yi = SMD_Sa, V = VCV_Sfm, mod = ~ Type_learning -1 + Learning_vs_memory + Type_reinforcement + Type_stress_exposure + Age_stress_exposure + Stress_duration, random =   list(~1|Study_ID,
+                                                                                    ~1|ES_ID,
+                                                                                    ~1|Strain),
+                    test = "t",
+                 data = dat_Sfm)
+funnel(mod_S0b)
 ```
 
-### Environmental Enrichment
+## Interaction
 
-#### Intercept model
-Why does the funnel plot look so strange and why is I2 higher?
-``` {r, message = FALSE, warning = FALSE}
-mod_E0a <- rma.mv(yi = SMD_Ea, V = VCV_Ea, random = list(~1|Study_ID,
-                                                         ~1|ES_ID, 
-                                                         ~1|Strain),
-                 test = "t",
-                 data = dat)
-summary(mod_E0a)
-i2_ml(mod_E0a)
-funnel(mod_E0a) 
-```
-
-### Interaction
-
-#### Intercept model
+### Intercept model
 Why does the funnel plot look so strange and why is I2 higher?
 ``` {r, message = FALSE, warning = FALSE}
 mod_ES0a <- rma.mv(yi = SMD_ESa, V = VCV_ESa, random = list(~1|Study_ID,
@@ -1345,6 +1886,14 @@ mod_ES0a <- rma.mv(yi = SMD_ESa, V = VCV_ESa, random = list(~1|Study_ID,
                   test = "t",
                   data = dat)
 summary(mod_ES0a)
-i2_ml(mod_ES0a) #I2 is very high! 99.37%
+i2_ml(mod_ES0a) 
 funnel(mod_ES0a)
+
+mod_ES0b <- rma.mv(yi = SMD_Sa, V = VCV_ESfm, mod = ~Type_learning-1 + Learning_vs_memory + Type_reinforcement + EE_social + EE_exercise + Age_EE_exposure + Type_stress_exposure + Age_stress_exposure + Stress_duration + Exposure_order, random =   list(~1|Study_ID,
+                                                                                    ~1|ES_ID,
+                                                                                    ~1|Strain),
+                    test = "t",
+                 data = dat_ESfm)
+
+funnel(mod_ES0b)
 ```
