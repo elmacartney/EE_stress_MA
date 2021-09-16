@@ -92,7 +92,7 @@ effect_size <- with(dat, mapply(effect_set,
                       ES_n, 
                       ES_mean, 
                       ES_SD,
-                      percent = dat$Response_percent,
+                      percent = Response_percent,
                       SIMPLIFY = FALSE))
 effect_size <- map_dfr(effect_size, I)
 
@@ -111,7 +111,7 @@ effect_size <- map_dfr(effect_size, I)
                       ES_n, 
                       ES_mean, 
                       ES_SD,
-                      percent = dat$Response_percent,
+                      percent = Response_percent,
                       SIMPLIFY = FALSE))
 effect_size2 <- map_dfr(effect_size2, I)
 
