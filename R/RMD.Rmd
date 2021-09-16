@@ -54,7 +54,7 @@ eval(metafor:::.MuMIn)
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
 dat <- read_csv(here("Data","Full_data.csv"))
 # Load custom function to extract data 
-source(here("R/functions.R")) 
+source(here("R/Functions_cleanedup.R")) 
 #source(here("R/functions_cleanedup.R")) 
 ```
 
@@ -65,18 +65,55 @@ Removing study with negative values, getting effect sizes from function, 'flippi
 #removing study with negative values as these are unable to be used for lnRR
 dat <- droplevels(dat[!dat$First_author == 'Wang',])
 
-#Getting effect sizes
-effect_size <- effect_set(CC_n = "CC_n", CC_mean = "CC_mean", CC_SD = "CC_SD",
-                          EC_n = "EC_n", EC_mean = "EC_mean" , EC_SD ="EC_SD",
-                          CS_n = "CS_n", CS_mean = "CS_mean", CS_SD = "CS_SD",
-                          ES_n = "ES_n", ES_mean = "ES_mean", ES_SD = "ES_SD",
-                          data = dat)
-#'pure' effect sizes
-effect_size2 <- effect_set2(CC_n = "CC_n", CC_mean = "CC_mean", CC_SD = "CC_SD",
-                          EC_n = "EC_n", EC_mean = "EC_mean" , EC_SD ="EC_SD",
-                          CS_n = "CS_n", CS_mean = "CS_mean", CS_SD = "CS_SD",
-                          ES_n = "ES_n", ES_mean = "ES_mean", ES_SD = "ES_SD",
-                          data = dat) 
+# #Getting effect sizes
+# effect_size <- effect_set(CC_n = "CC_n", CC_mean = "CC_mean", CC_SD = "CC_SD",
+#                           EC_n = "EC_n", EC_mean = "EC_mean" , EC_SD ="EC_SD",
+#                           CS_n = "CS_n", CS_mean = "CS_mean", CS_SD = "CS_SD",
+#                           ES_n = "ES_n", ES_mean = "ES_mean", ES_SD = "ES_SD",
+#                           data = dat)
+# #'pure' effect sizes
+# effect_size2 <- effect_set2(CC_n = "CC_n", CC_mean = "CC_mean", CC_SD = "CC_SD",
+#                           EC_n = "EC_n", EC_mean = "EC_mean" , EC_SD ="EC_SD",
+#                           CS_n = "CS_n", CS_mean = "CS_mean", CS_SD = "CS_SD",
+#                           ES_n = "ES_n", ES_mean = "ES_mean", ES_SD = "ES_SD",
+#                           data = dat) 
+
+# effect_size 
+effect_size <- with(dat, mapply(effect_set, 
+                      CC_n ,
+                      CC_mean, 
+                      CC_SD,
+                      EC_n, 
+                      EC_mean, 
+                      EC_SD,
+                      CS_n, 
+                      CS_mean, 
+                      CS_SD,
+                      ES_n, 
+                      ES_mean, 
+                      ES_SD,
+                      percent = dat$Response_percent,
+                      SIMPLIFY = FALSE))
+effect_size <- map_dfr(effect_size, I)
+
+# pure effect zize
+
+ effect_size2 <- with(dat, mapply(effect_set2, 
+                      CC_n ,
+                      CC_mean, 
+                      CC_SD,
+                      EC_n, 
+                      EC_mean, 
+                      EC_SD,
+                      CS_n, 
+                      CS_mean, 
+                      CS_SD,
+                      ES_n, 
+                      ES_mean, 
+                      ES_SD,
+                      percent = dat$Response_percent,
+                      SIMPLIFY = FALSE))
+effect_size2 <- map_dfr(effect_size2, I)
 
 #Removing missing effect sizes
 dim(dat)
