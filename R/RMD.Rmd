@@ -118,7 +118,7 @@ effect_size2 <- map_dfr(effect_size2, I)
 #Removing missing effect sizes
 dim(dat)
 full_info <- which(complete.cases(effect_size) == TRUE)
-dat_effect <- cbind(dat, effect_size, effect_size2)
+dat_effect <- bind_cols(dat, effect_size, effect_size2)
 dat <- dat_effect[full_info, ]
 names(dat_effect)
 dat <- dat_effect[full_info, ]
