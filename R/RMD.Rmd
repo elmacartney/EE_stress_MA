@@ -78,7 +78,7 @@ dat <- droplevels(dat[!dat$First_author == 'Wang',])
 #                           ES_n = "ES_n", ES_mean = "ES_mean", ES_SD = "ES_SD",
 #                           data = dat) 
 
-# effect_size 
+# 'Focal' effect_size 
 effect_size <- with(dat, mapply(effect_set, 
                       CC_n ,
                       CC_mean, 
@@ -96,7 +96,7 @@ effect_size <- with(dat, mapply(effect_set,
                       SIMPLIFY = FALSE))
 effect_size <- map_dfr(effect_size, I)
 
-# pure effect zize
+# 'Pairwise' effect size
 
  effect_size2 <- with(dat, mapply(effect_set2, 
                       CC_n ,
@@ -124,14 +124,15 @@ names(dat_effect)
 dat <- dat_effect[full_info, ]
 
 dim(dat_effect)
-dimentions <- dim(dat) 
+dimentions <- dim(dat)
+dimentions
 
 #Flipping 'lower is better' effect sizes
 #flipping lnRR for values where higher = worse
-dat$lnRR_Ea <- ifelse(dat$Response_direction == 2, dat$lnRR_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E)) # currently NAswhich causes error
+dat$lnRR_Ea <- ifelse(dat$Response_direction == 2, dat$lnRR_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E))
+# currently NAswhich causes error
 dat$lnRR_Sa  <- ifelse(dat$Response_direction == 2, dat$lnRR_S*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_S)) # currently NAswhich causes error
 dat$lnRR_ESa <-  ifelse(dat$Response_direction == 2, dat$lnRR_ES*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_ES)) # currently NAswhich causes error
-
 #flipping 'pure effect sizes'
 dat$lnRR_E2a <- ifelse(dat$Response_direction == 2, dat$lnRR_E2*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E2)) # currently NAswhich causes error
 dat$lnRR_S2a  <- ifelse(dat$Response_direction == 2, dat$lnRR_S2*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_S2)) # currently NAswhich causes error
