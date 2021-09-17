@@ -772,7 +772,7 @@ importance(res_Efm2)
 
 ### Publication bias
 ``` {r, message = FALSE, warning = FALSE}
-#TODO - probably - you can save leave1out stuff - it saves still like I did above (this will be a good practice so in the future you can plan more complex RMD files ) 
+
 # funnel plot
 Funnel_E<-funnel(mod_Efm, xlab = "lnRR", ylab = "Standard Error")
 Funnel_E
@@ -780,7 +780,7 @@ Funnel_E
 
 dat_Efm$sqrt_inv_e_n <- with(dat_Efm, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
 
-PB_MR_E<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  Year_published + Type_assay + Type_reinforcement + EE_social + EE_exercise + Age_stress_exposure, random = list(~1|Study_ID,
+PB_MR_E<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  Learning_vs_memory + Year_published + Type_assay + Type_reinforcement + EE_social + EE_exercise + Age_stress_exposure, random = list(~1|Study_ID,
                                                           ~1|ES_ID,
                                                           ~1|Strain), method = "REML", test = "t", 
     data = dat_Efm)
@@ -1093,7 +1093,7 @@ dat_Sfm$sqrt_inv_e_n <- with(dat_Sfm, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
 #time lag bias and eggers regression
 dat_Sfm$c_Year_published <- as.vector(scale(dat_Sfm$Year_published, scale = F))
 
-PB_MR_S<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  c_Year_published + Type_assay + Type_reinforcement + Type_stress_exposure + Age_stress_exposure, random = list(~1|Study_ID,
+PB_MR_S<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  c_Year_published + Type_assay +Learning_vs_memory + Type_reinforcement + Type_stress_exposure + Age_stress_exposure, random = list(~1|Study_ID,
                                                           ~1|ES_ID,
                                                           ~1|Strain), 
                  method = "REML", 
@@ -1540,7 +1540,7 @@ Funnel_ES
 
 dat_ESfm$sqrt_inv_e_n <- with(dat_ESfm, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
 
-PB_MR_ES<- rma.mv(lnRR_ESa, lnRRV_ES, mods = ~1 + sqrt_inv_e_n +  Year_published + Type_assay + Type_reinforcement + EE_social + EE_exercise + Age_stress_exposure, random = list(~1|Study_ID,
+PB_MR_ES<- rma.mv(lnRR_ESa, lnRRV_ES, mods = ~1 + sqrt_inv_e_n +  Year_published + Learning_vs_memory + Type_assay + Type_reinforcement + EE_social + EE_exercise + Age_stress_exposure, random = list(~1|Study_ID,
                                                           ~1|ES_ID,
                                                           ~1|Strain), method = "REML", test = "t", 
     data = dat_ESfm)
