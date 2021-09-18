@@ -1,6 +1,6 @@
 # CUSTOM FUNCTIONS
 # lnRR and SMD 
-# TODO - added percent argument - now we need to use wiht mapply
+# TODO - added percent argument - now we need to use with mapply
 
 effect_set <- function(CC_n, CC_mean, CC_SD,
                        EC_n, EC_mean, EC_SD,
@@ -12,7 +12,6 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
   
   # lnRR----
   # main effect Environmental enrichment----
-  # TODO - check they match with the  --- alternative method
   lnRR_E <- log(0.5*(ES_mean + EC_mean)) - 
                          log(0.5*(CS_mean+ CC_mean))
   
@@ -86,7 +85,7 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
   
   else {
     
-    asin_trans <- function(perecent) { asin(sqrt(perecent/100)) }
+    asin_trans <- function(percent) { asin(sqrt(percent/100)) }
     
     
     # transforming SD 
@@ -232,7 +231,7 @@ effect_set2 <- function(CC_n, CC_mean, CC_SD,
   effect2
   }
   else {
-    asin_trans <- function(perecent) { asin(sqrt(perecent/100)) }
+    asin_trans <- function(percent) { asin(sqrt(percent/100)) }
     
     # transforming SD 
     ES_SD <- sqrt((ES_SD/100)^2/(4*(ES_mean/100)*(1-(ES_mean/100))))
