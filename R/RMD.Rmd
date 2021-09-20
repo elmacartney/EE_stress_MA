@@ -49,7 +49,7 @@ eval(metafor:::.MuMIn)
 #### Loading data and functions
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
-dat <- read_csv(here("Data","Data_processed.csv"))
+dat <- read_csv(here("Data","Data_raw.csv")) #I think you meant by starting woth raw data here
 # Load custom function to extract data 
 source(here("R/Functions.R")) 
 ```
@@ -201,7 +201,14 @@ dat <- dat %>% mutate(Type_assay = case_when(Type_assay == 1 ~ "Habituation",
                       Sex = case_when(Sex == 1 ~ "Female", 
                                       Sex == 2 ~ "Male", 
                                       Sex == 3 ~ "Mixed", 
-                                      Sex == 4 ~ "Unclear"))
+                                      Sex == 4 ~ "Unclear"),
+                      Type_EE_exposure = case_when(Type_EE_exposure == 1 ~ "Nesting material",
+                                                      Type_EE_exposure == 2 ~ "Objects",
+                                                      Type_EE_exposure == 3 ~ "Cage complexity", 
+                                                      Type_EE_exposure == 4 ~ "Wheel/trademill",
+                                                      Type_EE_exposure == 5 ~ "Combination",
+                                                      Type_EE_exposure == 6 ~ "Other", 
+                                                      Type_EE_exposure == 7 ~ "Unclear"))
 
 #making variance VCVs
 VCV_E <- impute_covariance_matrix(vi = dat$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
@@ -229,6 +236,7 @@ length(unique(dat$Study_ID))
 min(dat$Year_published) 
 max(dat$Year_published)
 ```
+
 ## Explore associations among predictor variables   
 
 ```{r, results = 'hide'}
@@ -252,39 +260,14 @@ table(dat$Type_stress_exposure, dat$Stress_duration)
 
 ## Alluvial diagrams {.tabset}
 
-### Species and strain
+```{r redo and assemble plots , results = 'hide'}
 
-```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
+#A. subjects info: species-strain-sex
 
-# create a frequency table for Species and Strain variables
-freq_1 <- as.data.frame(table(dat$Common_species, dat$Strain)) %>% rename(Species = Var1, Strain = Var2)
+freq_A <- as.data.frame(table(dat$Sex, dat$Common_species, dat$Strain)) %>% rename(Sex = Var1, Species = Var2, Strain = Var3) #make a data frame of frequencies for three selected variables
+is_alluvia_form(as.data.frame(freq_A), axes = 1:3, silent = TRUE)
 
-is_alluvia_form(as.data.frame(freq_1), axes = 1:2, silent = TRUE)
-
-ggplot(data = freq_1,
-  aes(axis1 = Species, axis2 = Strain, y = Freq)) +
-  geom_alluvium(aes(fill = Strain)) +
-  geom_stratum(aes(fill = Species)) +
-  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
-#theme_minimal() +
-  theme_void() +
-  theme(legend.position = "none",
-        plot.title = element_text(hjust = 0.5, vjust = 3),
-        axis.title.x = element_text(),
-        axis.text.x = element_text(face="bold")) +
-  scale_x_discrete(limits = c("Species", "Strain"), expand = c(0.15, 0.05), position = "top") +
-  ggtitle("Species and strains used (set1)")
-```
-
-### Species, strain and sex
-
-```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
-
-# create frequency table for Sex, Species and Strain
-freq_2 <- as.data.frame(table(dat$Sex, dat$Common_species, dat$Strain)) %>% rename(Sex = Var1, Species = Var2, Strain = Var3)
-is_alluvia_form(as.data.frame(freq_2), axes = 1:3, silent = TRUE)
-
-ggplot(data = freq_2,
+p1 <- ggplot(data = freq_A,
   aes(axis1 = Sex, axis2 = Species, axis3 = Strain, y = Freq)) +
   geom_alluvium(aes(fill = Sex)) +
   geom_flow() +
@@ -293,115 +276,44 @@ ggplot(data = freq_2,
   #theme_minimal() +
   theme_void() +
   theme(legend.position = "none",
-        plot.title = element_text(hjust = 0.5, vjust = 3),
+        plot.title = element_text(hjust = 0, vjust = 3),
         axis.title.x = element_text(),
-        axis.text.x = element_text(face="bold")) +
+        axis.text.x = element_text(face="bold"),
+        plot.margin = unit(c(1, 1, 0, 1), "cm")) +
   scale_x_discrete(limits = c("Sex", "Species", "Strain"), expand = c(0.15, 0.05), position = "top") +
-  ggtitle("Species, strains and sex used (set2)")
+  ggtitle("A  study subjects")
 
-freq_2 %>% filter(Freq != 0) %>% arrange(desc(Freq)) #collapesd table of values, without 0s
-```
+p1
 
-### Age at stress and enrichment
+#B. EE info: type-exercise-social EE
 
-```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
-freq_ages1 <- as.data.frame(table(dat$Age_stress_exposure, dat$Age_EE_exposure)) %>% rename(Age_stress = Var1, Age_EE = Var2)
-is_alluvia_form(as.data.frame(freq_ages1), axes = 1:2, silent = TRUE)
+freq_B <- as.data.frame(table(dat$Type_EE_exposure, dat$EE_exercise, dat$EE_social)) %>% rename(Type_EE = Var1, EE_exercise = Var2, EE_social = Var3) #make a data frame of frequencies for three selected variables
+is_alluvia_form(as.data.frame(freq_B), axes = 1:3, silent = TRUE)
 
-ggplot(data = freq_ages1,
-  aes(axis1 = Age_stress, axis2 = Age_EE, y = Freq)) +
-  geom_alluvium(aes(fill = Age_EE)) +
-  geom_stratum(aes(fill = Age_stress)) +
-  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
-#theme_minimal() +
-  theme_void() +
-  theme(legend.position = "none",
-        plot.title = element_text(hjust = 0.5, vjust = 3),
-        axis.title.x = element_text(),
-        axis.text.x = element_text(face="bold")) +
-  scale_x_discrete(limits = c("Stress", "Enrichment"), expand = c(0.15, 0.05), position = "top") +
-  ggtitle("Life stages used (set1)")
-```
-
-### Age at stress, enrichment, and assay
-
-```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
-
-freq_ages2 <- as.data.frame(table(dat$Age_stress_exposure, dat$Age_EE_exposure, dat$Age_assay)) %>% rename(Age_stress = Var1, Age_EE = Var2, Age_assay = Var3)
-
-is_alluvia_form(as.data.frame(freq_ages2), axes = 1:3, silent = TRUE)
-
-ggplot(data = freq_ages2,
-  aes(axis1 = Age_stress, axis2 = Age_EE, axis3 = Age_assay, y = Freq)) +
-  geom_alluvium(aes(fill = Age_stress)) +
+p2 <- ggplot(data = freq_B,
+  aes(axis1 = Type_EE, axis2 = EE_exercise, axis3 = EE_social, y = Freq)) +
+  geom_alluvium(aes(fill = Type_EE)) +
   geom_flow() +
-  geom_stratum(aes(fill = Age_stress)) +
+  geom_stratum(aes(fill = Type_EE)) +
   geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
   #theme_minimal() +
   theme_void() +
   theme(legend.position = "none",
-        plot.title = element_text(hjust = 0.5, vjust = 3),
+        plot.title = element_text(hjust = 0, vjust = 3),
         axis.title.x = element_text(),
-        axis.text.x = element_text(face="bold")) +
-  scale_x_discrete(limits = c("Stress", "Enrichment", "Assay"), expand = c(0.15, 0.05), position = "top") +
-  ggtitle("Life stages used (set2)")
+        axis.text.x = element_text(face="bold"),
+        plot.margin = unit(c(1, 1, 0, 1), "cm")) +
+  scale_x_discrete(limits = c("Type", "Exercise", "Social"), expand = c(0.1, 0.1), position = "top") +
+  ggtitle("C  environmental enrichment")
 
-freq_ages2 %>% filter(Freq != 0) %>% arrange(desc(Freq)) #collapesd table of values, without 0s
-```
+p2
 
-### Age at stress, enrichment, assay, and exposure order
+#C. stress info: age-duration-type stress
 
-```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
-freq_ages3 <- as.data.frame(table(dat$Age_stress_exposure, dat$Age_EE_exposure, dat$Age_assay, dat$Exposure_order)) %>% rename(Age_stress = Var1, Age_EE = Var2, Age_assay = Var3, Order = Var4)
-is_alluvia_form(as.data.frame(freq_ages3), axes = 1:4, silent = TRUE)
+freq_C <- as.data.frame(table(dat$Age_stress_exposure, dat$Stress_duration, dat$Type_stress_exposure)) %>% rename(Age_stress = Var1, Duration_stress = Var2, Type_stress = Var3) #make a data frame of frequencies for three selected variables
+is_alluvia_form(as.data.frame(freq_C), axes = 1:3, silent = TRUE)
 
-ggplot(data = freq_ages3,
-  aes(axis1 = Age_stress, axis2 = Age_EE, axis3 = Age_assay, axis4 = Order,  y = Freq)) +
-  geom_alluvium(aes(fill = Age_stress)) +
-  geom_flow() +
-  geom_stratum(aes(fill = Age_stress)) +
-  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
-  #theme_minimal() +
-  theme_void() +
-  theme(legend.position = "none",
-        plot.title = element_text(hjust = 0.5, vjust = 3),
-        axis.title.x = element_text(),
-        axis.text.x = element_text(face="bold")) +
-  scale_x_discrete(limits = c("Stress", "Enrichment", "Assay", "Order"), expand = c(0.15, 0.05), position = "top") +
-  ggtitle("Life stages used and order (set3)")
-
-freq_ages2 %>% filter(Freq != 0) %>% arrange(desc(Freq)) #collapesd table of values, without 0s
-freq_ages3 %>% filter(Freq != 0) %>% arrange(desc(Freq)) #collapesd table of values, without 0s
-```
-
-
-### Stress duration and type of stress
-
-```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
-freq_stress1 <- as.data.frame(table(dat$Stress_duration, dat$Type_stress_exposure)) %>% rename(Stress_duration = Var1,  Stress_type = Var2)
-is_alluvia_form(as.data.frame(freq_stress1), axes = 1:2, silent = TRUE)
-
-ggplot(data = freq_stress1,
-  aes(axis1 = Stress_duration, axis2 = Stress_type, y = Freq)) +
-  geom_alluvium(aes(fill = Stress_duration)) +
-  geom_stratum(aes(fill = Stress_duration)) +
-  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
-#theme_minimal() +
-  theme_void() +
-  theme(legend.position = "none",
-        plot.title = element_text(hjust = 0.5, vjust = 3),
-        axis.title.x = element_text(),
-        axis.text.x = element_text(face="bold")) +
-  scale_x_discrete(limits = c("Duration", "Type"), expand = c(0.15, 0.05), position = "top") +
-  ggtitle("Stress exposure  variables (set1)")
-```
-
-### Age at stress, type of stress, stress duration
-```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
-freq_stress2 <- as.data.frame(table(dat$Age_stress_exposure, dat$Stress_duration, dat$Type_stress_exposure)) %>% rename(Age_stress = Var1, Duration_stress = Var2, Type_stress = Var3)
-is_alluvia_form(as.data.frame(freq_stress2), axes = 1:3, silent = TRUE)
-
-ggplot(data = freq_stress2,
+p3 <- ggplot(data = freq_C,
   aes(axis1 = Age_stress, axis2 = Duration_stress, axis3 = Type_stress, y = Freq)) +
   geom_alluvium(aes(fill = Age_stress)) +
   geom_flow() +
@@ -410,120 +322,46 @@ ggplot(data = freq_stress2,
   #theme_minimal() +
   theme_void() +
   theme(legend.position = "none",
-        plot.title = element_text(hjust = 0.5, vjust = 3),
+        plot.title = element_text(hjust = 0, vjust = 3),
         axis.title.x = element_text(),
-        axis.text.x = element_text(face="bold")) +
+        axis.text.x = element_text(face="bold"),
+        plot.margin = unit(c(1, 1, 0, 1), "cm")) +
   scale_x_discrete(limits = c("Age", "Duration", "Type"), expand = c(0.1, 0.1), position = "top") +
-  ggtitle("Stress exposure variables (set2)")
-```
+  ggtitle("B  stress exposure")
 
-### Exercise and social enrichment
+p3
 
-```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
-freq_EE1 <- as.data.frame(table(dat$EE_exercise, dat$EE_social)) %>% rename(EE_exercise = Var1, EE_social = Var2)
-is_alluvia_form(as.data.frame(freq_stress1), axes = 1:2, silent = TRUE)
+#D. assay info: L/M-type-reinforcement
 
-ggplot(data = freq_EE1,
-  aes(axis1 = EE_exercise, axis2 = EE_social, y = Freq)) +
-  geom_alluvium(aes(fill = EE_exercise)) +
-  geom_stratum(aes(fill = EE_exercise)) +
-  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
-#theme_minimal() +
-  theme_void() +
-  theme(legend.position = "none",
-        plot.title = element_text(hjust = 0.5, vjust = 3),
-        axis.title.x = element_text(),
-        axis.text.x = element_text(face="bold")) +
-  scale_x_discrete(limits = c("Exercise", "Social"), expand = c(0.15, 0.05), position = "top") +
-  ggtitle("EE exposure  variables (set1)")
-```
+freq_D <- as.data.frame(table(dat$Learning_vs_memory, dat$Type_assay, dat$Type_reinforcement)) %>% rename(Learning_Memory = Var1, Type = Var2, Reinforcement = Var3) #make a data frame of frequencies for three selected variables
+is_alluvia_form(as.data.frame(freq_D), axes = 1:3, silent = TRUE)
 
-### Age  at enrichment, exercise and social enrichment
-
-```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
-freq_EE2 <- as.data.frame(table(dat$Age_EE_exposure, dat$EE_exercise, dat$EE_social)) %>% rename(Age_EE = Var1, EE_exercise = Var2, EE_social = Var3)
-is_alluvia_form(as.data.frame(freq_EE2), axes = 1:3, silent = TRUE)
-
-ggplot(data = freq_EE2,
-  aes(axis1 = Age_EE, axis2 = EE_exercise, axis3 = EE_social, y = Freq)) +
-  geom_alluvium(aes(fill = Age_EE)) +
-  geom_flow() +
-  geom_stratum(aes(fill = Age_EE)) +
-  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
-  #theme_minimal() +
-  theme_void() +
-  theme(legend.position = "none",
-        plot.title = element_text(hjust = 0.5, vjust = 3),
-        axis.title.x = element_text(),
-        axis.text.x = element_text(face="bold")) +
-  scale_x_discrete(limits = c("Age", "Exercise", "Social"), expand = c(0.1, 0.1), position = "top") +
-  ggtitle("EE exposure variables (set2)")
-```
-
-### Learning vs memory and type of reinforcement
-
-```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
-freq_assay1 <- as.data.frame(table(dat$Learning_vs_memory, dat$Type_reinforcement)) %>% rename(Learning_Memory = Var1, Reinforcement = Var2)
-is_alluvial_form(as.data.frame(freq_assay1), axes = 1:2, silent = TRUE)
-
-ggplot(data = freq_assay1,
-  aes(axis1 = Learning_Memory, axis2 = Reinforcement, y = Freq)) +
+p4 <- ggplot(data = freq_D,
+  aes(axis1 = Learning_Memory, axis2 = Type, axis3 = Reinforcement, y = Freq)) +
   geom_alluvium(aes(fill = Learning_Memory)) +
+  geom_flow() +
   geom_stratum(aes(fill = Learning_Memory)) +
   geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
-#theme_minimal() +
-  theme_void() +
-  theme(legend.position = "none",
-        plot.title = element_text(hjust = 0.5, vjust = 3),
-        axis.title.x = element_text(),
-        axis.text.x = element_text(face="bold")) +
-  scale_x_discrete(limits = c("Learning_Memory", "Reinforcement"), expand = c(0.15, 0.05), position = "top") +
-  ggtitle("Behavioural assay  variables (set1)")
-```
-
-### Age at assay, learning vs memory, and type of reinforcement
-
-```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
-freq_assay2 <- as.data.frame(table(dat$Age_assay, dat$Learning_vs_memory, dat$Type_reinforcement)) %>% rename(Age_assay = Var1, Learning_Memory = Var2, Reinforcement = Var3)
-is_alluvia_form(as.data.frame(freq_assay2), axes = 1:3, silent = TRUE)
-
-ggplot(data = freq_assay2,
-  aes(axis1 = Age_assay, axis2 = Learning_Memory, axis3 = Reinforcement, y = Freq)) +
-  geom_alluvium(aes(fill = Age_assay)) +
-  geom_flow() +
-  geom_stratum(aes(fill = Age_assay)) +
-  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
   #theme_minimal() +
   theme_void() +
   theme(legend.position = "none",
-        plot.title = element_text(hjust = 0.5, vjust = 3),
+        plot.title = element_text(hjust = 0, vjust = 3),
         axis.title.x = element_text(),
-        axis.text.x = element_text(face="bold")) +
-  scale_x_discrete(limits = c("Age", "Learning_Memory", "Reinforcement"), expand = c(0.1, 0.1), position = "top") +
-  ggtitle("Behavioural assay  variables (set2)")
+        axis.text.x = element_text(face="bold"),
+        plot.margin = unit(c(1, 1, 0, 1), "cm")) +
+  scale_x_discrete(limits = c("Learning_Memory", "Type", "Reinforcement"), expand = c(0.1, 0.1), position = "top") +
+  ggtitle("D  cognitive assay")
+
+p4
+
+#p1 + scale_fill_brewer(palette = "Set3") #Pastel1
+
+(p1 + scale_fill_brewer(palette = "Set3")) / (p2 + scale_fill_brewer(palette = "Set3")) / (p3 + scale_fill_brewer(palette = "Set3")) / (p4 + scale_fill_brewer(palette = "Set3")) + plot_layout(ncol = 1, heights = c(1,1,1,1,1))
+
+ggsave(file = "./figs/Alluvial_diagrams_v0.pdf", width = 10, height = 12, units = "cm", dpi = 300, scale = 2, device = cairo_pdf)
 ```
 
-### Type of learning, learning vs memory, type of reinforcement
 
-```{r, results = 'hide', warning = FALSE, fig.width=10, fig.height=7}
-freq_assay3 <- as.data.frame(table(dat$Type_assay, dat$Learning_vs_memory, dat$Type_reinforcement)) %>% rename(Type = Var1, Learning_Memory = Var2, Reinforcement = Var3)
-is_alluvia_form(as.data.frame(freq_assay3), axes = 1:3, silent = TRUE)
-
-ggplot(data = freq_assay3,
-  aes(axis1 = Type, axis2 = Learning_Memory, axis3 = Reinforcement, y = Freq)) +
-  geom_alluvium(aes(fill = Type)) +
-  geom_flow() +
-  geom_stratum(aes(fill = Type)) +
-  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
-  #theme_minimal() +
-  theme_void() +
-  theme(legend.position = "none",
-        plot.title = element_text(hjust = 0.5, vjust = 3),
-        axis.title.x = element_text(),
-        axis.text.x = element_text(face="bold")) +
-  scale_x_discrete(limits = c("Type", "Learning_Memory", "Reinforcement"), expand = c(0.1, 0.1), position = "top") +
-  ggtitle("Behavioural assay  variables (set3)")
-```
 
 # Modelling with lnRR
 
