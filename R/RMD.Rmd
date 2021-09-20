@@ -13,20 +13,17 @@ output:
 ---
 
 ```{r, include = FALSE}
-#TODO added 
 knitr::opts_chunk$set(
 message = FALSE,
-warning = FALSE, # no warnings
-cache = TRUE,# TODO - tell Erin about this - Caching to save time when kniting - this is extremely useful 
-tidy = TRUE, # this is very nice for tidying up code chuncks
+warning = FALSE,
+cache = TRUE, 
+tidy = TRUE, 
 echo = TRUE
 )
 ```
 #### Loading packages
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
-# TODO please include pacakges which you did uss (do it at the end)
-#knitr::opts_chunk$set(echo = TRUE)
 pacman::p_load(tidyverse, 
                here,
                metafor,
@@ -52,16 +49,16 @@ eval(metafor:::.MuMIn)
 #### Loading data and functions
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
-dat <- read_csv(here("Data","Full_data.csv"))
+dat <- read_csv(here("Data","Data_processed.csv"))
 # Load custom function to extract data 
-source(here("R/Functions_cleanedup.R")) 
-#source(here("R/functions_cleanedup.R")) 
+source(here("R/Functions.R")) 
 ```
 
 #### Data organisation
 Removing study with negative values, getting effect sizes from function, 'flipping' effect sizes so that all effect sizes are higher values = individuals do better and learning/memory, shifting negative values to positive as lnRR cannot use negative values, assigining human readable terms, and creating VCV of variance 
 
-```{r, message = FALSE, warning = FALSE, results = 'hide'}
+```{r, message = FALSE, warning = FALSE, results = 'hide', eval = FALSE}
+#this code is to process the data using "Data_raw". Processed data after this step was loaded above
 #removing study with negative values as these are unable to be used for lnRR
 dat <- droplevels(dat[!dat$First_author == 'Wang',])
 
@@ -215,6 +212,7 @@ VCV_Ea <- impute_covariance_matrix(vi = dat$SMDV_E, cluster = dat$Study_ID, r = 
 VCV_Sa <- impute_covariance_matrix(vi = dat$SMDV_S, cluster = dat$Study_ID, r = 0.5)
 VCV_ESa <- impute_covariance_matrix(vi = dat$SMDV_ES, cluster = dat$Study_ID, r = 0.5)
 
+write.csv(dat,'Data_processed.csv')
 ```
 
 # Data exploration
@@ -234,8 +232,6 @@ max(dat$Year_published)
 ## Explore associations among predictor variables   
 
 ```{r, results = 'hide'}
-#TODO please adjust this fig siz and also check - other bigs too see all fig sizes look fine in HTML
-#see columns with missing values
 vis_miss(dat) +
   theme(plot.title = element_text(hjust = 0.5, vjust = 3), 
         plot.margin = margin(t = 0.5, r = 3, b = 1, l = 1, unit = "cm")) +
