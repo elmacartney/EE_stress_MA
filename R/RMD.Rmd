@@ -49,7 +49,7 @@ eval(metafor:::.MuMIn)
 #### Loading data and functions
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
-dat <- read_csv(here("Data","Data_raw.csv")) #I think you meant by starting woth raw data here
+dat <- read_csv(here("Data","Data_raw.csv"))
 # Load custom function to extract data 
 source(here("R/Functions.R")) 
 ```
@@ -74,6 +74,11 @@ dat <- droplevels(dat[!dat$First_author == 'Wang',])
 #                           CS_n = "CS_n", CS_mean = "CS_mean", CS_SD = "CS_SD",
 #                           ES_n = "ES_n", ES_mean = "ES_mean", ES_SD = "ES_SD",
 #                           data = dat) 
+#rounding down integer sample sizes 
+dat$CC_n <- floor(dat$CC_n)
+dat$EC_n <- floor(dat$EC_n)
+dat$CS_n <- floor(dat$CS_n)
+dat$ES_n <- floor(dat$CS_n)
 
 # 'Focal' effect_size 
 effect_size <- with(dat, mapply(effect_set, 
@@ -141,12 +146,6 @@ dat$lnRR_S3a <-  ifelse(dat$Response_direction == 2, dat$lnRR_S3*-1,ifelse(is.na
 dat$SMD_Ea <- ifelse(dat$Response_direction == 2, dat$SMD_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_E)) # currently NAswhich causes error
 dat$SMD_Sa  <- ifelse(dat$Response_direction == 2, dat$SMD_S*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_S)) # currently NAswhich causes error
 dat$SMD_ESa <-  ifelse(dat$Response_direction == 2, dat$SMD_ES*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_ES))
-
-#rounding down integer sample sizes 
-dat$CC_n <- floor(dat$CC_n)
-dat$EC_n <- floor(dat$EC_n)
-dat$CS_n <- floor(dat$CS_n)
-dat$ES_n <- floor(dat$CS_n)
 
 #assigning human readable terms
 dat <- dat %>% mutate(Type_assay = case_when(Type_assay == 1 ~ "Habituation",
@@ -1692,13 +1691,11 @@ summary(mod_E0a)
 i2_ml(mod_E0a)
 funnel(mod_E0a)
 
-#looking at funnel plot on full model to see if it looks better
 mod_E0b <- rma.mv(yi = SMD_Ea, V = VCV_Efm, mod = ~Type_assay-1 + Learning_vs_memory-1 + Type_reinforcement-1 + EE_social-1 + EE_exercise-1 + Age_EE_exposure-1, random = list(~1|Study_ID,~1|ES_ID,~1|Strain),
                  test = "t",
                  data = dat_Efm)
 
 
-funnel(mod_E0b)
 ```
 
 ## Stress
