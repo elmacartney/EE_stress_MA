@@ -218,7 +218,7 @@ VCV_Ea <- impute_covariance_matrix(vi = dat$SMDV_E, cluster = dat$Study_ID, r = 
 VCV_Sa <- impute_covariance_matrix(vi = dat$SMDV_S, cluster = dat$Study_ID, r = 0.5)
 VCV_ESa <- impute_covariance_matrix(vi = dat$SMDV_ES, cluster = dat$Study_ID, r = 0.5)
 
-write.csv(dat,'Data_processed.csv')
+write.csv(dat, file = here("Data", 'Data_processed.csv'))
 ```
 
 # Data exploration
