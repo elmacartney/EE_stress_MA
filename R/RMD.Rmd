@@ -20,205 +20,39 @@ cache = TRUE,
 tidy = TRUE, 
 echo = TRUE
 )
+
+rm(list = ls())
 ```
-#### Loading packages
+
+# Setting-up
+
+## Loading packages
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
 pacman::p_load(tidyverse, 
                here,
                metafor,
-               emmeans,
                orchaRd, 
-               MCMCglmm,
-               corpcor,
-               clubSandwich,
                MuMIn, 
                patchwork,
-               naniar,
                GoodmanKruskal,
                networkD3,
                ggplot2,
+               visdat,
                ggalluvial,
                ggthemr,
                cowplot)
-# needed for model selection using MuMin within metafor
+# needed for model selection using MuMIn within metafor
 eval(metafor:::.MuMIn)
 
 ```
 
-#### Loading data and functions
+## Loading data and functions
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
 dat <- read_csv(here("Data","Data_raw.csv"))
 # Load custom function to extract data 
 source(here("R/Functions.R")) 
-```
-
-#### Data organisation
-Removing study with negative values, getting effect sizes from function, 'flipping' effect sizes so that all effect sizes are higher values = individuals do better and learning/memory, shifting negative values to positive as lnRR cannot use negative values, assigining human readable terms, and creating VCV of variance 
-
-```{r, message = FALSE, warning = FALSE, results = 'hide', eval = FALSE}
-#this code is to process the data using "Data_raw". Processed data after this step was loaded above
-#removing study with negative values as these are unable to be used for lnRR
-dat <- droplevels(dat[!dat$First_author == 'Wang',])
-
-# #Getting effect sizes
-# effect_size <- effect_set(CC_n = "CC_n", CC_mean = "CC_mean", CC_SD = "CC_SD",
-#                           EC_n = "EC_n", EC_mean = "EC_mean" , EC_SD ="EC_SD",
-#                           CS_n = "CS_n", CS_mean = "CS_mean", CS_SD = "CS_SD",
-#                           ES_n = "ES_n", ES_mean = "ES_mean", ES_SD = "ES_SD",
-#                           data = dat)
-# #'pure' effect sizes
-# effect_size2 <- effect_set2(CC_n = "CC_n", CC_mean = "CC_mean", CC_SD = "CC_SD",
-#                           EC_n = "EC_n", EC_mean = "EC_mean" , EC_SD ="EC_SD",
-#                           CS_n = "CS_n", CS_mean = "CS_mean", CS_SD = "CS_SD",
-#                           ES_n = "ES_n", ES_mean = "ES_mean", ES_SD = "ES_SD",
-#                           data = dat) 
-#rounding down integer sample sizes 
-dat$CC_n <- floor(dat$CC_n)
-dat$EC_n <- floor(dat$EC_n)
-dat$CS_n <- floor(dat$CS_n)
-dat$ES_n <- floor(dat$CS_n)
-
-# 'Focal' effect_size 
-effect_size <- with(dat, mapply(effect_set, 
-                      CC_n ,
-                      CC_mean, 
-                      CC_SD,
-                      EC_n, 
-                      EC_mean, 
-                      EC_SD,
-                      CS_n, 
-                      CS_mean, 
-                      CS_SD,
-                      ES_n, 
-                      ES_mean, 
-                      ES_SD,
-                      percent = Response_percent,
-                      SIMPLIFY = FALSE))
-effect_size <- map_dfr(effect_size, I)
-
-# 'Pairwise' effect size
-
- effect_size2 <- with(dat, mapply(effect_set2, 
-                      CC_n ,
-                      CC_mean, 
-                      CC_SD,
-                      EC_n, 
-                      EC_mean, 
-                      EC_SD,
-                      CS_n, 
-                      CS_mean, 
-                      CS_SD,
-                      ES_n, 
-                      ES_mean, 
-                      ES_SD,
-                      percent = Response_percent,
-                      SIMPLIFY = FALSE))
-effect_size2 <- map_dfr(effect_size2, I)
-
-#Removing missing effect sizes
-dim(dat)
-full_info <- which(complete.cases(effect_size) == TRUE)
-dat_effect <- bind_cols(dat, effect_size, effect_size2)
-dat <- dat_effect[full_info, ]
-names(dat_effect)
-dat <- dat_effect[full_info, ]
-
-dim(dat_effect)
-dimentions <- dim(dat)
-dimentions
-
-#Flipping 'lower is better' effect sizes
-#flipping lnRR for values where higher = worse
-dat$lnRR_Ea <- ifelse(dat$Response_direction == 2, dat$lnRR_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E))
-# currently NAswhich causes error
-dat$lnRR_Sa  <- ifelse(dat$Response_direction == 2, dat$lnRR_S*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_S)) # currently NAswhich causes error
-dat$lnRR_ESa <-  ifelse(dat$Response_direction == 2, dat$lnRR_ES*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_ES)) # currently NAswhich causes error
-#flipping 'pure effect sizes'
-dat$lnRR_E2a <- ifelse(dat$Response_direction == 2, dat$lnRR_E2*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E2)) # currently NAswhich causes error
-dat$lnRR_S2a  <- ifelse(dat$Response_direction == 2, dat$lnRR_S2*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_S2)) # currently NAswhich causes error
-dat$lnRR_ES2a <-  ifelse(dat$Response_direction == 2, dat$lnRR_ES2*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_ES2)) # currently NAswhich causes error
-dat$lnRR_E3a <-  ifelse(dat$Response_direction == 2, dat$lnRR_E3*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E3)) # currently NAswhich causes error
-dat$lnRR_S3a <-  ifelse(dat$Response_direction == 2, dat$lnRR_S3*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_S3)) # currently NAswhich causes error
-
-#flipping SMD
-dat$SMD_Ea <- ifelse(dat$Response_direction == 2, dat$SMD_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_E)) # currently NAswhich causes error
-dat$SMD_Sa  <- ifelse(dat$Response_direction == 2, dat$SMD_S*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_S)) # currently NAswhich causes error
-dat$SMD_ESa <-  ifelse(dat$Response_direction == 2, dat$SMD_ES*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_ES))
-
-#assigning human readable terms
-dat <- dat %>% mutate(Type_assay = case_when(Type_assay == 1 ~ "Habituation",
-                                                Type_assay == 2 ~ "Conditioning",
-                                                Type_assay == 3 ~ "Recognition", 
-                                                Type_assay == 4 ~ "Unclear"),
-                      Learning_vs_memory = case_when(Learning_vs_memory == 1 ~ "Learning",
-                                                     Learning_vs_memory == 2 ~ "Memory", 
-                                                     Learning_vs_memory == 3 ~ "Habituation"),
-                      Type_reinforcement = case_when(Type_reinforcement== 1 ~"Appetitive",
-                                                         Type_reinforcement== 2 ~ "Aversive",
-                                                         Type_reinforcement== 3 ~ "Not applicable",
-                                                         Type_reinforcement== 4 ~ "Unclear"),
-                      Type_stress_exposure = case_when(Type_stress_exposure == 1 ~ "Density",
-                                                       Type_stress_exposure == 2 ~ "Scent",
-                                                       Type_stress_exposure == 3 ~ "Shock",
-                                                       Type_stress_exposure == 4 ~ "Exertion",
-                                                       Type_stress_exposure == 5 ~ "Restraint",
-                                                       Type_stress_exposure == 6 ~ "MS",
-                                                       Type_stress_exposure == 7 ~ "Circadian rhythm",
-                                                       Type_stress_exposure == 8 ~ "Noise",
-                                                       Type_stress_exposure == 9 ~ "Other",
-                                                       Type_stress_exposure == 10 ~ "Combination",
-                                                       Type_stress_exposure == 11 ~ "unclear"), 
-                      Age_stress_exposure = case_when(Age_stress_exposure == 1 ~ "Prenatal",
-                                                      Age_stress_exposure == 2 ~ "Early postnatal",
-                                                      Age_stress_exposure == 3 ~ "Adolescent",
-                                                      Age_stress_exposure == 4 ~ "Adult",
-                                                      Age_stress_exposure == 5 ~ "Unclear"),
-                      Stress_duration = case_when(Stress_duration == 1 ~ "Acute",
-                                                  Stress_duration == 2 ~ "Chronic",
-                                                  Stress_duration == 3 ~ "Intermittent",
-                                                  Stress_duration == 4 ~ "Unclear"),
-                      EE_social = case_when(EE_social == 1 ~ "Social",
-                                            EE_social== 2 ~ "Non-social", 
-                                            EE_social == 3 ~ "Unclear"), 
-                      EE_exercise = case_when(EE_exercise == 1 ~ "Exercise", 
-                                              EE_exercise == 2 ~ "No exercise"),
-                      Age_EE_exposure = case_when(Age_EE_exposure == 1 ~ "Prenatal", 
-                                                  Age_EE_exposure == 2 ~ "Early postnatal",
-                                                  Age_EE_exposure == 3 ~ "Adolescent", 
-                                                  Age_EE_exposure == 4 ~ "Adult",
-                                                  Age_EE_exposure == 5 ~ "Unclear"),
-                      Exposure_order = case_when(Exposure_order == 1 ~ "Stress first",
-                                                      Exposure_order == 2 ~ "Enrichment first",
-                                                      Exposure_order == 3 ~ "Concurrently", 
-                                                      Exposure_order == 4 ~ "Unclear"),
-                      Age_assay = case_when(Age_assay == 1 ~ "Early postnatal",
-                                            Age_assay == 2 ~ "Adolescent",
-                                            Age_assay == 3 ~ "Adult", 
-                                            Age_assay == 4 ~ "Unclear"),
-                      Sex = case_when(Sex == 1 ~ "Female", 
-                                      Sex == 2 ~ "Male", 
-                                      Sex == 3 ~ "Mixed", 
-                                      Sex == 4 ~ "Unclear"),
-                      Type_EE_exposure = case_when(Type_EE_exposure == 1 ~ "Nesting material",
-                                                      Type_EE_exposure == 2 ~ "Objects",
-                                                      Type_EE_exposure == 3 ~ "Cage complexity", 
-                                                      Type_EE_exposure == 4 ~ "Wheel/trademill",
-                                                      Type_EE_exposure == 5 ~ "Combination",
-                                                      Type_EE_exposure == 6 ~ "Other", 
-                                                      Type_EE_exposure == 7 ~ "Unclear"))
-
-#making variance VCVs
-VCV_E <- impute_covariance_matrix(vi = dat$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
-VCV_S <- impute_covariance_matrix(vi = dat$lnRRV_S, cluster = dat$Study_ID, r = 0.5)
-VCV_ES <- impute_covariance_matrix(vi = dat$lnRRV_ES, cluster = dat$Study_ID, r = 0.5)
-
-VCV_Ea <- impute_covariance_matrix(vi = dat$SMDV_E, cluster = dat$Study_ID, r = 0.5)
-VCV_Sa <- impute_covariance_matrix(vi = dat$SMDV_S, cluster = dat$Study_ID, r = 0.5)
-VCV_ESa <- impute_covariance_matrix(vi = dat$SMDV_ES, cluster = dat$Study_ID, r = 0.5)
-
-write.csv(dat, file = here("Data", 'Data_processed.csv'))
 ```
 
 # Data exploration
@@ -239,25 +73,25 @@ max(dat$Year_published)
 ## Explore associations among predictor variables   
 
 ```{r, results = 'hide'}
-vis_miss(dat) +
+plot_missing <- vis_miss(dat) +
   theme(plot.title = element_text(hjust = 0.5, vjust = 3), 
         plot.margin = margin(t = 0.5, r = 3, b = 1, l = 1, unit = "cm")) +
-  ggtitle("Missing data in the selected predictors") #no mising values
+  ggtitle("Missing data in the selected predictors") #no missing values
 
-
+plot_missing
 #useGoodman and Kruskal’s τ measure of association between categorical predictor variables (function from package GoodmanKruskal: https://cran.r-project.org/web/packages/GoodmanKruskal/vignettes/GoodmanKruskal.html)
 #GKmatrix <- GKtauDataframe(subset(dat, select = c("Sex", "Type_assay", "Learning_vs_memory", #"Type_reinforcement",  "Type_stress_exposure", "Age_stress_exposure", "Stress_duration", #"EE_social_HR", "EE_exercise", "Age_EE_exposure", "Exposure_order", "Age_assay")))
 #plot(GKmatrix)
 
 #simple pairwise contingency tables
-table(dat$Type_assay, dat$Type_reinforcement) 
-table(dat$Age_stress_exposure, dat$Age_EE_exposure) 
-table(dat$Type_stress_exposure, dat$Age_stress_exposure)
-table(dat$Type_stress_exposure, dat$Age_assay)
-table(dat$Type_stress_exposure, dat$Stress_duration)
+# table(dat$Type_assay, dat$Type_reinforcement) 
+# table(dat$Age_stress_exposure, dat$Age_EE_exposure) 
+# table(dat$Type_stress_exposure, dat$Age_stress_exposure)
+# table(dat$Type_stress_exposure, dat$Age_assay)
+# table(dat$Type_stress_exposure, dat$Stress_duration)
 ```
 
-## Alluvial diagrams {.tabset}
+## Alluvial diagrams 
 
 ```{r redo and assemble plots , results = 'hide'}
 
@@ -357,16 +191,177 @@ p4
 
 (p1 + scale_fill_brewer(palette = "Set3")) / (p2 + scale_fill_brewer(palette = "Set3")) / (p3 + scale_fill_brewer(palette = "Set3")) / (p4 + scale_fill_brewer(palette = "Set3")) + plot_layout(ncol = 1, heights = c(1,1,1,1,1))
 
-ggsave(file = "./figs/Alluvial_diagrams_v0.pdf", width = 10, height = 12, units = "cm", dpi = 300, scale = 2, device = cairo_pdf)
+#ggsave(file = "./figs/Alluvial_diagrams_v0.pdf", width = 10, height = 12, units = "cm", dpi = 300, scale = 2, device = cairo_pdf)
 ```
 
+# Data organisation
+Removing study with negative values, getting effect sizes from function, 'flipping' effect sizes so that all effect sizes are higher values = individuals do better and learning/memory, shifting negative values to positive as lnRR cannot use negative values, assigining human readable terms, and creating VCV of variance 
 
+```{r, message = FALSE, warning = FALSE, results = 'hide', eval = FALSE}
+#this code is to process the data using "Data_raw". Processed data after this step was loaded above
+#removing study with negative values as these are unable to be used for lnRR
+dat <- droplevels(dat[!dat$First_author == 'Wang',])
+
+# #Getting effect sizes
+# effect_size <- effect_set(CC_n = "CC_n", CC_mean = "CC_mean", CC_SD = "CC_SD",
+#                           EC_n = "EC_n", EC_mean = "EC_mean" , EC_SD ="EC_SD",
+#                           CS_n = "CS_n", CS_mean = "CS_mean", CS_SD = "CS_SD",
+#                           ES_n = "ES_n", ES_mean = "ES_mean", ES_SD = "ES_SD",
+#                           data = dat)
+# #'pure' effect sizes
+# effect_size2 <- effect_set2(CC_n = "CC_n", CC_mean = "CC_mean", CC_SD = "CC_SD",
+#                           EC_n = "EC_n", EC_mean = "EC_mean" , EC_SD ="EC_SD",
+#                           CS_n = "CS_n", CS_mean = "CS_mean", CS_SD = "CS_SD",
+#                           ES_n = "ES_n", ES_mean = "ES_mean", ES_SD = "ES_SD",
+#                           data = dat) 
+#rounding down integer sample sizes 
+dat$CC_n <- floor(dat$CC_n)
+dat$EC_n <- floor(dat$EC_n)
+dat$CS_n <- floor(dat$CS_n)
+dat$ES_n <- floor(dat$CS_n)
+
+# 'Focal' effect_size 
+effect_size <- with(dat, mapply(effect_set, 
+                      CC_n ,
+                      CC_mean, 
+                      CC_SD,
+                      EC_n, 
+                      EC_mean, 
+                      EC_SD,
+                      CS_n, 
+                      CS_mean, 
+                      CS_SD,
+                      ES_n, 
+                      ES_mean, 
+                      ES_SD,
+                      percent = Response_percent,
+                      SIMPLIFY = FALSE))
+effect_size <- map_dfr(effect_size, I)
+
+# 'Pairwise' effect size
+
+ effect_size2 <- with(dat, mapply(effect_set2, 
+                      CC_n ,
+                      CC_mean, 
+                      CC_SD,
+                      EC_n, 
+                      EC_mean, 
+                      EC_SD,
+                      CS_n, 
+                      CS_mean, 
+                      CS_SD,
+                      ES_n, 
+                      ES_mean, 
+                      ES_SD,
+                      percent = Response_percent,
+                      SIMPLIFY = FALSE))
+effect_size2 <- map_dfr(effect_size2, I)
+
+#Removing missing effect sizes
+dim(dat)
+full_info <- which(complete.cases(effect_size) == TRUE)
+
+# adding effect sizes as column
+dat <- bind_cols(dat, effect_size, effect_size2)
+dat <- dat[full_info, ]
+
+#Flipping 'lower is better' effect sizes
+#flipping lnRR for values where higher = worse
+dat$lnRR_Ea <- ifelse(dat$Response_direction == 2, dat$lnRR_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E))
+# currently NAswhich causes error
+dat$lnRR_Sa  <- ifelse(dat$Response_direction == 2, dat$lnRR_S*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_S)) # currently NAswhich causes error
+dat$lnRR_ESa <-  ifelse(dat$Response_direction == 2, dat$lnRR_ES*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_ES)) # currently NAswhich causes error
+#flipping 'pure effect sizes'
+dat$lnRR_E2a <- ifelse(dat$Response_direction == 2, dat$lnRR_E2*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E2)) # currently NAswhich causes error
+dat$lnRR_S2a  <- ifelse(dat$Response_direction == 2, dat$lnRR_S2*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_S2)) # currently NAswhich causes error
+dat$lnRR_ES2a <-  ifelse(dat$Response_direction == 2, dat$lnRR_ES2*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_ES2)) # currently NAswhich causes error
+dat$lnRR_E3a <-  ifelse(dat$Response_direction == 2, dat$lnRR_E3*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E3)) # currently NAswhich causes error
+dat$lnRR_S3a <-  ifelse(dat$Response_direction == 2, dat$lnRR_S3*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_S3)) # currently NAswhich causes error
+
+#flipping SMD
+dat$SMD_Ea <- ifelse(dat$Response_direction == 2, dat$SMD_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_E)) # currently NAswhich causes error
+dat$SMD_Sa  <- ifelse(dat$Response_direction == 2, dat$SMD_S*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_S)) # currently NAswhich causes error
+dat$SMD_ESa <-  ifelse(dat$Response_direction == 2, dat$SMD_ES*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_ES))
+
+#assigning human readable terms
+dat <- dat %>% mutate(Type_assay = case_when(Type_assay == 1 ~ "Habituation",
+                                                Type_assay == 2 ~ "Conditioning",
+                                                Type_assay == 3 ~ "Recognition", 
+                                                Type_assay == 4 ~ "Unclear"),
+                      Learning_vs_memory = case_when(Learning_vs_memory == 1 ~ "Learning",
+                                                     Learning_vs_memory == 2 ~ "Memory", 
+                                                     Learning_vs_memory == 3 ~ "Habituation"),
+                      Type_reinforcement = case_when(Type_reinforcement== 1 ~"Appetitive",
+                                                         Type_reinforcement== 2 ~ "Aversive",
+                                                         Type_reinforcement== 3 ~ "Not applicable",
+                                                         Type_reinforcement== 4 ~ "Unclear"),
+                      Type_stress_exposure = case_when(Type_stress_exposure == 1 ~ "Density",
+                                                       Type_stress_exposure == 2 ~ "Scent",
+                                                       Type_stress_exposure == 3 ~ "Shock",
+                                                       Type_stress_exposure == 4 ~ "Exertion",
+                                                       Type_stress_exposure == 5 ~ "Restraint",
+                                                       Type_stress_exposure == 6 ~ "MS",
+                                                       Type_stress_exposure == 7 ~ "Circadian rhythm",
+                                                       Type_stress_exposure == 8 ~ "Noise",
+                                                       Type_stress_exposure == 9 ~ "Other",
+                                                       Type_stress_exposure == 10 ~ "Combination",
+                                                       Type_stress_exposure == 11 ~ "unclear"), 
+                      Age_stress_exposure = case_when(Age_stress_exposure == 1 ~ "Prenatal",
+                                                      Age_stress_exposure == 2 ~ "Early postnatal",
+                                                      Age_stress_exposure == 3 ~ "Adolescent",
+                                                      Age_stress_exposure == 4 ~ "Adult",
+                                                      Age_stress_exposure == 5 ~ "Unclear"),
+                      Stress_duration = case_when(Stress_duration == 1 ~ "Acute",
+                                                  Stress_duration == 2 ~ "Chronic",
+                                                  Stress_duration == 3 ~ "Intermittent",
+                                                  Stress_duration == 4 ~ "Unclear"),
+                      EE_social = case_when(EE_social == 1 ~ "Social",
+                                            EE_social== 2 ~ "Non-social", 
+                                            EE_social == 3 ~ "Unclear"), 
+                      EE_exercise = case_when(EE_exercise == 1 ~ "Exercise", 
+                                              EE_exercise == 2 ~ "No exercise"),
+                      Age_EE_exposure = case_when(Age_EE_exposure == 1 ~ "Prenatal", 
+                                                  Age_EE_exposure == 2 ~ "Early postnatal",
+                                                  Age_EE_exposure == 3 ~ "Adolescent", 
+                                                  Age_EE_exposure == 4 ~ "Adult",
+                                                  Age_EE_exposure == 5 ~ "Unclear"),
+                      Exposure_order = case_when(Exposure_order == 1 ~ "Stress first",
+                                                      Exposure_order == 2 ~ "Enrichment first",
+                                                      Exposure_order == 3 ~ "Concurrently", 
+                                                      Exposure_order == 4 ~ "Unclear"),
+                      Age_assay = case_when(Age_assay == 1 ~ "Early postnatal",
+                                            Age_assay == 2 ~ "Adolescent",
+                                            Age_assay == 3 ~ "Adult", 
+                                            Age_assay == 4 ~ "Unclear"),
+                      Sex = case_when(Sex == 1 ~ "Female", 
+                                      Sex == 2 ~ "Male", 
+                                      Sex == 3 ~ "Mixed", 
+                                      Sex == 4 ~ "Unclear"),
+                      Type_EE_exposure = case_when(Type_EE_exposure == 1 ~ "Nesting material",
+                                                      Type_EE_exposure == 2 ~ "Objects",
+                                                      Type_EE_exposure == 3 ~ "Cage complexity", 
+                                                      Type_EE_exposure == 4 ~ "Wheel/trademill",
+                                                      Type_EE_exposure == 5 ~ "Combination",
+                                                      Type_EE_exposure == 6 ~ "Other", 
+                                                      Type_EE_exposure == 7 ~ "Unclear"))
+
+#making variance VCVs
+VCV_E <- impute_covariance_matrix(vi = dat$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
+VCV_S <- impute_covariance_matrix(vi = dat$lnRRV_S, cluster = dat$Study_ID, r = 0.5)
+VCV_ES <- impute_covariance_matrix(vi = dat$lnRRV_ES, cluster = dat$Study_ID, r = 0.5)
+
+VCV_Ea <- impute_covariance_matrix(vi = dat$SMDV_E, cluster = dat$Study_ID, r = 0.5)
+VCV_Sa <- impute_covariance_matrix(vi = dat$SMDV_S, cluster = dat$Study_ID, r = 0.5)
+VCV_ESa <- impute_covariance_matrix(vi = dat$SMDV_ES, cluster = dat$Study_ID, r = 0.5)
+
+#write.csv(dat, file = here("Data", 'Data_processed.csv'))
+```
 
 # Modelling with lnRR
 
 ## Environmental enrichment
 
-### Intercept model
+### Meta-analysis
 Learning and memory are significantly improved when housed with environmnetal enrichment
 
 ``` {r, message = FALSE, warning = FALSE}
@@ -391,9 +386,7 @@ orchard_plot(mod_E0, mod = "Int", xlab = "lnRR", alpha=0.4) +  # Orchard plot
         legend.text = element_text(size = 13)) 
 ```
 
-### Metaregression
-
-### Uni-Moderator metaregression {.tabset}
+### Meta-regression: uni-moderator {.tabset}
 
 #### Type of assay
 The type of learning/memory response
@@ -568,7 +561,8 @@ Age_E<- orchard_plot(mod_E6, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) 
 Age_E
 ```
 
-### multi-moderator Full model
+###  Meta-regression: multi-moderator model
+
 ``` {r, message = FALSE, warning = FALSE, eval = FALSE}
 
 # filter data so that all K < 5 are removed
@@ -603,7 +597,9 @@ res_Efm2<- subset(res_Efm, delta <= 6, recalc.weights=FALSE)
 importance(res_Efm2)
 ```
 
-### Publication bias
+### Publication bias & sensitivity analysis
+
+#### Publication bias tests
 ``` {r, message = FALSE, warning = FALSE}
 
 # funnel plot
@@ -624,7 +620,7 @@ estimates_PB_MR_E
 #no effect of inv_effective sample size or year published
 ```
 
-### Leave-one-out Sensitivity analysis
+#### Leave-one-out analysis
 ``` {r, message = FALSE, warning = FALSE, eval = FALSE}
 dat$Study_ID <- as.factor(dat$Study_ID)
 
@@ -705,7 +701,7 @@ orchard_plot(mod_S0, mod = "Int", xlab = "lnRR", alpha=0.4) +
         legend.text = element_text(size = 13)) 
 ```
 
-###Metaregression
+## Meta-regression
 
 ### Uni-moderator metaregression {.tabset}
 
@@ -878,7 +874,7 @@ Duration_S <- orchard_plot(mod_S6, mod = "Stress_duration", xlab = "lnRR", alpha
 Duration_S 
 ```
 
-### Multi-moderator fullmodel
+###  Meta-regression: multi-moderator model
 ``` {r, message = FALSE, warning = FALSE, eval = FALSE}
 
 #selecting moderator levels with k >=5
@@ -913,7 +909,9 @@ res_Sfm2<- subset(res_Sfm, delta <= 6, recalc.weights=FALSE)
 importance(res_Sfm2) 
 ```
 
-### Publication bias
+### Publication bias & sensitivity analysis
+
+#### Publication bias
 
 ``` {r, message = FALSE, warning = FALSE}
 # funnel plot
@@ -939,7 +937,7 @@ estimates_PB_MR_S
 #no effect of inv_effective sample size or year published
 ```
 
-### Leave-one-out sensitivity analysis
+#### Leave-one-out sensitivity analysis
 
 ``` {r, message = FALSE, warning = FALSE, eval = FALSE}
 dat$Study_ID <- as.factor(dat$Study_ID)
@@ -1047,9 +1045,9 @@ orchard_plot(mod_ESoutlier, mod = "Int", xlab = "lnRR", alpha=0.4) +
         legend.text = element_text(size = 13))   
 ```
 
-### Metaregression
+## Meta-regression
 
-### Uni-moderator metaregression {.tabset}
+### Uni-moderator meta-regression {.tabset}
 
 #### Type of assay
 The type of learning/memory response 
@@ -1328,7 +1326,8 @@ Age_enrichment_ES <- orchard_plot(mod_ES10, mod = "Age_EE_exposure", xlab = "lnR
 Age_enrichment_ES
 ```
 
-### Multi-moderator fullmodel
+###  Meta-regression: multi-moderator model
+
 ``` {r, message = FALSE, warning = FALSE, eval = FALSE}
 dat_ESfm <- dat %>%
   filter(Type_assay %in% c("Recognition", "Habituation", "Conditioning"),
@@ -1364,7 +1363,9 @@ res_ESfm2<- subset(res_ESfm, delta <= 6, recalc.weights=FALSE)
 importance(res_ESfm2) 
 ```
 
-### Publication bias
+### Publication bias & sensitivity analysis
+
+#### Publication bias
 
 ``` {r, message = FALSE, warning = FALSE}
 Funnel_ES<-funnel(mod_ESfm, xlab = "lnRR", ylab = "Standard Error")
@@ -1384,7 +1385,7 @@ estimates_PB_MR_ES
 #no effect of inv_effective sample size or year published
 ```
 
-### Leave-one-out sensitivity analysis
+#### Leave-one-out analysis
 
 ``` {r, message = FALSE, warning = FALSE, eval = FALSE}
 dat$Study_ID <- as.factor(dat$Study_ID)
@@ -1558,7 +1559,7 @@ i2_ml(mod_S30)
 orchard_plot(mod_S30, mod = "Int", xlab = "lnRR")
 ```
 
-### Combined orchard plot
+## Combined orchard plot
 ``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
 
 mod_list2 <- list(mod_S30, mod_E30, mod_ES20, mod_S20, mod_E20) #rearranged the order so that it matches intext results
@@ -1602,7 +1603,7 @@ p1
 ```
 
 
-## Panel of metaregressions {.tabset}
+## Panel of meta-regressions {.tabset}
 
 ### Environmental enrichment
 ``` {r, message = FALSE, warning = FALSE,  fig.width=10, fig.height=7}
