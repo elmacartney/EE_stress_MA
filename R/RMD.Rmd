@@ -28,10 +28,11 @@ rm(list = ls())
 
 ## Loading packages
 
-```{r, message = FALSE, warning = FALSE, results = 'hide'}
+```{r}
 pacman::p_load(tidyverse, 
                here,
                metafor,
+               clubSandwich,
                orchaRd, 
                MuMIn, 
                patchwork,
@@ -49,7 +50,7 @@ eval(metafor:::.MuMIn)
 
 ## Loading data and functions
 
-```{r, message = FALSE, warning = FALSE, results = 'hide'}
+```{r}
 dat <- read_csv(here("Data","Data_raw.csv"))
 # Load custom function to extract data 
 source(here("R/Functions.R")) 
@@ -197,7 +198,7 @@ p4
 # Data organisation
 Removing study with negative values, getting effect sizes from function, 'flipping' effect sizes so that all effect sizes are higher values = individuals do better and learning/memory, shifting negative values to positive as lnRR cannot use negative values, assigining human readable terms, and creating VCV of variance 
 
-```{r, message = FALSE, warning = FALSE, results = 'hide', eval = FALSE}
+```{r}
 #this code is to process the data using "Data_raw". Processed data after this step was loaded above
 #removing study with negative values as these are unable to be used for lnRR
 dat <- droplevels(dat[!dat$First_author == 'Wang',])
@@ -354,7 +355,7 @@ VCV_Ea <- impute_covariance_matrix(vi = dat$SMDV_E, cluster = dat$Study_ID, r = 
 VCV_Sa <- impute_covariance_matrix(vi = dat$SMDV_S, cluster = dat$Study_ID, r = 0.5)
 VCV_ESa <- impute_covariance_matrix(vi = dat$SMDV_ES, cluster = dat$Study_ID, r = 0.5)
 
-#write.csv(dat, file = here("Data", 'Data_processed.csv'))
+#write.csv(dat, file = here("Data", 'Data_processed.csv'), row.names = TRUE)
 ```
 
 # Modelling with lnRR
@@ -365,6 +366,8 @@ VCV_ESa <- impute_covariance_matrix(vi = dat$SMDV_ES, cluster = dat$Study_ID, r 
 Learning and memory are significantly improved when housed with environmnetal enrichment
 
 ``` {r, message = FALSE, warning = FALSE}
+#dat <- read_csv(here("Data","Data_processed.csv"))
+
 mod_E0 <- rma.mv(yi = lnRR_Ea, V = VCV_E, random = list(~1|Study_ID,
                                                           ~1|ES_ID,
                                                           ~1|Strain),
@@ -1021,10 +1024,11 @@ orchard_plot(mod_ES0, mod = "Int", xlab = "lnRR", alpha=0.4) +
 #### Intercept with outlier removed
 
 ``` {r, message = FALSE, warning = FALSE}
+
 dat_outliers <- dat %>%
   filter(ES_ID != 88)
 
-VCV_ES_outliers <- impute_covariance_matrix(vi = dat_outliers$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
+VCV_ES_outliers <- impute_covariance_matrix(vi = dat_outliers$lnRRV_E, cluster = dat_outliers$Study_ID, r = 0.5)
 
 mod_ESoutlier <- rma.mv(yi = lnRR_ESa, V = VCV_ES_outliers, random = list(~1|Study_ID,
                                                              ~1|ES_ID,
@@ -1032,7 +1036,7 @@ mod_ESoutlier <- rma.mv(yi = lnRR_ESa, V = VCV_ES_outliers, random = list(~1|Stu
                   test = "t", 
                   data = dat_outliers)
 
-summary(mod_ES0)
+summary(mod_ESoutlier)
 
 orchard_plot(mod_ESoutlier, mod = "Int", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
@@ -1355,10 +1359,12 @@ saveRDS(res_ESfm, file = here("Rdata", "res_ESfm.rds"))
 saveRDS(mod_ESfm, file = here("Rdata", "mod_ESfm.rds"))
 saveRDS(dat_ESfm, file = here("Rdata", "dat_ESfm.rds"))
 ```
-```{r, message = FALSE, warning = FALSE}
-dat_Sfm <- readRDS(file = here("Rdata", "dat_ESfm.rds"))
-mod_Sfm <- readRDS(file = here("Rdata", "mod_ESfm.rds"))
-res_Sfm <- readRDS(file = here("Rdata", "res_ESfm.rds"))
+
+
+```{r}
+dat_ESfm <- readRDS(file = here("Rdata", "dat_ESfm.rds"))
+mod_ESfm <- readRDS(file = here("Rdata", "mod_ESfm.rds"))
+res_ESfm <- readRDS(file = here("Rdata", "res_ESfm.rds"))
 res_ESfm2<- subset(res_ESfm, delta <= 6, recalc.weights=FALSE)
 importance(res_ESfm2) 
 ```
@@ -1367,7 +1373,7 @@ importance(res_ESfm2)
 
 #### Publication bias
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r}
 Funnel_ES<-funnel(mod_ESfm, xlab = "lnRR", ylab = "Standard Error")
 Funnel_ES
 #year published was scaled previously under stress PB
@@ -1681,8 +1687,12 @@ dev.off()
 ## Environmental Enrichment
 
 ### Intercept model
-Why does the funnel plot look so strange and why is I2 higher?
+
 ``` {r, message = FALSE, warning = FALSE}
+
+# TODO 
+#Why does the funnel plot look so strange and why is I2 higher?
+
 mod_E0a <- rma.mv(yi = SMD_Ea, V = VCV_Ea, random = list(~1|Study_ID,
                                                          ~1|ES_ID, 
                                                          ~1|Strain),
@@ -1690,19 +1700,22 @@ mod_E0a <- rma.mv(yi = SMD_Ea, V = VCV_Ea, random = list(~1|Study_ID,
                  data = dat)
 summary(mod_E0a)
 i2_ml(mod_E0a)
-funnel(mod_E0a)
+funnel(mod_E0a, yaxis="seinv")
+
+# VCV matrix
+VCV_Efm <- impute_covariance_matrix(vi = dat_Efm$lnRRV_E, cluster = dat_Efm$Study_ID, r = 0.5)
 
 mod_E0b <- rma.mv(yi = SMD_Ea, V = VCV_Efm, mod = ~Type_assay-1 + Learning_vs_memory-1 + Type_reinforcement-1 + EE_social-1 + EE_exercise-1 + Age_EE_exposure-1, random = list(~1|Study_ID,~1|ES_ID,~1|Strain),
                  test = "t",
                  data = dat_Efm)
 
-
+funnel(mod_E0b, yaxis="seinv")
 ```
 
 ## Stress
 
 ### Intercept model
-Why does the funnel plot look so strange and why is I2 higher?
+
 ``` {r, message = FALSE, warning = FALSE}
 mod_S0a <- rma.mv(yi = SMD_Sa, V = VCV_Sa, random = list(~1|Study_ID,
                                                          ~1|ES_ID,
@@ -1711,7 +1724,10 @@ mod_S0a <- rma.mv(yi = SMD_Sa, V = VCV_Sa, random = list(~1|Study_ID,
                 data = dat)
 summary(mod_S0a) 
 i2_ml(mod_S0a) 
-funnel(mod_S0a)
+funnel(mod_S0a, yaxis="seinv")
+
+# VCV matrix
+VCV_Sfm <- impute_covariance_matrix(vi = dat_Sfm$lnRRV_E, cluster = dat_Sfm$Study_ID, r = 0.5)
 
 #assessing funnel on model model
 mod_S0b <- rma.mv(yi = SMD_Sa, V = VCV_Sfm, mod = ~ Type_assay -1 + Learning_vs_memory + Type_reinforcement + Type_stress_exposure + Age_stress_exposure + Stress_duration, random =   list(~1|Study_ID,
@@ -1719,13 +1735,13 @@ mod_S0b <- rma.mv(yi = SMD_Sa, V = VCV_Sfm, mod = ~ Type_assay -1 + Learning_vs_
                                                                                     ~1|Strain),
                     test = "t",
                  data = dat_Sfm)
-funnel(mod_S0b)
+funnel(mod_S0b, yaxis="seinv")
 ```
 
 ## Interaction
 
 ### Intercept model
-Why does the funnel plot look so strange and why is I2 higher?
+
 ``` {r, message = FALSE, warning = FALSE}
 mod_ES0a <- rma.mv(yi = SMD_ESa, V = VCV_ESa, random = list(~1|Study_ID,
                                                             ~1|ES_ID,
@@ -1734,7 +1750,10 @@ mod_ES0a <- rma.mv(yi = SMD_ESa, V = VCV_ESa, random = list(~1|Study_ID,
                   data = dat)
 summary(mod_ES0a)
 i2_ml(mod_ES0a) 
-funnel(mod_ES0a)
+funnel(mod_ES0a, yaxis="seinv")
+
+# VCV matrix
+VCV_ESfm <- impute_covariance_matrix(vi = dat_ESfm$lnRRV_E, cluster = dat_ESfm$Study_ID, r = 0.5)
 
 mod_ES0b <- rma.mv(yi = SMD_Sa, V = VCV_ESfm, mod = ~Type_assay-1 + Learning_vs_memory + Type_reinforcement + EE_social + EE_exercise + Age_EE_exposure + Type_stress_exposure + Age_stress_exposure + Stress_duration + Exposure_order, random =   list(~1|Study_ID,
                                                                                     ~1|ES_ID,
@@ -1742,5 +1761,5 @@ mod_ES0b <- rma.mv(yi = SMD_Sa, V = VCV_ESfm, mod = ~Type_assay-1 + Learning_vs_
                     test = "t",
                  data = dat_ESfm)
 
-funnel(mod_ES0b)
+funnel(mod_ES0b, yaxis="seinv")
 ```
