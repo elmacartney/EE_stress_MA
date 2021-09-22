@@ -1,15 +1,23 @@
 ---
 title: "Stress x EE MA"
 authors: "Erin L Macartney, Malgorzata Lagisz, Shinichi Nakagawa"
-output:
-  html_document:
-    code_folding: hide
-    df_print: kable
-    toc: TRUE
-    toc_float: TRUE
-    toc_depth: 4
-    collapsed: FALSE
-    YAML: rmdformats::robobook
+subtitle: Supplementary Material
+output: 
+    
+    rmdformats::readthedown:
+      code_folding: hide
+      code_download: true
+editor_options: 
+  chunk_output_type: console
+  # output:
+#   html_document:
+#     code_folding: hide
+#     df_print: kable
+#     toc: TRUE
+#     toc_float: TRUE
+#     toc_depth: 4
+#     collapsed: FALSE
+#     YAML: rmdformats::robobook
 ---
 
 ```{r, include = FALSE}
@@ -97,7 +105,6 @@ plot_missing
 ```{r redo and assemble plots , results = 'hide'}
 
 #A. subjects info: species-strain-sex
-
 freq_A <- as.data.frame(table(dat$Sex, dat$Common_species, dat$Strain)) %>% rename(Sex = Var1, Species = Var2, Strain = Var3) #make a data frame of frequencies for three selected variables
 is_alluvia_form(as.data.frame(freq_A), axes = 1:3, silent = TRUE)
 
@@ -1638,7 +1645,7 @@ ES_mod
 ```
 
 ## Panel of funnel plots
-``` {r, message = FALSE, warning = FALSE,  fig.width=12, fig.height=6,echo = FALSE, eval = FALSE}
+``` {r, message = FALSE, warning = FALSE,  fig.width=12, fig.height=6,echo = FALSE}
 # EE
 
 pdf(NULL)
