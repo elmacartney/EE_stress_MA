@@ -50,7 +50,8 @@ pacman::p_load(tidyverse,
                visdat,
                ggalluvial,
                ggthemr,
-               cowplot)
+               cowplot,
+               grDevices)
 # needed for model selection using MuMIn within metafor
 eval(metafor:::.MuMIn)
 
