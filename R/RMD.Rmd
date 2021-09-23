@@ -1652,10 +1652,10 @@ ES_mod
 pdf(NULL)
 dev.control(displaylist="enable")
 par(mar=c(4,4,0.1,0))
-funnel(mod_Sfm, xlab = "lnRR", ylab = "Standard Error",
+A <- funnel(mod_Sfm, xlab = "lnRR", ylab = "Standard Error",
         xlim = c(-2,2),
         ylim = c(0,1.05))
-A <- recordPlot()
+A <- recordPlot(A )
 invisible(dev.off())
 
 # Stress
@@ -1663,21 +1663,21 @@ invisible(dev.off())
 pdf(NULL)
 dev.control(displaylist="enable")
 par(mar=c(4,4,0.1,0))
-funnel(mod_Sfm, xlab = "lnRR", ylab = "Standard Error",
+B <- funnel(mod_Sfm, xlab = "lnRR", ylab = "Standard Error",
         xlim = c(-2,2),
         ylim = c(0,1.05))
 B <- recordPlot()
-invisible(dev.off())
+invisible(dev.off(B))
 
 # Interaction
 pdf(NULL)
 dev.control(displaylist="enable")
 par(mar=c(4,4,0.1,0))
-funnel(mod_ESfm, xlab = "lnRR", ylab = "Standard Error",
+C <- funnel(mod_ESfm, xlab = "lnRR", ylab = "Standard Error",
         xlim = c(-2,2),
         ylim = c(0,1.05))
 C <- recordPlot()
-invisible(dev.off())
+invisible(dev.off(C))
 
 # putting together
 funnels <- (ggdraw(A) + ggdraw(B) + ggdraw(C)) + plot_annotation(tag_levels = 'A')
