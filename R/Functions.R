@@ -49,19 +49,20 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
   
   
   SMDV_E <- 0.25*((1/ES_n + 1/EC_n + 1/CS_n + 1/CC_n) + 
-                    (SMD_E^2 /2*(ES_n + EC_n + CS_n + CC_n)))
+                    (SMD_E^2 /(2*(ES_n + EC_n + CS_n + CC_n))))
   
   
   
   # main effect Stress
   SMD_S <- ((ES_mean + CS_mean) - (EC_mean + CC_mean)) / (2*SD_pool)
   
-  SMDV_S <- SMDV_E
+  SMDV_S <- 0.25*((1/ES_n + 1/EC_n + 1/CS_n + 1/CC_n) + 
+                    (SMD_S^2 /(2*(ES_n + EC_n + CS_n + CC_n))))
   
   # interaction
   SMD_ES <- ((ES_mean - EC_mean) - (CS_mean - CC_mean)) / SD_pool
   
-  SMDV_ES <- 1/ES_n + 1/EC_n + 1/CS_n + 1/CC_n + (SMD_ES^2 / (2*(ES_n + EC_n + CS_n + CC_n)))
+  SMDV_ES <- (1/ES_n + 1/EC_n + 1/CS_n + 1/CC_n) + (SMD_ES^2 / (2*(ES_n + EC_n + CS_n + CC_n)))
   
   effect <- tibble(
     # lnRR
@@ -132,20 +133,20 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
     
     
     # main effect Environment enrichment
-    SMD_E <- as.numeric( ((ES_mean + EC_mean) - (CS_mean + CC_mean))/ (2*SD_pool))
+    SMD_E <- ((ES_mean + EC_mean) - (CS_mean + CC_mean))/ (2*SD_pool)
     
     
-    SMDV_E <- as.numeric(0.25*((1/ES_n + 1/EC_n + 1/CS_n + 1/CC_n) + (SMD_E^2 /2*(ES_n + EC_n + CS_n + CC_n))))
+    SMDV_E <- 0.25*((1/ES_n + 1/EC_n + 1/CS_n + 1/CC_n) + (SMD_E^2 /(2*(ES_n + EC_n + CS_n + CC_n))))
     
     # main effect Stress
-    SMD_S <- as.numeric( ((ES_mean + CS_mean) - (EC_mean + CC_mean)) / (2*SD_pool))
+    SMD_S <- ((ES_mean + CS_mean) - (EC_mean + CC_mean)) / (2*SD_pool)
     
-    SMDV_S <- SMDV_E
+    SMDV_S <- 0.25*((1/ES_n + 1/EC_n + 1/CS_n + 1/CC_n) + (SMD_S^2 /(2*(ES_n + EC_n + CS_n + CC_n))))
     
     # interaction
-    SMD_ES <- as.numeric( ((ES_mean - EC_mean) - (CS_mean - CC_mean)) / SD_pool)
+    SMD_ES <- ((ES_mean - EC_mean) - (CS_mean - CC_mean)) / SD_pool
     
-    SMDV_ES <- as.numeric((1/ES_n + 1/EC_n + 1/CS_n + 1/CC_n + (SMD_E^2 / (2*(ES_n + EC_n + CS_n + CC_n)))))
+    SMDV_ES <- (1/ES_n + 1/EC_n + 1/CS_n + 1/CC_n) + (SMD_ES^2 / (2*(ES_n + EC_n + CS_n + CC_n)))
     
     effect <- tibble(
       # lnRR

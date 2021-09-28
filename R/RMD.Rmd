@@ -37,6 +37,9 @@ rm(list = ls())
 ## Loading packages
 
 ```{r}
+# TODO - Erin you can download from here
+#devtools::install_github('Mikata-Project/ggthemr') 
+
 pacman::p_load(tidyverse, 
                here,
                metafor,
