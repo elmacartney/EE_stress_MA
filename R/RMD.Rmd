@@ -1645,7 +1645,7 @@ ES_mod
 ```
 
 ## Panel of funnel plots
-``` {r, message = FALSE, warning = FALSE,  fig.width=12, fig.height=6,echo = FALSE}
+``` {r, message = FALSE, warning = FALSE,  fig.width=12, fig.height=6}
 # EE
 
 pdf(NULL)
@@ -1654,7 +1654,7 @@ par(mar=c(4,4,0.1,0))
 A <- funnel(mod_Sfm, xlab = "lnRR", ylab = "Standard Error",
         xlim = c(-2,2),
         ylim = c(0,1.05))
-A <- recordPlot(A )
+A <- recordPlot()
 invisible(dev.off())
 
 # Stress
@@ -1666,7 +1666,7 @@ B <- funnel(mod_Sfm, xlab = "lnRR", ylab = "Standard Error",
         xlim = c(-2,2),
         ylim = c(0,1.05))
 B <- recordPlot()
-invisible(dev.off(B))
+invisible(dev.off())
 
 # Interaction
 pdf(NULL)
@@ -1676,16 +1676,16 @@ C <- funnel(mod_ESfm, xlab = "lnRR", ylab = "Standard Error",
         xlim = c(-2,2),
         ylim = c(0,1.05))
 C <- recordPlot()
-invisible(dev.off(C))
+invisible(dev.off())
 
 # putting together
-funnels <- (ggdraw(A) + ggdraw(B) + ggdraw(C)) + plot_annotation(tag_levels = 'A')
-funnels
+ggdraw(A) + ggdraw(B) + ggdraw(C) + plot_annotation(tag_levels = 'A')
 
 
-png(file = here("figs", "funnels.png"))
 
-dev.off()
+# png(file = here("figs", "funnels.png"))
+# 
+# dev.off()
 
 ```
 
