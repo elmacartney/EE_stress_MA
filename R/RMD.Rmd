@@ -49,9 +49,11 @@ pacman::p_load(tidyverse,
                ggplot2,
                visdat,
                ggalluvial,
-               ggthemr,
+               ggthemr, # TODO check this package
                cowplot,
-               grDevices)
+               grDevices,
+               png,
+               grid)
 # needed for model selection using MuMIn within metafor
 eval(metafor:::.MuMIn)
 
@@ -1750,6 +1752,9 @@ funnel(mod_S0b, yaxis="seinv")
 ### Intercept model
 
 ``` {r, message = FALSE, warning = FALSE}
+
+
+
 mod_ES0a <- rma.mv(yi = SMD_ESa, V = VCV_ESa, random = list(~1|Study_ID,
                                                             ~1|ES_ID,
                                                             ~1|Strain),

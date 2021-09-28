@@ -61,7 +61,7 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
   # interaction
   SMD_ES <- ((ES_mean - EC_mean) - (CS_mean - CC_mean)) / SD_pool
   
-  SMDV_ES <- 1/ES_n + 1/EC_n + 1/CS_n + 1/CC_n + (SMD_E^2 / (2*(ES_n + EC_n + CS_n + CC_n)))
+  SMDV_ES <- 1/ES_n + 1/EC_n + 1/CS_n + 1/CC_n + (SMD_ES^2 / (2*(ES_n + EC_n + CS_n + CC_n)))
   
   effect <- tibble(
     # lnRR
