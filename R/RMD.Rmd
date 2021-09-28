@@ -371,7 +371,6 @@ VCV_ESa <- impute_covariance_matrix(vi = dat$SMDV_ES, cluster = dat$Study_ID, r 
 ## Environmental enrichment
 
 ### Meta-analysis
-Learning and memory are significantly improved when housed with environmnetal enrichment
 
 ``` {r, message = FALSE, warning = FALSE}
 #dat <- read_csv(here("Data","Data_processed.csv"))
