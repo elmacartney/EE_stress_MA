@@ -377,7 +377,7 @@ VCV_ESa <- impute_covariance_matrix(vi = dat$SMDV_ES, cluster = dat$Study_ID, r 
 
 ### Meta-analysis
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r}
 #dat <- read_csv(here("Data","Data_processed.csv"))
 
 mod_E0 <- rma.mv(yi = lnRR_Ea, V = VCV_E, random = list(~1|Study_ID,
@@ -406,7 +406,7 @@ orchard_plot(mod_E0, mod = "Int", xlab = "lnRR", alpha=0.4) +  # Orchard plot
 #### Type of assay
 The type of learning/memory response
 
-``` {r, message = FALSE, warning = FALSE,  fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 dat1 <- filter(dat, Type_assay %in% c("Recognition", "Habituation", "Conditioning"))
 VCV_E1 <- impute_covariance_matrix(vi = dat1$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
 
@@ -436,7 +436,7 @@ Learning_E
 #### Learning vs Memory
 Is the assay broadly measuring learning or memory? 
 
-``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 mod_E2 <-  rma.mv(yi = lnRR_Ea, V = VCV_E, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID,
                                                                                         ~1|ES_ID,
                                                                                         ~1|Strain),
@@ -463,7 +463,7 @@ LvsM_E
 #### Type of reinforcement 
 The type of cue used 
 
-``` {r, message = FALSE, warning = FALSE,  fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 
 dat2 <- filter(dat, Type_reinforcement %in% c("Appetitive", "Aversive", "Not applicable"))
 VCV_E2 <- impute_covariance_matrix(vi = dat2$lnRRV_E, cluster = dat2$Study_ID, r = 0.5)
@@ -493,7 +493,7 @@ Reinforcement_E
 #### Social enrichment
 Does EE also include a manipulation of social environment? Note that we excluded any studies that exclusively used social enrichment.s
 
-``` {r, message = FALSE, warning = FALSE,  fig.width=10, fig.height=7}
+``` {r,  fig.width=10, fig.height=7}
 dat5 <- filter(dat, EE_social %in% c("Social", "Non-social"))
 VCV_E5 <- impute_covariance_matrix(vi = dat5$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
   
@@ -522,7 +522,7 @@ Social_E
 #### Exercise enrichment
 Does the form of enrichment include exercise through a running wheel or treadmill?
 
-``` {r, message = FALSE, warning = FALSE,  fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 mod_E5<- rma.mv(yi = lnRR_Ea, V = VCV_E, mod = ~EE_exercise-1, random = list(~1|Study_ID,
                                                                                ~1|ES_ID,
                                                                                ~1|Strain),
@@ -548,7 +548,7 @@ Exercise_E
 
 #### Age of enrichment
 The age at which the individuals were exposed to environmental enrichment.
-``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 dat6 <- filter(dat, Age_EE_exposure %in% c("Adult", "Adolescent"))
 VCV_E6 <- impute_covariance_matrix(vi = dat6$lnRRV_E, cluster = dat6$Study_ID, r = 0.5)
 
@@ -578,7 +578,7 @@ Age_E
 
 ###  Meta-regression: multi-moderator model
 
-``` {r, message = FALSE, warning = FALSE, eval = FALSE}
+``` {r, eval = FALSE}
 
 # filter data so that all K < 5 are removed
 dat_Efm <- dat %>%
@@ -604,7 +604,7 @@ saveRDS(mod_Efm, file = here("Rdata", "mod_Efm.rds"))
 saveRDS(dat_Efm, file = here("Rdata", "dat_Efm.rds"))
 ```
 
-```{r, message = FALSE, warning = FALSE}
+```{r}
 dat_Efm <- readRDS(file = here("Rdata", "dat_Efm.rds"))
 mod_Efm <- readRDS(file = here("Rdata", "mod_Efm.rds"))
 res_Efm <- readRDS(file = here("Rdata", "res_Efm.rds"))
@@ -615,7 +615,7 @@ importance(res_Efm2)
 ### Publication bias & sensitivity analysis
 
 #### Publication bias tests
-``` {r, message = FALSE, warning = FALSE}
+``` {r}
 
 # funnel plot
 Funnel_E<-funnel(mod_Efm, xlab = "lnRR", ylab = "Standard Error")
@@ -636,7 +636,7 @@ estimates_PB_MR_E
 ```
 
 #### Leave-one-out analysis
-``` {r, message = FALSE, warning = FALSE, eval = FALSE}
+``` {r, eval = FALSE}
 dat$Study_ID <- as.factor(dat$Study_ID)
 
 LeaveOneOut_effectsize <- list()
@@ -661,7 +661,7 @@ MA_CVR_E <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows
 saveRDS(MA_CVR_E,file = here("Rdata", "MA_CVR_E.rds"))
 ```
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r}
 #telling ggplot to stop reordering factors
 MA_CVR_E <- readRDS(file = here("Rdata", "MA_CVR_E.rds"))
 
@@ -695,7 +695,7 @@ dat$Study_ID <- as.integer(dat$Study_ID)
 Learning and memory are significantly reduced due to stress. 
 High heterogeneity
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r}
 mod_S0 <- rma.mv(yi = lnRR_Sa, V = VCV_S, random = list(~1|Study_ID,
                                                           ~1|ES_ID,
                                                           ~1|Strain),
@@ -723,7 +723,7 @@ orchard_plot(mod_S0, mod = "Int", xlab = "lnRR", alpha=0.4) +
 #### Type of assay
 The type of learning/memory response 
 
-``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 dat$Type_assay<-as.factor(dat$Type_assay)
 
 VCV_S1 <- impute_covariance_matrix(vi = dat1$lnRRV_S, cluster = dat$Study_ID, r = 0.5)
@@ -754,7 +754,7 @@ Learning_S
 #### Learning vs Memory
 Is the assay broadly measuring learning or memory? 
 
-``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 
 mod_S2 <-  rma.mv(yi = lnRR_Sa, V = VCV_S, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID,
                                                                                         ~1|ES_ID,
@@ -781,7 +781,7 @@ LvsM_S
 #### Type of reinforcement
 The type of cue used 
 
-``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 
 VCV_S2 <- impute_covariance_matrix(vi = dat2$lnRRV_S, cluster = dat$Study_ID, r = 0.5)
 
@@ -810,7 +810,7 @@ Reinforcement_S
 #### Type of stress
 The type of stress manipulation 
 
-``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 dat3 <- filter(dat, Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"))
 VCV_S3 <- impute_covariance_matrix(vi = dat3$lnRRV_S, cluster = dat3$Study_ID, r = 0.5)
 
@@ -836,7 +836,7 @@ Stressor
 ````
 
 #### Age of stress
-``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 VCV_S3a <- impute_covariance_matrix(vi = dat$lnRRV_S, cluster = dat$Study_ID, r = 0.5)
 
 mod_S5 <-rma.mv(yi = lnRR_Sa, V = VCV_S3a, mod = ~Age_stress_exposure-1, random = list(~1|Study_ID,
@@ -864,7 +864,7 @@ Age_S
 How long was the stress applied for (chronic = every day for 7 days or more)?
 This has the highest marginal R2
 
-``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+``` {r,  fig.width=10, fig.height=7}
 dat4 <- filter(dat, Stress_duration %in% c("Chronic", "Acute"))
 VCV_S4 <- impute_covariance_matrix(vi = dat4$lnRRV_S, cluster = dat4$Study_ID, r = 0.5)
 
@@ -890,7 +890,7 @@ Duration_S
 ```
 
 ###  Meta-regression: multi-moderator model
-``` {r, message = FALSE, warning = FALSE, eval = FALSE}
+``` {r, eval = FALSE}
 
 #selecting moderator levels with k >=5
 dat_Sfm <- dat %>%
@@ -916,7 +916,7 @@ saveRDS(mod_Sfm, file = here("Rdata", "mod_Sfm.rds"))
 saveRDS(dat_Sfm, file = here("Rdata", "dat_Sfm.rds"))
 ```
 
-```{r, message = FALSE, warning = FALSE}
+```{r}
 dat_Sfm <- readRDS(file = here("Rdata", "dat_Sfm.rds"))
 mod_Sfm <- readRDS(file = here("Rdata", "mod_Sfm.rds"))
 res_Sfm <- readRDS(file = here("Rdata", "res_Sfm.rds"))
@@ -928,7 +928,7 @@ importance(res_Sfm2)
 
 #### Publication bias
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r}
 # funnel plot
 Funnel_S <- funnel(mod_Sfm, xlab = "lnRR", ylab = "Standard Error")
 Funnel_S
@@ -954,7 +954,7 @@ estimates_PB_MR_S
 
 #### Leave-one-out sensitivity analysis
 
-``` {r, message = FALSE, warning = FALSE, eval = FALSE}
+``` {r, eval = FALSE}
 dat$Study_ID <- as.factor(dat$Study_ID)
 
 LeaveOneOut_effectsize <- list()
@@ -979,7 +979,7 @@ saveRDS(MA_CVR_S,file = here("Rdata", "MA_CVR_S.rds"))
 
 ```
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r}
 MA_CVR_S <- readRDS(file = here("Rdata", "MA_CVR_S.rds"))
 
 #telling ggplot to stop reordering factors
@@ -1012,7 +1012,7 @@ dat$Study_ID <- as.integer(dat$Study_ID)
 ### Intercept
 Enriched and stress animals are better at learning and memory. 
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r}
 mod_ES0 <- rma.mv(yi = lnRR_ESa, V = VCV_ES, random = list(~1|Study_ID,
                                                              ~1|ES_ID,
                                                              ~1|Strain),
@@ -1035,7 +1035,8 @@ orchard_plot(mod_ES0, mod = "Int", xlab = "lnRR", alpha=0.4) +
 
 #### Intercept with outlier removed
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r}
+# TODO - Erin - did you mention this?? - I think this is included in leave-1-out so you can remove this
 
 dat_outliers <- dat %>%
   filter(ES_ID != 88)
@@ -1068,7 +1069,7 @@ orchard_plot(mod_ESoutlier, mod = "Int", xlab = "lnRR", alpha=0.4) +
 #### Type of assay
 The type of learning/memory response 
 
-``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 VCV_ES1 <- impute_covariance_matrix(vi = dat1$lnRRV_ES, cluster = dat$Study_ID, r = 0.5)
 
 mod_ES1 <- rma.mv(yi = lnRR_ESa, V = VCV_ES1, mod = ~Type_assay-1, random = list(~1|Study_ID,
@@ -1097,7 +1098,7 @@ Learning_ES
 #### Learning vs Memory
 Is the assay broadly measuring learning or memory? 
 
-``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 mod_ES2 <-  rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID, 
                                                                                            ~1|ES_ID,
                                                                                            ~1|Strain),
@@ -1124,7 +1125,7 @@ LvsM_ES
 #### Type of reinforcement
 The type of conditioning used
 
-``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 VCV_ES2 <- impute_covariance_matrix(vi = dat2$lnRRV_ES, cluster = dat2$Study_ID, r = 0.5)
 
 mod_ES3 <- rma.mv(yi = lnRR_ESa, V = VCV_ES2, mod = ~ Type_reinforcement-1, random = list(~1|Study_ID,
@@ -1153,7 +1154,7 @@ Reinforcement_ES
 #### Type of stress
 The type of stress manipulation 
 
-``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+``` {r}
 VCV_ES3 <- impute_covariance_matrix(vi = dat3$lnRRV_ES, cluster = dat3$Study_ID, r = 0.5)
 mod_ES4 <- rma.mv(yi = lnRR_ESa, V = VCV_ES3, mod = ~Type_stress_exposure-1, random = list(~1|Study_ID,
                                                                                             ~1|ES_ID,
@@ -1179,7 +1180,7 @@ Stressor_ES
 
 #### Age of stress
 The age at which the individuals were exposed to the stressor.
-``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 mod_ES5 <-rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~Age_stress_exposure-1, random = list(~1|Study_ID,
                                                                                           ~1|ES_ID,
                                                                                           ~1|Strain),
@@ -1206,7 +1207,7 @@ Age_stress_ES
 How long was the stress applied for (chronic = every day for 7 days or more)?
 This has the highest marginal R2 (currentl nearly 43%) - need to redo without outlier
 
-``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 VCV_ES4 <- impute_covariance_matrix(vi = dat4$lnRRV_ES, cluster = dat4$Study_ID, r = 0.5)
 
 mod_ES6 <-rma.mv(yi = lnRR_ESa, V = VCV_ES4, mod = ~Stress_duration-1, random = list(~1|Study_ID,
@@ -1235,7 +1236,7 @@ Duration_ES
 #### Social enrichment
 Does EE also include a manipulation of social environment (i.e., number of individuals in EE relative to control)? 
 
-``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 VCV_ES5 <- impute_covariance_matrix(vi = dat5$lnRRV_ES, cluster = dat5$Study_ID, r = 0.5)
 mod_ES7<- rma.mv(yi = lnRR_ESa, V = VCV_ES5, mod = ~EE_social-1, random = list(~1|Study_ID,
                                                                                 ~1|ES_ID,
@@ -1263,7 +1264,7 @@ Social_ES
 #### Exercise enrichment
 Does the form of enrichment include exercise through a running wheel or treadmill? 
 
-``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 mod_ES8<- rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~EE_exercise-1, random = list(~1|Study_ID, 
     ~1|ES_ID,
     ~1|Strain),
@@ -1290,7 +1291,7 @@ Exercise_ES
 #### Order to treatment exposure
 What order were animals exposed to stress and EE
 
-``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 mod_ES9 <- rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~Exposure_order -1, random = list(~1|Study_ID, 
     ~1|ES_ID,
     ~1|Strain),
@@ -1316,7 +1317,7 @@ Order_ES
 
 #### Age of enrichment
 What age were individuals exposed to EE
-``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 VCV_ES6 <- impute_covariance_matrix(vi = dat6$lnRRV_ES, cluster = dat6$Study_ID, r = 0.5)
 
 mod_ES10 <- rma.mv(yi = lnRR_ESa, V = VCV_ES6, mod = ~Age_EE_exposure-1, random = list(~1|Study_ID,
@@ -1344,7 +1345,7 @@ Age_enrichment_ES
 
 ###  Meta-regression: multi-moderator model
 
-``` {r, message = FALSE, warning = FALSE, eval = FALSE}
+``` {r, eval = FALSE}
 dat_ESfm <- dat %>%
   filter(Type_assay %in% c("Recognition", "Habituation", "Conditioning"),
          Type_reinforcement %in% c("Appetitive", "Aversive", "Not applicable"),
@@ -1405,7 +1406,7 @@ estimates_PB_MR_ES
 
 #### Leave-one-out analysis
 
-``` {r, message = FALSE, warning = FALSE, eval = FALSE}
+``` {r, eval = FALSE}
 dat$Study_ID <- as.factor(dat$Study_ID)
 
 LeaveOneOut_effectsize <- list()
@@ -1430,7 +1431,7 @@ saveRDS(MA_CVR_ES, ,file = here("Rdata", "MA_CVR_ES.rds"))
 
 ```
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r}
 MA_CVR_ES<- readRDS(here("Rdata", "MA_CVR_ES.rds"))
 
 #telling ggplot to stop reordering factors
@@ -1459,7 +1460,7 @@ dat$Study_ID <- as.integer(dat$Study_ID)
 
 ### Combined orchard plot
 
-``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 mod_list1 <- list(mod_E0, mod_S0, mod_ES0)
 
 mod_res1 <- lapply(mod_list1, function(x) mod_results(x, mod = "Int"))
@@ -1493,7 +1494,7 @@ orchard1
 
 ### Enrichment relative to control
 
-``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 
 VCV_E20 <- impute_covariance_matrix(vi = dat$lnRRV_E2, cluster = dat$Study_ID, r = 0.5)
 
@@ -1513,7 +1514,7 @@ orchard_plot(mod_E20, mod = "Int", xlab = "lnRR")
 
 ### Stress relative to control
 
-``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 VCV_S20 <- impute_covariance_matrix(vi = dat$lnRRV_S2, cluster = dat$Study_ID, r = 0.5)
 
 mod_S20 <- rma.mv(yi = lnRR_S2a, V = VCV_S20, random = list(~1|Study_ID, 
@@ -1530,7 +1531,7 @@ orchard_plot(mod_S20, mod = "Int", xlab = "lnRR")
 
 ### Enrichment + stress relative to control
 
-``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 VCV_ES20 <- impute_covariance_matrix(vi = dat$lnRRV_ES2, cluster = dat$Study_ID, r = 0.5)
 
 mod_ES20 <- rma.mv(yi = lnRR_ES2a, V = VCV_ES20, random = list(~1|Study_ID,
@@ -1546,7 +1547,7 @@ orchard_plot(mod_ES20, mod = "Int", xlab = "lnRR")
 
 ### Enrichment + stress relative to stress
 
-``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 VCV_E30 <- impute_covariance_matrix(vi = dat$lnRRV_E3, cluster = dat$Study_ID, r = 0.5)
 
 mod_E30 <- rma.mv(yi = lnRR_E3a, V = VCV_E30, random = list(~1|Study_ID,
@@ -1562,7 +1563,7 @@ orchard_plot(mod_E30, mod = "Int", xlab = "lnRR")
 
 ### Enrichment + stress relative to enrichment
 
-``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 VCV_S30 <- impute_covariance_matrix(vi = dat$lnRRV_S3, cluster = dat$Study_ID, r = 0.5)
 
 mod_S30 <- rma.mv(yi = lnRR_S3a, V = VCV_S30, random = list(~1|Study_ID,
@@ -1578,7 +1579,7 @@ orchard_plot(mod_S30, mod = "Int", xlab = "lnRR")
 ```
 
 ## Combined orchard plot
-``` {r, message = FALSE, warning = FALSE, fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 
 mod_list2 <- list(mod_S30, mod_E30, mod_ES20, mod_S20, mod_E20) #rearranged the order so that it matches intext results
 
@@ -1611,7 +1612,7 @@ orchard2
 ```
 
 ## Panel of 'focal' ES and 'pairwise' ES orchard plots
-``` {r, message = FALSE, warning = FALSE}
+``` {r}
 
 
 p1 <- orchard1 + orchard2 +  plot_annotation(tag_levels = 'A')
@@ -1624,7 +1625,7 @@ p1
 ## Panel of meta-regressions {.tabset}
 
 ### Environmental enrichment
-``` {r, message = FALSE, warning = FALSE,  fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 #Enrichment
 E_mod <- (LvsM_E + Learning_E + Reinforcement_E)/ (Age_E + Exercise_E + Social_E) +  plot_annotation(tag_levels = 'A')
 
@@ -1633,7 +1634,7 @@ E_mod
 ```
 
 ### Stress
-``` {r, message = FALSE, warning = FALSE,  fig.width=10, fig.height=7}
+``` {r,  fig.width=10, fig.height=7}
 S_mod <- (LvsM_S + Learning_S + Reinforcement_S) / (Age_S + Stressor + Duration_S) + plot_annotation(tag_levels = 'A')
 
 S_mod
@@ -1641,7 +1642,7 @@ S_mod
 ```
 
 ### Interaction
-``` {r, message = FALSE, warning = FALSE,  fig.width=10, fig.height=7}
+``` {r, fig.width=10, fig.height=7}
 ES_mod <- plot_grid(LvsM_ES, Learning_ES, Reinforcement_ES, Age_enrichment_ES, Age_stress_ES, Order_ES, Exercise_ES, Social_ES, Stressor_ES, Duration_ES,
   labels = "AUTO", ncol = 5)
 
@@ -1650,7 +1651,7 @@ ES_mod
 ```
 
 ## Panel of funnel plots
-``` {r, message = FALSE, warning = FALSE,  fig.width=12, fig.height=6}
+``` {r,  eval = FALSE}
 # EE
 
 pdf(NULL)
@@ -1686,13 +1687,16 @@ invisible(dev.off())
 # putting together
 ggdraw(A) + ggdraw(B) + ggdraw(C) + plot_annotation(tag_levels = 'A')
 
-
-
 # png(file = here("figs", "funnels.png"))
 # 
 # dev.off()
 
 ```
+
+```{r, out.height="120%"}
+knitr::include_graphics(here("figs", "funnels.png"))
+```
+
 
 # Modelling with SMD
 
@@ -1701,9 +1705,6 @@ ggdraw(A) + ggdraw(B) + ggdraw(C) + plot_annotation(tag_levels = 'A')
 ### Intercept model
 
 ``` {r, message = FALSE, warning = FALSE}
-
-# TODO 
-#Why does the funnel plot look so strange and why is I2 higher?
 
 mod_E0a <- rma.mv(yi = SMD_Ea, V = VCV_Ea, random = list(~1|Study_ID,
                                                          ~1|ES_ID, 
