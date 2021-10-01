@@ -38,7 +38,7 @@ rm(list = ls())
 
 ```{r}
 
-#devtools::install_github('Mikata-Project/ggthemr') 
+#devtools::install_github('Mikata-Project/ggthemr', force = TRUE) 
 
 pacman::p_load(tidyverse, 
                here,
