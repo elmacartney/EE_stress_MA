@@ -219,7 +219,13 @@ dat <- dat %>% mutate(Type_assay = case_when(Type_assay == 1 ~ "Habituation",
                                                       Type_EE_exposure == 4 ~ "Wheel/trademill",
                                                       Type_EE_exposure == 5 ~ "Combination",
                                                       Type_EE_exposure == 6 ~ "Other", 
-                                                      Type_EE_exposure == 7 ~ "Unclear"))
+                                                      Type_EE_exposure == 7 ~ "Unclear"),
+                      ROB_blinding = case_when(ROB_blinding == 1 ~ "Yes",
+                                               ROB_blinding == 2 ~ "No",
+                                               ROB_blinding == 3 ~ "Unclear"),
+                      ROB_randomisation = case_when(ROB_randomisation == 1 ~ "Yes",
+                                                    ROB_randomisation == 2 ~ "No",
+                                                    ROB_randomisation == 3 ~ "Unclear"))
 
 #making variance VCVs
 VCV_E <- impute_covariance_matrix(vi = dat$lnRRV_E, cluster = dat$Study_ID, r = 0.5)
@@ -1680,6 +1686,22 @@ ggdraw(A) + ggdraw(B) + ggdraw(C) + plot_annotation(tag_levels = 'A')
 knitr::include_graphics(here("figs", "funnels.png"))
 ```
 
+# Risk of Bias
+
+``` {R}
+# randomisation
+dat %>% group_by(ROB_randomisation) %>% 
+  summarise(n = n_distinct(Study_ID))
+
+15/30
+
+#blinding
+dat %>% group_by(ROB_blinding) %>% 
+  summarise(n = n_distinct(Study_ID))
+
+6/30
+
+```
 
 # Modelling with SMD
 
@@ -1687,7 +1709,7 @@ knitr::include_graphics(here("figs", "funnels.png"))
 
 ### Intercept model
 
-``` {r, message = FALSE, warning = FALSE}
+``` {r}
 
 mod_E0a <- rma.mv(yi = SMD_Ea, V = VCV_Ea, random = list(~1|Study_ID,
                                                          ~1|ES_ID, 
