@@ -294,14 +294,14 @@ p1
 ```{r, fig.width=10, fig.height=7}
 #TODO change enrichment type to age
 
-freq_B <- as.data.frame(table(dat$Type_EE_exposure, dat$EE_exercise, dat$EE_social)) %>% rename(Type_EE = Var1, EE_exercise = Var2, EE_social = Var3) #make a data frame of frequencies for three selected variables
+freq_B <- as.data.frame(table(dat$Age_EE_exposure, dat$EE_exercise, dat$EE_social)) %>% rename(Age_EE_exposure = Var1, EE_exercise = Var2, EE_social = Var3) #make a data frame of frequencies for three selected variables
 is_alluvia_form(as.data.frame(freq_B), axes = 1:3, silent = TRUE)
 
 p2 <- ggplot(data = freq_B,
-  aes(axis1 = Type_EE, axis2 = EE_exercise, axis3 = EE_social, y = Freq)) +
-  geom_alluvium(aes(fill = Type_EE)) +
+  aes(axis1 = Age_EE_exposure, axis2 = EE_exercise, axis3 = EE_social, y = Freq)) +
+  geom_alluvium(aes(fill = Age_EE_exposure)) +
   geom_flow() +
-  geom_stratum(aes(fill = Type_EE)) +
+  geom_stratum(aes(fill = Age_EE_exposure)) +
   geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
   #theme_minimal() +
   theme_void() +
@@ -310,7 +310,7 @@ p2 <- ggplot(data = freq_B,
         axis.title.x = element_text(),
         axis.text.x = element_text(face="bold"),
         plot.margin = unit(c(1, 1, 0, 1), "cm")) +
-  scale_x_discrete(limits = c("Type", "Exercise", "Social"), expand = c(0.1, 0.1), position = "top") +
+  scale_x_discrete(limits = c("Age", "Exercise", "Social"), expand = c(0.1, 0.1), position = "top") +
   ggtitle("C  environmental enrichment")
 
 p2
@@ -373,7 +373,7 @@ p4
 
 (p1 + scale_fill_brewer(palette = "Set3")) / (p2 + scale_fill_brewer(palette = "Set3")) / (p3 + scale_fill_brewer(palette = "Set3")) / (p4 + scale_fill_brewer(palette = "Set3")) + plot_layout(ncol = 1, heights = c(1,1,1,1,1))
 
-#ggsave(file = "./figs/Alluvial_diagrams_v0.pdf", width = 10, height = 12, units = "cm", dpi = 300, scale = 2, device = cairo_pdf)
+ggsave(file = "./figs/Alluvial_diagrams_v1.pdf", width = 10, height = 12, units = "cm", dpi = 300, scale = 2, device = cairo_pdf)
 ```
 
 # Modelling with lnRR
@@ -631,9 +631,8 @@ PB_MR_E<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  Learning_vs_memor
     data = dat_Efm)
 
 estimates_PB_MR_E<- estimates.CI(PB_MR_E)
-estimates_PB_MR_E
+#estimates_PB_MR_E
 
-#no effect of inv_effective sample size or year published
 ```
 
 #### Leave-one-out analysis
@@ -942,7 +941,7 @@ PB_MR_S<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  c_Year_published 
                   control=list(optimizer="optim", optmethod="Nelder-Mead"))
 
 estimates_PB_MR_S<- estimates.CI(PB_MR_S)
-estimates_PB_MR_S
+#estimates_PB_MR_S
 
 ```
 
@@ -1352,7 +1351,7 @@ PB_MR_ES<- rma.mv(lnRR_ESa, lnRRV_ES, mods = ~1 + sqrt_inv_e_n +  Year_published
     data = dat_ESfm)
 
 estimates_PB_MR_ES<- estimates.CI(PB_MR_ES)
-estimates_PB_MR_ES
+#estimates_PB_MR_ES
 
 ```
 
@@ -1609,7 +1608,7 @@ ES_mod
 pdf(NULL)
 dev.control(displaylist="enable")
 par(mar=c(4,4,0.1,0))
-A <- funnel(mod_Sfm, xlab = "lnRR", ylab = "Standard Error",
+A <- funnel(mod_Sfm, xlab = "Residuals (lnRR)", ylab = "Standard Error",
         xlim = c(-2,2),
         ylim = c(0,1.05))
 A <- recordPlot()
@@ -1620,7 +1619,7 @@ invisible(dev.off())
 pdf(NULL)
 dev.control(displaylist="enable")
 par(mar=c(4,4,0.1,0))
-B <- funnel(mod_Sfm, xlab = "lnRR", ylab = "Standard Error",
+B <- funnel(mod_Sfm, xlab = "Residuals (lnRR)", ylab = "Standard Error",
         xlim = c(-2,2),
         ylim = c(0,1.05))
 B <- recordPlot()
@@ -1630,7 +1629,7 @@ invisible(dev.off())
 pdf(NULL)
 dev.control(displaylist="enable")
 par(mar=c(4,4,0.1,0))
-C <- funnel(mod_ESfm, xlab = "lnRR", ylab = "Standard Error",
+C <- funnel(mod_ESfm, xlab = "Residuals (lnRR)", ylab = "Standard Error",
         xlim = c(-2,2),
         ylim = c(0,1.05))
 C <- recordPlot()
@@ -1639,9 +1638,9 @@ invisible(dev.off())
 # putting together
 ggdraw(A) + ggdraw(B) + ggdraw(C) + plot_annotation(tag_levels = 'A')
 
-# png(file = here("figs", "funnels.png"))
-# 
-# dev.off()
+#png(file = here("figs", "Fig7_Funnels.png"))
+ 
+#dev.off()
 
 ```
 
