@@ -244,7 +244,8 @@ max(dat$Year_published)
 Note that cannot adjust text size of axis on ggthemr
 
 ```{r, results = 'hide'}
-plot_missing <- vis_miss(dat, scale_label_size = TRUE) +
+
+plot_missing <- vis_miss(dat) +
   theme(plot.title = element_text(hjust = 0.5, vjust = 3),
         plot.margin = margin(t = 0.5, r = 3, b = 1, l = 1, unit = "cm")) +
   ggtitle("Missing data in the selected predictors") #no missing values
@@ -877,8 +878,8 @@ mod_S5 <-rma.mv(yi = lnRR_Sa, V = VCV_S4, mod = ~Stress_duration-1, random = lis
                                                                                    ~1|Strain),
                 test = "t",
                 data = dat6)
-summary(mod_S6) 
-r2_ml(mod_S6) 
+summary(mod_S5) 
+r2_ml(mod_S5) 
 
 Duration_S <- orchard_plot(mod_S5, mod = "Stress_duration", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
