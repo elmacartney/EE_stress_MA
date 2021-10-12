@@ -45,7 +45,7 @@ pacman::p_load(tidyverse,
                metafor,
                clubSandwich,
                orchaRd, 
-               MuMIn, 
+               MuMIn,
                patchwork,
                GoodmanKruskal,
                networkD3,
@@ -64,6 +64,10 @@ eval(metafor:::.MuMIn)
 ```
 
 ## Loading data and functions
+This loads the unprocessed datafile and custom functions including: 
+*calculating 'focal' and 'pair-wise' effect sizes and variance
+*calculating SMD
+*creating VCV of variance
 
 ```{r}
 dat <- read_csv(here("Data","Data_raw.csv"))
@@ -72,7 +76,11 @@ source(here("R/Functions.R"))
 ```
 
 ## Data organisation
-Removing study with negative values, rounding down sample sizes,getting effect sizes from function, 'flipping' effect sizes so that all effect sizes are higher values = individuals do better and learning/memory, assigning human readable terms, and creating VCV of variance 
+*removing study (Wang et al_2020) with negative values as lnRR cannot be calculated with negative values
+*rounding down sample sizes that are reported as decimals due to averaging n across treatments (rounding down is more conservative),
+*getting effect sizes from function
+*'flipping' effect sizes so that all effect sizes are higher values = individuals do better and learning/memory
+*assigning human readable terms, and creating VCV of variance 
 
 ```{r}
 
@@ -127,7 +135,7 @@ full_info <- which(complete.cases(effect_size) == TRUE)
 dat <- bind_cols(dat, effect_size, effect_size2)
 dat <- dat[full_info, ]
 
-#Flipping 'lower is better' effect sizes
+#Flipping 'lower is better' to 'higher is better' effect sizes
 #flipping lnRR for values where higher = worse
 dat$lnRR_Ea <- ifelse(dat$Response_direction == 2, dat$lnRR_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E))
 # currently NAswhich causes error
@@ -227,7 +235,10 @@ VCV_ESa <- impute_covariance_matrix(vi = dat$SMDV_ES, cluster = dat$Study_ID, r 
 
 # Data exploration
 
-## General  
+## General
+*number of effect sizes
+*number of studies
+*publication year range
 ``` {r, message = FALSE, warning = FALSE, eval = FALSE}
 #Number of effect sizes
 length(unique(dat$ES_ID))  
@@ -241,7 +252,6 @@ max(dat$Year_published)
 ```
 
 ## Visual of missing data
-Note that cannot adjust text size of axis on ggthemr
 
 ```{r, results = 'hide'}
 plot_missing <- vis_miss(dat, scale_label_size = TRUE) +
@@ -263,6 +273,7 @@ plot_missing
 ```
 
 ## Alluvial diagrams {.tabset}
+Shows the relationship/nestedness of different data elements (used for produce Fig. 2)
 
 ### Subjects info: species-strain-sex
 
@@ -289,7 +300,7 @@ p1 <- ggplot(data = freq_A,
 p1
 ```
 
-### EE info: type-exercise-social EE
+### Environmental enrichment info: age-exercise-social EE
 
 ```{r, results = 'hide', fig.width=10, fig.height=7}
 
@@ -340,7 +351,7 @@ p3 <- ggplot(data = freq_C,
 p3
 ```
 
-### Assay info: L/M-type-reinforcement
+### Assay info: LvsM-type-reinforcement
 
 ```{r, results = 'hide', fig.width=10, fig.height=7}
 freq_D <- as.data.frame(table(dat$Learning_vs_memory, dat$Type_assay, dat$Type_reinforcement)) %>% rename(Learning_Memory = Var1, Type = Var2, Reinforcement = Var3) #make a data frame of frequencies for three selected variables
@@ -366,7 +377,7 @@ p4
 ```
 
 ### Combined plot
-
+Used for Fig. 2
 ```{r, fig.width=10, fig.height=7}
 #p1 + scale_fill_brewer(palette = "Set3") #Pastel1
 
