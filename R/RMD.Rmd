@@ -488,7 +488,6 @@ Learning_E
 ```
 **Fig. 4b** Orchard plot showing the group-wise means of the categorical variable 'Type_assay' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.   
  
-
 #### Type of reinforcement 
 If conditioning was used, was aversive or appetitive reinforcement used?
 
@@ -551,7 +550,6 @@ Age_E<- orchard_plot(mod_E4, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) 
 Age_E
 ```
 **Fig. 4d** Orchard plot showing the group-wise means of the categorical variable 'Age_EE_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
-
 
 #### Exercise enrichment
 Did enrichment involve the addition of apparatus for voluntary exercise (e.g., a wheel or treadmill)?
@@ -755,6 +753,7 @@ orchard_plot(mod_S0, mod = "Int", xlab = "lnRR", alpha=0.4) +
         legend.title = element_text(size = 15),
         legend.text = element_text(size = 13)) 
 ```
+**Fig. 3** Orchard plot showing meta-analytic mean and 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.  
 
 ### Meta-regression: uni-moderator {.tabset}
 
@@ -784,6 +783,7 @@ LvsM_S <- orchard_plot(mod_S1, mod = "Learning_vs_memory", xlab = "lnRR", alpha=
 
 LvsM_S 
 ```
+**Fig. 5a** Orchard plot showing the group-wise means of the categorical variable 'Learning_vs_memory' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.   
 
 #### Type of assay
 The broad category of the type of assay used to measure learning or memory 
@@ -815,6 +815,7 @@ Learning_S <-orchard_plot(mod_S2, mod = "Type_assay", xlab = "lnRR", alpha=0.4) 
 
 Learning_S
 ```
+**Fig. 5b** Orchard plot showing the group-wise means of the categorical variable 'Type_assay' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
 #### Type of reinforcement
 If conditioning was used, was aversive or appetitive reinforcement used?
@@ -844,6 +845,7 @@ Reinforcement_S <-orchard_plot(mod_S3, mod = "Type_reinforcement", xlab = "lnRR"
 
 Reinforcement_S
 ````
+**Fig. 5c** Orchard plot showing the group-wise means of the categorical variable 'Type_reinforcement' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
 #### Age of stress
 The age when individuals were exposed to stress
@@ -870,6 +872,7 @@ Age_S <- orchard_plot(mod_S4, mod = "Age_stress_exposure", xlab = "lnRR", alpha=
 
 Age_S 
 ```
+**Fig. 5d** Orchard plot showing the group-wise means of the categorical variable 'Age_stress_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
 #### Type of stress
 The type of stressor used
@@ -898,6 +901,7 @@ Stressor<- orchard_plot(mod_S4, mod = "Type_stress_exposure", xlab = "lnRR", alp
 
 Stressor
 ````
+**Fig. 5e** Orchard plot showing the group-wise means of the categorical variable 'Type_stress_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
 #### Stess duration
 Was the stress acute or chronic?
@@ -926,6 +930,7 @@ Duration_S <- orchard_plot(mod_S5, mod = "Stress_duration", xlab = "lnRR", alpha
 
 Duration_S 
 ```
+**Fig. 5f** Orchard plot showing the group-wise means of the categorical variable 'Stress_duration' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
 ###  Multi-moderator model
 The akaike weights for the top set of models with AIC < 6
@@ -987,10 +992,13 @@ PB_MR_S<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  c_Year_published 
                  data = dat_Sfm,
                   control=list(optimizer="optim", optmethod="Nelder-Mead"))
 
+PB_MR_S
+
 estimates_PB_MR_S<- estimates.CI(PB_MR_S)
 #estimates_PB_MR_S
 
 ```
+**Fig.7b** Funnel plot showing the standard error and residuals (lnRR) from the full model.
 
 #### Leave-one-out sensitivity analysis
 
@@ -1045,6 +1053,7 @@ leaveoneout_S
 
 dat$Study_ID <- as.integer(dat$Study_ID)
 ```
+**Fig. S4** Leave-one-group-out analysis showing meta-analytic mean and 95% CI when each individual study is removed from the data set. 
 
 ## Interaction of stress and EE
 
@@ -1070,6 +1079,7 @@ orchard_plot(mod_ES0, mod = "Int", xlab = "lnRR", alpha=0.4) +
         legend.title = element_text(size = 15),
         legend.text = element_text(size = 13)) 
 ````
+**Fig. 3** Orchard plot showing meta-analytic mean and 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes. 
 
 ###  Meta-regression: uni-moderator {.tabset}
 
@@ -1099,6 +1109,7 @@ LvsM_ES <- orchard_plot(mod_ES1, mod = "Learning_vs_memory", xlab = "lnRR", alph
 
 LvsM_ES 
 ```
+**Fig. 6a** Orchard plot showing the group-wise means of the categorical variable 'Learning_vs_memory' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes. 
 
 #### Type of assay
 The broad category of the type of assay used to measure learning or memory 
@@ -1128,6 +1139,7 @@ Learning_ES <- orchard_plot(mod_ES2, mod = "Type_assay", xlab = "lnRR", alpha=0.
 
 Learning_ES
 ```
+**Fig. 6b** Orchard plot showing the group-wise means of the categorical variable 'Type_assay' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
 #### Type of reinforcement
 If conditioning was used, was aversive or appetitive reinforcement used?
@@ -1157,6 +1169,7 @@ Reinforcement_ES <- orchard_plot(mod_ES3, mod = "Type_reinforcement", xlab = "ln
 
 Reinforcement_ES 
 ````
+**Fig. 6c** Orchard plot showing the group-wise means of the categorical variable 'Type_reinforcement' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
 #### Age of enrichment
 The age when individuals were exposed to environmental enrichment
@@ -1186,6 +1199,7 @@ Age_enrichment_ES <- orchard_plot(mod_ES4, mod = "Age_EE_exposure", xlab = "lnRR
 
 Age_enrichment_ES
 ```
+**Fig. 6d** Orchard plot showing the group-wise means of the categorical variable 'Age_EE_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
 #### Exercise enrichment
 Did enrichment involve the addition of apparatus for voluntary exercise (e.g., a wheel or treadmill)?
@@ -1213,6 +1227,7 @@ Exercise_ES <- orchard_plot(mod_ES5, mod = "EE_exercise", xlab = "lnRR", alpha=0
 
 Exercise_ES
 ```
+**Fig. 6d** Orchard plot showing the group-wise means of the categorical variable 'EE_exercise' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
 #### Social enrichment
 Did enrichment involve more conspecifics (note that we did not include studies that only provided social enrichment but no other form of abiotic enrichment)?
@@ -1241,7 +1256,7 @@ Social_ES <- orchard_plot(mod_ES6, mod = "EE_social", xlab = "lnRR", alpha=0.4) 
 
 Social_ES
 ```
-
+**Fig. 6e** Orchard plot showing the group-wise means of the categorical variable 'EE_social' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
 #### Age of stress
 The age when individuals were exposed to stress
@@ -1268,6 +1283,7 @@ Age_stress_ES<-orchard_plot(mod_ES7, mod = "Age_stress_exposure", xlab = "lnRR",
 
 Age_stress_ES
 ```
+**Fig. 6d** Orchard plot showing the group-wise means of the categorical variable 'Age_stress_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
 #### Type of stress
 The type of stressor used
@@ -1295,6 +1311,7 @@ Stressor_ES <- orchard_plot(mod_ES8, mod = "Type_stress_exposure", xlab = "lnRR"
 
 Stressor_ES 
 ````
+**Fig. 6e** Orchard plot showing the group-wise means of the categorical variable 'Type_stress_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
 #### Stress duration
 Was the stress acute or chronic?
@@ -1324,6 +1341,7 @@ Duration_ES<- orchard_plot(mod_ES9, mod = "Stress_duration", xlab = "lnRR", alph
 
 Duration_ES
 ```
+**Fig. 6f** Orchard plot showing the group-wise means of the categorical variable 'Stress_duration' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
 #### Order to treatment exposure
 The order in which individuals were exposed to enrichment and stress
@@ -1351,6 +1369,7 @@ Order_ES <- orchard_plot(mod_ES10, mod = "Exposure_order", xlab = "lnRR", alpha=
 
 Order_ES 
 ```
+**Fig. 6g** Orchard plot showing the group-wise means of the categorical variable 'Exposure_order' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
 ###  Multi-moderator model
 The akaike weights for the top set of models with AIC < 6
@@ -1412,6 +1431,7 @@ estimates_PB_MR_ES<- estimates.CI(PB_MR_ES)
 #estimates_PB_MR_ES
 
 ```
+**Fig.7c** Funnel plot showing the standard error and residuals (lnRR) from the full model.
 
 #### Leave-one-out analysis
 
@@ -1466,6 +1486,7 @@ leaveoneout_ES
 
 dat$Study_ID <- as.integer(dat$Study_ID)
 ```
+**Fig. S5** Leave-one-group-out analysis showing meta-analytic mean and 95% CI when each individual study is removed from the data set. 
 
 ### Combined orchard plot
 
@@ -1498,6 +1519,7 @@ orchard1<- orchard_plot(merged1, mod = "Int", xlab = "lnRR", angle = 0) +
 
 orchard1
 ```
+**Fig. 3** Orchard plot showing meta-analytic mean and 95% confidence interval (think black line) and 95% prediction interval (thin black line) for the main effects of environmental enrichment and stress, and the interactive effect. Individuals points show observed effect sizes and sample sizes. 
 
 ## 'Pairwise' effect sizes {.tabset}
 
