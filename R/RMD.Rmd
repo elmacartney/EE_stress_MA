@@ -77,11 +77,11 @@ source(here("R/Functions.R"))
 ```
 
 ## Data organisation
-*removing study (Wang et al_2020) with negative values as lnRR cannot be calculated with negative values
-*rounding down sample sizes that are reported as decimals due to averaging n across treatments (rounding down is more conservative),
-*getting effect sizes from function
-*'flipping' effect sizes so that all effect sizes are higher values = individuals do better and learning/memory
-*assigning human readable terms, and creating VCV of variance 
+- removing study (Wang et al_2020) with negative values as lnRR cannot be calculated with negative values
+- rounding down sample sizes that are reported as decimals due to averaging n across treatments (rounding down is more conservative),
+- getting effect sizes from function
+- 'flipping' effect sizes so that all effect sizes are higher values = individuals do better and learning/memory
+- assigning human readable terms, and creating VCV of variance 
 
 ```{r}
 
@@ -237,9 +237,9 @@ VCV_ESa <- impute_covariance_matrix(vi = dat$SMDV_ES, cluster = dat$Study_ID, r 
 # Data exploration
 
 ## General
-*number of effect sizes
-*number of studies
-*publication year range
+- number of effect sizes
+- number of studies
+- publication year range
 ``` {r, message = FALSE, warning = FALSE, eval = FALSE}
 #Number of effect sizes
 length(unique(dat$ES_ID))  
@@ -273,6 +273,8 @@ plot_missing
 # table(dat$Type_stress_exposure, dat$Age_assay)
 # table(dat$Type_stress_exposure, dat$Stress_duration)
 ```
+**Fig.1** Visual of missing data for each column. Note that most missing data are for different descriptive statistics and papers are often not consistent with the types of descriptive statistics reported (i.e., SD, SE, mean, median etc)
+*cannot reduce text size in this figure*
 
 ## Alluvial diagrams {.tabset}
 Shows the relationship/nestedness of different data elements (used for produce Fig. 2)
@@ -301,6 +303,7 @@ p1 <- ggplot(data = freq_A,
 
 p1
 ```
+**Fig. 2a** relationship/nestedness between study species, strain of rodent, and sex
 
 ### Environmental enrichment info: age-exercise-social EE
 
@@ -327,6 +330,7 @@ p2 <- ggplot(data = freq_B,
 
 p2
 ```
+**Fig. 2b** relationship/nestedness between the age of enrichment exposure, if enrichment involved a manipulation of exercise and social environment
 
 ### Stress info: age-duration-type stress
 
@@ -352,6 +356,7 @@ p3 <- ggplot(data = freq_C,
 
 p3
 ```
+**Fig. 2c** Relationship/nestedess between the age of stress exposure, the duration of the stres, and the type of stress
 
 ### Assay info: LvsM-type-reinforcement
 
@@ -377,6 +382,7 @@ p4 <- ggplot(data = freq_D,
 
 p4
 ```
+**Fig. 2c** Relationship/nestedness between if the assay measured a learning or memory trait, the type of assay used, and the type of reinforcement used
 
 ### Combined plot
 Used for Fig. 2
@@ -387,6 +393,7 @@ Used for Fig. 2
 
 #ggsave(file = "./figs/Alluvial_diagrams_v2.pdf", width = 10, height = 12, units = "cm", dpi = 300, scale = 2) #, device = cairo_pdf)
 ```
+**Fig. 2** The combined plot of all alluvial diagrams used to make Fig. 2 in the main text
 
 # Modelling with lnRR
 
@@ -417,6 +424,7 @@ orchard_plot(mod_E0, mod = "Int", xlab = "lnRR", alpha=0.4) +  # Orchard plot
         legend.title = element_text(size = 15),
         legend.text = element_text(size = 13)) 
 ```
+**Fig. 3** Orchard plot showing meta-analytic mean and 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.   
 
 ### Meta-regression: uni-moderator {.tabset}
 
@@ -446,6 +454,8 @@ LvsM_E<- orchard_plot(mod_E1, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0
 
 LvsM_E
 ```
+**Fig. 4a** Orchard plot showing the group-wise means of the categorical variable 'Learning_vs_memory' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.   
+ 
 
 #### Type of assay
 The broad category of the type of assay used to measure learning or memory 
@@ -476,6 +486,8 @@ Learning_E <- orchard_plot(mod_E2, mod = "Type_assay", xlab = "lnRR", alpha=0.4)
 
 Learning_E
 ```
+**Fig. 4b** Orchard plot showing the group-wise means of the categorical variable 'Type_assay' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.   
+ 
 
 #### Type of reinforcement 
 If conditioning was used, was aversive or appetitive reinforcement used?
@@ -506,7 +518,7 @@ Reinforcement_E <-orchard_plot(mod_E3, mod = "Type_reinforcement", xlab = "lnRR"
 
 Reinforcement_E
 ````
-
+**Fig. 4c** Orchard plot showing the group-wise means of the categorical variable 'Type_reinforcement' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
 #### Age of enrichment
 The age when individuals were exposed to environmental enrichment
@@ -538,6 +550,8 @@ Age_E<- orchard_plot(mod_E4, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) 
 
 Age_E
 ```
+**Fig. 4d** Orchard plot showing the group-wise means of the categorical variable 'Age_EE_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
+
 
 #### Exercise enrichment
 Did enrichment involve the addition of apparatus for voluntary exercise (e.g., a wheel or treadmill)?
@@ -565,6 +579,7 @@ Exercise_E <-orchard_plot(mod_E5, mod = "EE_exercise", xlab = "lnRR", alpha=0.4)
 
 Exercise_E
 ```
+**Fig. 4d** Orchard plot showing the group-wise means of the categorical variable 'EE_exercise' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
 #### Social enrichment
 Did enrichment involve more conspecifics (note that we did not include studies that only provided social enrichment but no other form of abiotic enrichment)?
@@ -594,6 +609,7 @@ Social_E <-orchard_plot(mod_E6, mod = "EE_social", xlab = "lnRR", alpha=0.4) +
 
 Social_E 
 ```
+**Fig. 4e** Orchard plot showing the group-wise means of the categorical variable 'EE_social' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
 ###  Multi-moderator model
 The akaike weights for the top set of models with AIC < 6
@@ -636,7 +652,7 @@ importance(res_Efm2)
 
 #### Publication bias tests
 
-``` {r, results = 'hide'}
+``` {r}
 
 # funnel plot
 Funnel_E<-funnel(mod_Efm, xlab = "lnRR", ylab = "Standard Error")
@@ -650,12 +666,16 @@ PB_MR_E<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  Learning_vs_memor
                                                           ~1|Strain), method = "REML", test = "t", 
     data = dat_Efm)
 
+PB_MR_E
+
 estimates_PB_MR_E<- estimates.CI(PB_MR_E)
 #estimates_PB_MR_E
 
 ```
+**Fig.7a** Funnel plot showing the standard error and residuals (lnRR) from the full model.
 
 #### Leave-one-out analysis
+Individually removing studies to distinguish that no singular study is having a disproportionate effect
 
 ``` {r, eval = FALSE}
 dat$Study_ID <- as.factor(dat$Study_ID)
@@ -709,6 +729,7 @@ leaveoneout_E
 
 dat$Study_ID <- as.integer(dat$Study_ID)
 ```
+**Fig. S3** Leave-one-group-out analysis showing meta-analytic mean and 95% CI when each individual study is removed from the data set. 
 
 ## Stress
 
