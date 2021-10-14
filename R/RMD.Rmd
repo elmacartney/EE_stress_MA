@@ -423,6 +423,7 @@ orchard_plot(mod_E0, mod = "Int", xlab = "lnRR", alpha=0.4) +  # Orchard plot
         text = element_text(size = 24), # change font sizes
         legend.title = element_text(size = 15),
         legend.text = element_text(size = 13)) 
+
 ```
 **Fig. 3** Orchard plot showing meta-analytic mean and 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.   
 
@@ -691,6 +692,7 @@ est.func <- function(mod_E0){
   df <- data.frame(est = mod_E0$b, lower = mod_E0$ci.lb, upper = mod_E0$ci.ub)
   return(df)
 }
+
 
 
 #using dplyr to form data frame
