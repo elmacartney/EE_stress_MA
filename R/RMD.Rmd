@@ -395,6 +395,23 @@ Used for Fig. 2
 ```
 **Fig. 2** The combined plot of all alluvial diagrams used to make Fig. 2 in the main text
 
+## Risk of Bias
+Percent of studies that used randomisation and used blinding
+``` {R}
+# randomisation
+dat %>% group_by(ROB_randomisation) %>% 
+  summarise(n = n_distinct(Study_ID))
+
+15/30
+
+#blinding
+dat %>% group_by(ROB_blinding) %>% 
+  summarise(n = n_distinct(Study_ID))
+
+6/30
+
+```
+
 # Modelling with lnRR
 
 ## Environmental enrichment
@@ -681,11 +698,17 @@ dat$Study_ID <- as.factor(dat$Study_ID)
 
 LeaveOneOut_effectsize <- list()
 for(i in 1:length(levels(dat$Study_ID))){
-  LeaveOneOut_effectsize[[i]] <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, 
+  
+  d <- dat %>% filter(Study_ID != levels(dat$Study_ID)[i])
+  
+  VCV_Eb <- impute_covariance_matrix(vi = d$lnRRV_E, cluster = d$Study_ID, r = 0.5)
+  
+  LeaveOneOut_effectsize[[i]] <- rma.mv(yi = lnRR_Ea, V = VCV_Eb, 
                                         random = list(~1 | Study_ID,~1| ES_ID, ~1 | Strain), 
                                         method = "REML", data = dat[dat$Study_ID
                                                                     != levels(dat$Study_ID)[i], ])}
 
+#TODO Shinichi to check
 
 # writing function for extracting est, ci.lb, and ci.ub from all models
 est.func <- function(mod_E0){
@@ -1009,15 +1032,19 @@ dat$Study_ID <- as.factor(dat$Study_ID)
 
 LeaveOneOut_effectsize <- list()
 for(i in 1:length(levels(dat$Study_ID))){
-  LeaveOneOut_effectsize[[i]] <- rma.mv(yi = lnRR_Sa, V = lnRRV_S, 
+  d <- dat %>% filter(Study_ID != levels(dat$Study_ID)[i])
+  
+  VCV_Sb <- impute_covariance_matrix(vi = d$lnRRV_E, cluster = d$Study_ID, r = 0.5)
+  
+  LeaveOneOut_effectsize[[i]] <- rma.mv(yi = lnRR_Sa, V = VCV_Sb, 
                                         random = list(~1 | Study_ID,~1| ES_ID, ~1 | Strain), 
                                         method = "REML", data = dat[dat$Study_ID
                                                                     != levels(dat$Study_ID)[i], ])}
 
 
 # writing function for extracting est, ci.lb, and ci.ub from all models
-est.func <- function(mod_E0){
-  df <- data.frame(est = mod_E0$b, lower = mod_E0$ci.lb, upper = mod_E0$ci.ub)
+est.func <- function(mod_S0){
+  df <- data.frame(est = mod_S0$b, lower = mod_S0$ci.lb, upper = mod_S0$ci.ub)
   return(df)
 }
 
@@ -1442,15 +1469,18 @@ dat$Study_ID <- as.factor(dat$Study_ID)
 
 LeaveOneOut_effectsize <- list()
 for(i in 1:length(levels(dat$Study_ID))){
-  LeaveOneOut_effectsize[[i]] <- rma.mv(yi = lnRR_Ea, V = lnRRV_E, 
+  d <- dat %>% filter(Study_ID != levels(dat$Study_ID)[i])
+  
+  VCV_ESb <- impute_covariance_matrix(vi = d$lnRRV_ES, cluster = d$Study_ID, r = 0.5)
+  LeaveOneOut_effectsize[[i]] <- rma.mv(yi = lnRR_ESa, V = VCV_ESb, 
                                         random = list(~1 | Study_ID,~1| ES_ID, ~1 | Strain), 
                                         method = "REML", data = dat[dat$Study_ID
                                                                     != levels(dat$Study_ID)[i], ])}
 
 
 # writing function for extracting est, ci.lb, and ci.ub from all models
-est.func <- function(mod_E0){
-  df <- data.frame(est = mod_E0$b, lower = mod_E0$ci.lb, upper = mod_E0$ci.ub)
+est.func <- function(mod_ES0){
+  df <- data.frame(est = mod_ES0$b, lower = mod_ES0$ci.lb, upper = mod_ES0$ci.ub)
   return(df)
 }
 
@@ -1472,9 +1502,9 @@ MA_CVR_ES$left_out<-factor(MA_CVR_ES$left_out, levels = MA_CVR_ES$left_out)
 #plotting
 leaveoneout_ES <- ggplot(MA_CVR_ES) +
   geom_hline(yintercept = 0, lty = 2, lwd = 1) +
-  geom_hline(yintercept = mod_E0$ci.lb, lty = 3, lwd = 0.75, colour = "black") +
-  geom_hline(yintercept = mod_E0$b, lty = 1, lwd = 0.75, colour = "black") +
-  geom_hline(yintercept = mod_E0$ci.ub, lty = 3, lwd = 0.75, colour = "black") +
+  geom_hline(yintercept = mod_ES0$ci.lb, lty = 3, lwd = 0.75, colour = "black") +
+  geom_hline(yintercept = mod_ES0$b, lty = 1, lwd = 0.75, colour = "black") +
+  geom_hline(yintercept = mod_ES0$ci.ub, lty = 3, lwd = 0.75, colour = "black") +
   geom_pointrange(aes(x = left_out, y = est, ymin = lower, ymax = upper)) +
   xlab("Study left out") + 
   ylab("lnRR, 95% CI") + 
@@ -1771,23 +1801,6 @@ mod_ES0a <- rma.mv(yi = SMD_ESa, V = VCV_ESa, random = list(~1|Study_ID,
                   data = dat)
 summary(mod_ES0a)
 i2_ml(mod_ES0a) 
-
-```
-
-# Risk of Bias
-Percent of studies that used randomisation and used blinding
-``` {R}
-# randomisation
-dat %>% group_by(ROB_randomisation) %>% 
-  summarise(n = n_distinct(Study_ID))
-
-15/30
-
-#blinding
-dat %>% group_by(ROB_blinding) %>% 
-  summarise(n = n_distinct(Study_ID))
-
-6/30
 
 ```
 
