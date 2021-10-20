@@ -299,9 +299,10 @@ estimates.CI <- function(model){
 }
 
 # pairwise comparisons
-
+### Step 1 ####
 # contrast function
 # takes: 1) data frame, 2) moderator of interest, and 3) VCV matrix
+
 contrast_fun <- function(data, response, moderator, VCV){
   
   mod <- deparse(substitute(moderator))
@@ -327,11 +328,12 @@ contrast_fun <- function(data, response, moderator, VCV){
   contra <- map(names[-length(names)], run_rma)
 }
 
+### Step 2 ####
 # function to get relevant estimates from normal and contast models
 # takes: 1) normal model output 2) contrast model outputs, and 3) moderator of interest, 
 get_estimate <- function(model, contra, moderator) {
   
-  # making itto the name
+  # making into the name
   mod <- deparse(substitute(moderator))
   
   # getting estimations 

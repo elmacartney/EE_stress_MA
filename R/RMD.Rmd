@@ -36,7 +36,7 @@ rm(list = ls())
 
 ## Loading packages
 
-```{r}
+```{r, cache = FALSE}
 
 #devtools::install_github('Mikata-Project/ggthemr', force = TRUE) 
 
@@ -58,19 +58,21 @@ pacman::p_load(tidyverse,
                png,
                grid,
                gridGraphics,
-               pander)
+               pander,
+               formatR)
 # needed for model selection using MuMIn within metafor
 eval(metafor:::.MuMIn)
 
 ```
 
 ## Loading data and functions
-This loads the unprocessed datafile and custom functions including: 
-*calculating 'focal' and 'pair-wise' effect sizes and variance
-*calculating SMD
-*creating VCV of variance
+This loads the unprocessed datafile and custom functions including
 
-```{r}
+- calculating 'focal' and 'pair-wise' effect sizes and variance
+- calculating SMD
+- creating VCV of variance
+
+```{r, cache = FALSE}
 dat <- read_csv(here("Data","Data_raw.csv"))
 # Load custom function to extract data 
 source(here("R/Functions.R")) 
@@ -78,9 +80,9 @@ source(here("R/Functions.R"))
 
 ## Data organisation
 - removing study (Wang et al_2020) with negative values as lnRR cannot be calculated with negative values
-- rounding down sample sizes that are reported as decimals due to averaging n across treatments (rounding down is more conservative),
+- rounding down sample sizes that are reported as decimals due to averaging n across treatments
 - getting effect sizes from function
-- 'flipping' effect sizes so that all effect sizes are higher values = individuals do better and learning/memory
+- 'flipping' effect sizes so that all effect sizes are higher values = individuals do better in cognitive assays
 - assigning human readable terms, and creating VCV of variance 
 
 ```{r}
@@ -237,17 +239,19 @@ VCV_ESa <- impute_covariance_matrix(vi = dat$SMDV_ES, cluster = dat$Study_ID, r 
 # Data exploration
 
 ## General
-- number of effect sizes
-- number of studies
-- publication year range
-``` {r, message = FALSE, warning = FALSE, eval = FALSE}
+Number of effect sizes
+``` {r}
 #Number of effect sizes
 length(unique(dat$ES_ID))  
+```
 
-#Number of studies
+Number of studies
+``` {r}
 length(unique(dat$Study_ID))
+```
 
-#Publication years
+Publication year range
+``` {r}
 min(dat$Year_published) 
 max(dat$Year_published)
 ```
@@ -273,11 +277,11 @@ plot_missing
 # table(dat$Type_stress_exposure, dat$Age_assay)
 # table(dat$Type_stress_exposure, dat$Stress_duration)
 ```
-**Fig.1** Visual of missing data for each column. Note that most missing data are for different descriptive statistics and papers are often not consistent with the types of descriptive statistics reported (i.e., SD, SE, mean, median etc)
-*cannot reduce text size in this figure*
+Visual of missing data for each column. Note that most missing data are for different descriptive statistics as papers are often report results using different types of descriptive statistics (i.e., SD, SE, mean, median etc).
+*Cannot reduce text size in this figure*
 
 ## Alluvial diagrams {.tabset}
-Shows the relationship/nestedness of different data elements (used for produce Fig. 2)
+Shows the relationship/nestedness of different data elements (used to produce Fig. 2)
 
 ### Subjects info: species-strain-sex
 
@@ -303,7 +307,7 @@ p1 <- ggplot(data = freq_A,
 
 p1
 ```
-**Fig. 2a** relationship/nestedness between study species, strain of rodent, and sex
+**Fig. 2a** Relationship/nestedness between study species, strain of rodent, and sex
 
 ### Environmental enrichment info: age-exercise-social EE
 
@@ -330,7 +334,7 @@ p2 <- ggplot(data = freq_B,
 
 p2
 ```
-**Fig. 2b** relationship/nestedness between the age of enrichment exposure, if enrichment involved a manipulation of exercise and social environment
+**Fig. 2b** Relationship/nestedness between the age of enrichment exposure, if enrichment involved a manipulation of exercise and social environment
 
 ### Stress info: age-duration-type stress
 
@@ -382,10 +386,10 @@ p4 <- ggplot(data = freq_D,
 
 p4
 ```
-**Fig. 2c** Relationship/nestedness between if the assay measured a learning or memory trait, the type of assay used, and the type of reinforcement used
+**Fig. 2d** Relationship/nestedness between if the assay measured a learning or memory trait, the type of assay used, and the type of reinforcement used
 
 ### Combined plot
-Used for Fig. 2
+
 ```{r, fig.width=10, fig.height=7}
 #p1 + scale_fill_brewer(palette = "Set3") #Pastel1
 
@@ -396,25 +400,26 @@ Used for Fig. 2
 **Fig. 2** The combined plot of all alluvial diagrams used to make Fig. 2 in the main text
 
 ## Risk of Bias
-Percent of studies that used randomisation and used blinding
-``` {R}
-# randomisation
+Percent of studies that used randomisation
+``` {r}
 dat %>% group_by(ROB_randomisation) %>% 
   summarise(n = n_distinct(Study_ID))
 
 15/30
+```
 
+Percent of studies that used blinding
+``` {r}
 #blinding
 dat %>% group_by(ROB_blinding) %>% 
   summarise(n = n_distinct(Study_ID))
 
 6/30
-
 ```
 
 # Modelling with lnRR
 
-## Environmental enrichment
+## Main effect: environmental enrichment
 
 ### Meta-analysis
 
@@ -463,8 +468,10 @@ LvsM_E<- orchard_plot(mod_E1, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   xlim(-0.5, 2) + 
-  geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
-  scale_size_continuous(range = c(1, 7))+ # change point scaling
+  scale_colour_manual(values = c("grey34","grey34")) +
+  scale_fill_manual(values=c("grey34","grey34")) +
+  geom_point(aes(fill = name),  size = 5, shape = 21) + # mean estimate
+  scale_size_continuous(range = c(1, 7)) + # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
         text = element_text(size = 15), # change font sizes
         legend.title = element_text(size = 10),
@@ -502,6 +509,8 @@ Learning_E <- orchard_plot(mod_E2, mod = "Type_assay", xlab = "lnRR", alpha=0.4)
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   xlim(-0.5, 2) + 
+  scale_colour_manual(values = c("grey34","grey34","grey34")) +
+  scale_fill_manual(values=c("grey34","grey34", "grey34")) +
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -542,6 +551,8 @@ Reinforcement_E <-orchard_plot(mod_E3, mod = "Type_reinforcement", xlab = "lnRR"
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   xlim(-0.5, 2) + 
+  scale_colour_manual(values = c("grey34","grey34","grey34")) +
+  scale_fill_manual(values=c("grey34","grey34", "grey34")) +
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -583,6 +594,8 @@ Age_E<- orchard_plot(mod_E4, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   xlim(-0.5, 2) + 
+  scale_colour_manual(values = c("grey34","grey34")) +
+  scale_fill_manual(values=c("grey34","grey34")) +
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -621,6 +634,8 @@ Exercise_E <-orchard_plot(mod_E5, mod = "EE_exercise", xlab = "lnRR", alpha=0.4)
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   xlim(-0.5, 2) + 
+  scale_colour_manual(values = c("grey34","grey34")) +
+  scale_fill_manual(values=c("grey34","grey34")) +
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -660,6 +675,8 @@ Social_E <-orchard_plot(mod_E6, mod = "EE_social", xlab = "lnRR", alpha=0.4) +
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   xlim(-0.5, 2) + 
+  scale_colour_manual(values = c("grey34","grey34")) +
+  scale_fill_manual(values=c("grey34","grey34")) +
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -680,11 +697,11 @@ res_table_mod_E6 <- get_estimate(model = mod_E5, contra = contra_mod_E6, moderat
 res_table_mod_E6
 ```
 
-###  Multi-moderator model
-The akaike weights for the top set of models with AIC < 6
 
+### Publication bias & sensitivity analysis {.tabset}
+
+####  Multi-moderator model
 ``` {r, eval = FALSE}
-
 # filter data so that all K < 5 are removed
 dat_Efm <- dat %>%
   filter(Type_assay %in% c("Recognition", "Habituation", "Conditioning"),
@@ -709,6 +726,8 @@ saveRDS(mod_Efm, file = here("Rdata", "mod_Efm.rds"))
 saveRDS(dat_Efm, file = here("Rdata", "dat_Efm.rds"))
 ```
 
+The akaike weights for the top set of models with AIC < 6
+
 ```{r}
 dat_Efm <- readRDS(file = here("Rdata", "dat_Efm.rds"))
 mod_Efm <- readRDS(file = here("Rdata", "mod_Efm.rds"))
@@ -717,17 +736,20 @@ res_Efm2<- subset(res_Efm, delta <= 6, recalc.weights=FALSE)
 importance(res_Efm2)
 ```
 
-### Publication bias & sensitivity analysis
+#### Funnel plot
 
-#### Publication bias tests
-
+Used to produce Fig. 7a
 ``` {r}
 
 # funnel plot
 Funnel_E<-funnel(mod_Efm, xlab = "lnRR", ylab = "Standard Error")
-Funnel_E
-#year published was scaled previously  under stress PB
+#Funnel_E
 
+```
+**Fig.7a** Funnel plot showing the standard error and residuals (lnRR) from the full model.
+
+``` {r}
+#year published was scaled previously  under stress PB
 dat_Efm$sqrt_inv_e_n <- with(dat_Efm, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
 
 PB_MR_E<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  Learning_vs_memory + Year_published + Type_assay + Type_reinforcement + EE_social + EE_exercise + Age_stress_exposure, random = list(~1|Study_ID,
@@ -735,13 +757,11 @@ PB_MR_E<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  Learning_vs_memor
                                                           ~1|Strain), method = "REML", test = "t", 
     data = dat_Efm)
 
-PB_MR_E
+#PB_MR_E
 
 estimates_PB_MR_E<- estimates.CI(PB_MR_E)
 #estimates_PB_MR_E
-
 ```
-**Fig.7a** Funnel plot showing the standard error and residuals (lnRR) from the full model.
 
 #### Leave-one-out analysis
 Individually removing studies to distinguish that no singular study is having a disproportionate effect
@@ -778,6 +798,7 @@ MA_CVR_E <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows
 saveRDS(MA_CVR_E,file = here("Rdata", "MA_CVR_E.rds"))
 ```
 
+Used to produce Fig. S3
 ``` {r}
 #telling ggplot to stop reordering factors
 MA_CVR_E <- readRDS(file = here("Rdata", "MA_CVR_E.rds"))
@@ -807,7 +828,22 @@ dat$Study_ID <- as.integer(dat$Study_ID)
 ```
 **Fig. S3** Leave-one-group-out analysis showing meta-analytic mean and 95% CI when each individual study is removed from the data set. 
 
-## Stress
+#### Using SMD
+Re-rerunning meta-analytic model using standardised mean difference (SMD) instead of lnRR
+
+``` {r}
+
+mod_E0a <- rma.mv(yi = SMD_Ea, V = VCV_Ea, random = list(~1|Study_ID,
+                                                         ~1|ES_ID, 
+                                                         ~1|Strain),
+                 test = "t",
+                 data = dat)
+summary(mod_E0a)
+i2_ml(mod_E0a)
+
+```
+
+## Main effect: stress
 
 ### Meta-analysis
 
@@ -852,6 +888,8 @@ r2_ml(mod_S1)
 LvsM_S <- orchard_plot(mod_S1, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  scale_colour_manual(values = c("grey34","grey34")) +
+  scale_fill_manual(values=c("grey34","grey34")) +
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -884,6 +922,8 @@ r2_ml(mod_S2)
 Learning_S <-orchard_plot(mod_S2, mod = "Type_assay", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  scale_colour_manual(values = c("grey34","grey34","grey34")) +
+  scale_fill_manual(values=c("grey34","grey34","grey34")) +
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -914,6 +954,8 @@ r2_ml(mod_S3)
 Reinforcement_S <-orchard_plot(mod_S3, mod = "Type_reinforcement", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  scale_colour_manual(values = c("grey34","grey34","grey34")) +
+  scale_fill_manual(values=c("grey34","grey34","grey34")) +
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -941,6 +983,8 @@ r2_ml(mod_S4)
 Age_S <- orchard_plot(mod_S4, mod = "Age_stress_exposure", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  scale_colour_manual(values = c("grey34","grey34","grey34", "grey34")) +
+  scale_fill_manual(values=c("grey34","grey34","grey34","grey34")) +
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -970,6 +1014,8 @@ r2_ml(mod_S4)
 Stressor<- orchard_plot(mod_S4, mod = "Type_stress_exposure", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  scale_colour_manual(values = c("grey34","grey34","grey34", "grey34")) +
+  scale_fill_manual(values=c("grey34","grey34","grey34","grey34")) +
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -999,6 +1045,8 @@ r2_ml(mod_S5)
 Duration_S <- orchard_plot(mod_S5, mod = "Stress_duration", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  scale_colour_manual(values = c("grey34","grey34")) +
+  scale_fill_manual(values=c("grey34","grey34")) +
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -1010,8 +1058,8 @@ Duration_S
 ```
 **Fig. 5f** Orchard plot showing the group-wise means of the categorical variable 'Stress_duration' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
-###  Multi-moderator model
-The akaike weights for the top set of models with AIC < 6
+### Publication bias & sensitivity analysis {.tabset}
+####  Multi-moderator model
 
 ``` {r, eval = FALSE}
 
@@ -1039,6 +1087,8 @@ saveRDS(mod_Sfm, file = here("Rdata", "mod_Sfm.rds"))
 saveRDS(dat_Sfm, file = here("Rdata", "dat_Sfm.rds"))
 ```
 
+The akaike weights for the top set of models with AIC < 6
+
 ```{r}
 dat_Sfm <- readRDS(file = here("Rdata", "dat_Sfm.rds"))
 mod_Sfm <- readRDS(file = here("Rdata", "mod_Sfm.rds"))
@@ -1047,15 +1097,17 @@ res_Sfm2<- subset(res_Sfm, delta <= 6, recalc.weights=FALSE)
 importance(res_Sfm2) 
 ```
 
-### Publication bias & sensitivity analysis
+#### Funnel plot
+Used to produce Fig. 7b
 
-#### Publication bias
-
-``` {r, results = 'hide'}
+``` {r}
 # funnel plot
 Funnel_S <- funnel(mod_Sfm, xlab = "lnRR", ylab = "Standard Error")
 Funnel_S
+```
+**Fig.7b** Funnel plot showing the standard error and residuals (lnRR) from the full model.
 
+```{r}
 #calculating inv effective sample size for use in full meta-regression
 dat_Sfm$sqrt_inv_e_n <- with(dat_Sfm, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
 
@@ -1070,13 +1122,13 @@ PB_MR_S<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  c_Year_published 
                  data = dat_Sfm,
                   control=list(optimizer="optim", optmethod="Nelder-Mead"))
 
-PB_MR_S
+#PB_MR_S
 
 estimates_PB_MR_S<- estimates.CI(PB_MR_S)
 #estimates_PB_MR_S
 
 ```
-**Fig.7b** Funnel plot showing the standard error and residuals (lnRR) from the full model.
+
 
 #### Leave-one-out sensitivity analysis
 
@@ -1109,6 +1161,7 @@ saveRDS(MA_CVR_S,file = here("Rdata", "MA_CVR_S.rds"))
 
 ```
 
+Used to produce Fig. S4
 ``` {r}
 MA_CVR_S <- readRDS(file = here("Rdata", "MA_CVR_S.rds"))
 
@@ -1137,7 +1190,21 @@ dat$Study_ID <- as.integer(dat$Study_ID)
 ```
 **Fig. S4** Leave-one-group-out analysis showing meta-analytic mean and 95% CI when each individual study is removed from the data set. 
 
-## Interaction of stress and EE
+#### Using SMD
+Re-rerunning meta-analytic model using standardised mean difference (SMD) instead of lnRR
+
+``` {r, message = FALSE, warning = FALSE}
+mod_S0a <- rma.mv(yi = SMD_Sa, V = VCV_Sa, random = list(~1|Study_ID,
+                                                         ~1|ES_ID,
+                                                         ~1|Strain),
+                test = "t",
+                data = dat)
+summary(mod_S0a) 
+i2_ml(mod_S0a) 
+
+```
+
+## Interaction: enrichment x stress
 
 ### Meta-analysis
 
@@ -1181,6 +1248,8 @@ r2_ml(mod_ES1)
 LvsM_ES <- orchard_plot(mod_ES1, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  scale_colour_manual(values = c("grey34","grey34")) +
+  scale_fill_manual(values=c("grey34","grey34")) +
   geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -1211,6 +1280,8 @@ r2_ml(mod_ES2)
 Learning_ES <- orchard_plot(mod_ES2, mod = "Type_assay", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  scale_colour_manual(values = c("grey34","grey34","grey34")) +
+  scale_fill_manual(values=c("grey34","grey34","grey34")) +
   geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -1241,6 +1312,8 @@ r2_ml(mod_ES3)
 Reinforcement_ES <- orchard_plot(mod_ES3, mod = "Type_reinforcement", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  scale_colour_manual(values = c("grey34","grey34","grey34")) +
+  scale_fill_manual(values=c("grey34","grey34","grey34")) +
   geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -1271,6 +1344,8 @@ r2_ml(mod_ES4)
 Age_enrichment_ES <- orchard_plot(mod_ES4, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  scale_colour_manual(values = c("grey34","grey34")) +
+  scale_fill_manual(values=c("grey34","grey34")) +
   geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -1299,6 +1374,8 @@ r2_ml(mod_ES5)
 Exercise_ES <- orchard_plot(mod_ES5, mod = "EE_exercise", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  scale_colour_manual(values = c("grey34","grey34")) +
+  scale_fill_manual(values=c("grey34","grey34")) +
   geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -1328,6 +1405,8 @@ r2_ml(mod_ES6)
 Social_ES <- orchard_plot(mod_ES6, mod = "EE_social", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  scale_colour_manual(values = c("grey34","grey34")) +
+  scale_fill_manual(values=c("grey34","grey34")) +
   geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -1355,6 +1434,8 @@ r2_ml(mod_ES7)
 Age_stress_ES<-orchard_plot(mod_ES7, mod = "Age_stress_exposure", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  scale_colour_manual(values = c("grey34","grey34","grey34", "grey34")) +
+  scale_fill_manual(values=c("grey34","grey34","grey34","grey34")) +
   geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -1383,6 +1464,8 @@ r2_ml(mod_ES8)
 Stressor_ES <- orchard_plot(mod_ES8, mod = "Type_stress_exposure", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  scale_colour_manual(values = c("grey34","grey34","grey34", "grey34")) +
+  scale_fill_manual(values=c("grey34","grey34","grey34","grey34")) +
   geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -1414,6 +1497,8 @@ Duration_ES<- orchard_plot(mod_ES9, mod = "Stress_duration", xlab = "lnRR", alph
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
+  scale_colour_manual(values = c("grey34","grey34")) +
+  scale_fill_manual(values=c("grey34","grey34")) +
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
         axis.text.x = element_text(size = 10), # change font sizes
@@ -1441,6 +1526,8 @@ r2_ml(mod_ES10)
 Order_ES <- orchard_plot(mod_ES10, mod = "Exposure_order", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
+  scale_colour_manual(values = c("grey34","grey34","grey34")) +
+  scale_fill_manual(values=c("grey34","grey34","grey34")) +
   geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -1453,9 +1540,9 @@ Order_ES
 ```
 **Fig. 6g** Orchard plot showing the group-wise means of the categorical variable 'Exposure_order' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
-###  Multi-moderator model
-The akaike weights for the top set of models with AIC < 6
+### Publication bias & sensitivity analysis {.tabset}
 
+####  Multi-moderator model
 ``` {r, eval = FALSE}
 dat_ESfm <- dat %>%
   filter(Type_assay %in% c("Recognition", "Habituation", "Conditioning"),
@@ -1484,6 +1571,7 @@ saveRDS(mod_ESfm, file = here("Rdata", "mod_ESfm.rds"))
 saveRDS(dat_ESfm, file = here("Rdata", "dat_ESfm.rds"))
 ```
 
+The akaike weights for the top set of models with AIC < 6
 
 ```{r}
 dat_ESfm <- readRDS(file = here("Rdata", "dat_ESfm.rds"))
@@ -1493,25 +1581,12 @@ res_ESfm2<- subset(res_ESfm, delta <= 6, recalc.weights=FALSE)
 importance(res_ESfm2) 
 ```
 
-### Publication bias & sensitivity analysis
+#### Funnel plot
+Used to produce Fig. 7c
 
-#### Publication bias
-
-``` {r, results = 'hide'}
+``` {r}
 Funnel_ES<-funnel(mod_ESfm, xlab = "lnRR", ylab = "Standard Error")
 Funnel_ES
-#year published was scaled previously under stress PB
-
-dat_ESfm$sqrt_inv_e_n <- with(dat_ESfm, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
-
-PB_MR_ES<- rma.mv(lnRR_ESa, lnRRV_ES, mods = ~1 + sqrt_inv_e_n +  Year_published + Learning_vs_memory + Type_assay + Type_reinforcement + EE_social + EE_exercise + Age_stress_exposure, random = list(~1|Study_ID,
-                                                          ~1|ES_ID,
-                                                          ~1|Strain), method = "REML", test = "t", 
-    data = dat_ESfm)
-
-estimates_PB_MR_ES<- estimates.CI(PB_MR_ES)
-#estimates_PB_MR_ES
-
 ```
 **Fig.7c** Funnel plot showing the standard error and residuals (lnRR) from the full model.
 
@@ -1544,6 +1619,7 @@ MA_CVR_ES <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_row
 saveRDS(MA_CVR_ES, ,file = here("Rdata", "MA_CVR_ES.rds"))
 
 ```
+Used to produce Fig. S5
 
 ``` {r}
 MA_CVR_ES<- readRDS(here("Rdata", "MA_CVR_ES.rds"))
@@ -1573,38 +1649,19 @@ dat$Study_ID <- as.integer(dat$Study_ID)
 ```
 **Fig. S5** Leave-one-group-out analysis showing meta-analytic mean and 95% CI when each individual study is removed from the data set. 
 
-### Combined orchard plot
+#### Using SMD
+Re-rerunning meta-analytic model using standardised mean difference (SMD) instead of lnR
 
-``` {r, fig.width=10, fig.height=7}
-mod_list1 <- list(mod_E0, mod_S0, mod_ES0)
+``` {r, message = FALSE, warning = FALSE}
+mod_ES0a <- rma.mv(yi = SMD_ESa, V = VCV_ESa, random = list(~1|Study_ID,
+                                                            ~1|ES_ID,
+                                                            ~1|Strain),
+                  test = "t",
+                  data = dat)
+summary(mod_ES0a)
+i2_ml(mod_ES0a) 
 
-mod_res1 <- lapply(mod_list1, function(x) mod_results(x, mod = "Int"))
-
-merged1 <- submerge(mod_res1[[3]], mod_res1[[2]],  mod_res1[[1]], mix = T)
-merged1$mod_table$name <- factor(merged1$mod_table$name, levels = c("Intrcpt1", 
-    "Intrcpt2", "Intrcpt3"), 
-    labels = rev(c("Enrichment ME", "Stress ME", "Interaction")))
-
-merged1$data$moderator <- factor(merged1$data$moderator, levels = c("Intrcpt1", 
-    "Intrcpt2", "Intrcpt3"), 
-    labels = rev(c("Enrichment ME", "Stress ME", "Interaction")))
-
-orchard1<- orchard_plot(merged1, mod = "Int", xlab = "lnRR", angle = 0) + 
-  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
-  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals 
-  xlim(-2,4.5) +
-  geom_point(aes(fill = name),  size = 4, shape = 21)+ # mean estimate
-  scale_size_continuous(range = c(1, 7))+ # change point scaling +
-  scale_colour_manual(values = c("#00AEEF","#00A651","#ED1C24"))+ # change colours
-  scale_fill_manual(values=c("#00AEEF","#00A651","#ED1C24"))+
-  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
-        text = element_text(size = 15), # change font sizes
-        legend.title = element_text(size = 10),
-        legend.text = element_text(size = 10)) 
-
-orchard1
 ```
-**Fig. 3** Orchard plot showing meta-analytic mean and 95% confidence interval (think black line) and 95% prediction interval (thin black line) for the main effects of environmental enrichment and stress, and the interactive effect. Individuals points show observed effect sizes and sample sizes. 
 
 ## 'Pairwise' effect sizes {.tabset}
 
@@ -1693,7 +1750,40 @@ i2_ml(mod_S30)
 orchard_plot(mod_S30, mod = "Int", xlab = "lnRR")
 ```
 
-``` {r, fig.width=10, fig.height=7, }
+## Figures
+### Panel of 'focal' ES and 'pairwise' ES orchard plots
+Used to produce Fig. 3
+``` {r}
+mod_list1 <- list(mod_E0, mod_S0, mod_ES0)
+
+mod_res1 <- lapply(mod_list1, function(x) mod_results(x, mod = "Int"))
+
+merged1 <- submerge(mod_res1[[3]], mod_res1[[2]],  mod_res1[[1]], mix = T)
+merged1$mod_table$name <- factor(merged1$mod_table$name, levels = c("Intrcpt1", 
+    "Intrcpt2", "Intrcpt3"), 
+    labels = rev(c("Enrichment ME", "Stress ME", "Interaction")))
+
+merged1$data$moderator <- factor(merged1$data$moderator, levels = c("Intrcpt1", 
+    "Intrcpt2", "Intrcpt3"), 
+    labels = rev(c("Enrichment ME", "Stress ME", "Interaction")))
+
+orchard1<- orchard_plot(merged1, mod = "Int", xlab = "lnRR", angle = 0) + 
+  geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
+  geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals 
+  xlim(-2,4.5) +
+  geom_point(aes(fill = name),  size = 4, shape = 21)+ # mean estimate
+  scale_size_continuous(range = c(1, 7))+ # change point scaling +
+  scale_colour_manual(values = c("#00AEEF","#00A651","#ED1C24"))+ # change colours
+  scale_fill_manual(values=c("#00AEEF","#00A651","#ED1C24"))+
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
+        text = element_text(size = 15), # change font sizes
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10)) 
+
+```
+
+
+``` {r}
 
 mod_list2 <- list(mod_S30, mod_E30, mod_ES20, mod_S20, mod_E20) #rearranged the order so that it matches intext results
 
@@ -1724,22 +1814,19 @@ orchard2 <- orchard_plot(merged2, mod = "Int", xlab = "lnRR", angle = 0) +
 
 ```
 
-## Figures
-
-### Panel of 'focal' ES and 'pairwise' ES orchard plots
 ``` {r}
-
 
 p1 <- orchard1 + orchard2 +  plot_annotation(tag_levels = 'A')
 p1
 
 #saved as PDF: 6 x 15 inches
 ```
-
+**Fig. 3** Orchard plots showing the eight meta-analytic models. (A) main effects of enrichment and stress, and interaction of environmental enrichment and stress, (B) ‘pairwise’ comparisons between treatments and controls. Thick black lines = 95% CI, thin black lines = 95 % PI. 
 
 ### Panel of meta-regressions {.tabset}
 
 #### Environmental enrichment
+Used to produce Fig. 4
 ``` {r, fig.width=10, fig.height=7}
 #Enrichment
 E_mod <- (LvsM_E + Learning_E + Reinforcement_E)/ (Age_E + Exercise_E + Social_E) +  plot_annotation(tag_levels = 'A')
@@ -1747,16 +1834,20 @@ E_mod <- (LvsM_E + Learning_E + Reinforcement_E)/ (Age_E + Exercise_E + Social_E
 E_mod
 #saved as pdf 10 x 15 inches
 ```
+**Fig. 4** Orchard plots showing the six different meta-regressions on the main effect of environmental enrichment on learning and memory. (A)  learning versus memory response, (B) the type of assay, (C) the type of reinforcement, (D) the age at environmental enrichment, (E) type of manipulation of exercise during enrichment, (F) manipulation of the social environment during enrichment.  
 
 #### Stress
+Used to produce Fig. 5
 ``` {r,  fig.width=10, fig.height=7}
 S_mod <- (LvsM_S + Learning_S + Reinforcement_S) / (Age_S + Stressor + Duration_S) + plot_annotation(tag_levels = 'A')
 
 S_mod
 #saved as pdf 10 x 15 inches
 ```
+**Fig. 5** Orchard plots showing the six different meta-regressions on the main effect of stress on learning and memory. (A) learning versus memory response, (B) the type of assay, (C) the type of reinforcement, (D) the age at stress, (E) the type of stressor (MS = maternal separation), (F) chronic or acute stress. 
 
 #### Interaction
+Used to produce Fig. 6
 ``` {r, fig.width=10, fig.height=7}
 ES_mod <- plot_grid(LvsM_ES, Learning_ES, Reinforcement_ES, Age_enrichment_ES, Age_stress_ES, Order_ES, Exercise_ES, Social_ES, Stressor_ES, Duration_ES,
   labels = "AUTO", ncol = 5)
@@ -1764,8 +1855,10 @@ ES_mod <- plot_grid(LvsM_ES, Learning_ES, Reinforcement_ES, Age_enrichment_ES, A
 ES_mod
 #saved as 10 x 20 inches
 ```
+**Fig. 6** Orchard plots showing the 10 different meta-regressions of moderators on the interaction between environmental enrichment and stress learning and memory. (A) learning versus memory response, (B) the type of assay, (C) the type of reinforcement used, (D) the age at environmental enrichment, (E) the age at stress, (F) the order of treatment exposure, (G) if enrichment involved a manipulation of exercise, (H) manipulation of the social environment during enrichment, (I) the type of stressor, (F) stress was chronic or acute. 
 
 ### Panel of funnel plots
+Used to produce Fig. 7
 ``` {r, eval = FALSE}
 # EE
 
@@ -1811,51 +1904,7 @@ ggdraw(A) + ggdraw(B) + ggdraw(C) + plot_annotation(tag_levels = 'A')
 knitr::include_graphics(here("figs", "funnels.png"))
 ```
 
-# Modelling with SMD {.tabset}
-Models are of the three 'focal' models 
-
-## Environmental Enrichment
-
-``` {r}
-
-mod_E0a <- rma.mv(yi = SMD_Ea, V = VCV_Ea, random = list(~1|Study_ID,
-                                                         ~1|ES_ID, 
-                                                         ~1|Strain),
-                 test = "t",
-                 data = dat)
-summary(mod_E0a)
-i2_ml(mod_E0a)
-
-```
-
-## Stress
-
-``` {r, message = FALSE, warning = FALSE}
-mod_S0a <- rma.mv(yi = SMD_Sa, V = VCV_Sa, random = list(~1|Study_ID,
-                                                         ~1|ES_ID,
-                                                         ~1|Strain),
-                test = "t",
-                data = dat)
-summary(mod_S0a) 
-i2_ml(mod_S0a) 
-
-```
-
-## Interaction
-
-``` {r, message = FALSE, warning = FALSE}
-
-
-
-mod_ES0a <- rma.mv(yi = SMD_ESa, V = VCV_ESa, random = list(~1|Study_ID,
-                                                            ~1|ES_ID,
-                                                            ~1|Strain),
-                  test = "t",
-                  data = dat)
-summary(mod_ES0a)
-i2_ml(mod_ES0a) 
-
-```
+**Fig. 7** Funnel plots of the standard error and residuals (lnRR) from the full models. (A) environmental enrichment main effect, (B) stress main effect, (C) environmental enrichment x stress interaction.
 
 # Software and package versions
 
