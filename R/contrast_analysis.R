@@ -37,7 +37,7 @@ contrast_fun <- function(data, response, moderator, VCV){
   }
   
   
-  # running all teh models to get all the contrasts
+  # running all the models to get all the contrasts
   contra <- map(names[-length(names)], run_rma)
 }
 
