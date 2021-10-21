@@ -1,7 +1,7 @@
 ---
-title: "Enrichment x stress MA"
+title: "The relative benefits of environmental enrichment on learning and memory are greater when stressed: a meta-analysis of interactions in rodents"
 authors: "Erin L Macartney, Malgorzata Lagisz, Shinichi Nakagawa"
-subtitle: Supplementary Material
+subtitle: Supplementary Material S2
 output: 
     
     rmdformats::readthedown:
@@ -1057,6 +1057,15 @@ Reinforcement_S
 ````
 **Fig. 5c** Orchard plot showing the group-wise means of the categorical variable 'Type_reinforcement' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
+##### Pairwise comparison 
+``` {r}
+contra_mod_S3 <- contrast_fun(data = dat2, response = lnRR_Sa, moderator = Type_reinforcement, VCV = VCV_S2)
+res_table_mod_S3 <- get_estimate(model = mod_S3, contra = contra_mod_S3, moderator = Type_reinforcement)
+
+res_table_mod_S3
+```
+
+
 #### Age of stress
 The age when individuals were exposed to stress
 
@@ -1086,6 +1095,15 @@ Age_S
 ```
 **Fig. 5d** Orchard plot showing the group-wise means of the categorical variable 'Age_stress_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
+##### Pairwise comparison 
+``` {r}
+contra_mod_S4 <- contrast_fun(data = dat, response = lnRR_Sa, moderator = Age_stress_exposure, VCV = VCV_S)
+res_table_mod_S4 <- get_estimate(model = mod_S4, contra = contra_mod_S4, moderator = Age_stress_exposure)
+
+res_table_mod_S4
+```
+
+
 #### Type of stress
 The type of stressor used
 
@@ -1093,15 +1111,15 @@ The type of stressor used
 dat5 <- filter(dat, Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"))
 VCV_S3 <- impute_covariance_matrix(vi = dat5$lnRRV_S, cluster = dat5$Study_ID, r = 0.5)
 
-mod_S4 <- rma.mv(yi = lnRR_Sa, V = VCV_S3, mod = ~Type_stress_exposure-1, random = list(~1|Study_ID,
+mod_S5 <- rma.mv(yi = lnRR_Sa, V = VCV_S3, mod = ~Type_stress_exposure-1, random = list(~1|Study_ID,
                                                                                          ~1|ES_ID,
                                                                                          ~1|Strain),
                  test = "t",
                  data = dat5)
-summary(mod_S4) 
-r2_ml(mod_S4)
+summary(mod_S5) 
+r2_ml(mod_S5)
 
-Stressor<- orchard_plot(mod_S4, mod = "Type_stress_exposure", xlab = "lnRR", alpha=0.4) + 
+Stressor<- orchard_plot(mod_S5, mod = "Type_stress_exposure", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   scale_colour_manual(values = c("grey34","grey34","grey34", "grey34")) +
@@ -1117,6 +1135,15 @@ Stressor
 ````
 **Fig. 5e** Orchard plot showing the group-wise means of the categorical variable 'Type_stress_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
+##### Pairwise comparison 
+``` {r}
+contra_mod_S5 <- contrast_fun(data = dat5, response = lnRR_Sa, moderator =Type_stress_exposure, VCV = VCV_S3)
+res_table_mod_S5 <- get_estimate(model = mod_S5, contra = contra_mod_S5, moderator = Type_stress_exposure)
+
+res_table_mod_S5
+```
+
+
 #### Stess duration
 Was the stress acute or chronic?
 
@@ -1124,15 +1151,15 @@ Was the stress acute or chronic?
 dat6 <- filter(dat, Stress_duration %in% c("Chronic", "Acute"))
 VCV_S4 <- impute_covariance_matrix(vi = dat6$lnRRV_S, cluster = dat6$Study_ID, r = 0.5)
 
-mod_S5 <-rma.mv(yi = lnRR_Sa, V = VCV_S4, mod = ~Stress_duration-1, random = list(~1|Study_ID,
+mod_S6 <-rma.mv(yi = lnRR_Sa, V = VCV_S4, mod = ~Stress_duration-1, random = list(~1|Study_ID,
                                                                                    ~1|ES_ID,
                                                                                    ~1|Strain),
                 test = "t",
                 data = dat6)
-summary(mod_S5) 
-r2_ml(mod_S5) 
+summary(mod_S6) 
+r2_ml(mod_S6) 
 
-Duration_S <- orchard_plot(mod_S5, mod = "Stress_duration", xlab = "lnRR", alpha=0.4) + 
+Duration_S <- orchard_plot(mod_S6, mod = "Stress_duration", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   scale_colour_manual(values = c("grey34","grey34")) +
@@ -1147,6 +1174,14 @@ Duration_S <- orchard_plot(mod_S5, mod = "Stress_duration", xlab = "lnRR", alpha
 Duration_S 
 ```
 **Fig. 5f** Orchard plot showing the group-wise means of the categorical variable 'Stress_duration' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
+
+##### Pairwise comparison 
+``` {r}
+contra_mod_S6 <- contrast_fun(data = dat6, response = lnRR_Sa, moderator =Stress_duration, VCV = VCV_S4)
+res_table_mod_S6 <- get_estimate(model = mod_S6, contra = contra_mod_S6, moderator = Stress_duration)
+
+res_table_mod_S6
+```
 
 ### Publication bias & sensitivity analysis {.tabset}
 
@@ -1392,6 +1427,14 @@ LvsM_ES
 ```
 **Fig. 6a** Orchard plot showing the group-wise means of the categorical variable 'Learning_vs_memory' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes. 
 
+##### Pairwise comparison 
+``` {r}
+contra_mod_ES1 <- contrast_fun(data = dat, response = lnRR_ESa, moderator =~Learning_vs_memory, VCV = VCV_ES)
+res_table_mod_ES1 <- get_estimate(model = mod_ES1, contra = contra_mod_ES1, moderator = ~Learning_vs_memory)
+
+res_table_mod_ES1
+```
+
 #### Type of assay
 The broad category of the type of assay used to measure learning or memory 
 
@@ -1423,6 +1466,15 @@ Learning_ES <- orchard_plot(mod_ES2, mod = "Type_assay", xlab = "lnRR", alpha=0.
 Learning_ES
 ```
 **Fig. 6b** Orchard plot showing the group-wise means of the categorical variable 'Type_assay' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
+
+##### Pairwise comparison 
+``` {r}
+contra_mod_ES2 <- contrast_fun(data = dat1, response = lnRR_ESa, moderator =~Type_assay, VCV = VCV_ES1)
+res_table_mod_ES2 <- get_estimate(model = mod_ES2, contra = contra_mod_ES2, moderator = ~Type_assay)
+
+res_table_mod_ES2
+```
+
 
 #### Type of reinforcement
 If conditioning was used, was aversive or appetitive reinforcement used?
