@@ -71,6 +71,7 @@ This loads the unprocessed datafile and custom functions including
 - calculating 'focal' and 'pair-wise' effect sizes and variance
 - calculating SMD
 - creating VCV of variance
+- calculating pair-wise contrasts between moderators
 
 ```{r, cache = FALSE}
 dat <- read_csv(here("Data","Data_raw.csv"))
@@ -423,6 +424,31 @@ dat %>% group_by(ROB_blinding) %>%
 
 ### Meta-analysis
 
+To quantify differences in individual performance in cognitive assays with environmental enrichment, we used the logarithm of response ratio (lnRR) calculated as: 
+
+$$
+\ln{\text{RR}_\text{EE}} = 
+\ln\left( \frac{ M_\text{ES} +  M_\text{EC}} {2} \right) - 
+\ln\left( \frac {M_\text{CS} +  M_\text{CC}} {2} \right) = \ln \left(
+{\frac {M_\text{ES} + M_\text{EC}} {M_\text{CS} + M_\text{CC}}} 
+ \right),
+$$
+
+Variance was calculated as:
+
+$$
+\text{var}(\ln{\text{RR}_\text{EE}}) = 
+\left( 
+\frac{1} { M_\text{ES} + M_\text{EC} } 
+\right)^2
+\left(
+\frac{SD_\text{ES}^2}{N_\text{ES}} + \frac{SD_\text{EC}^2}{N_\text{EC}}
+\right) + \left( \frac {1} {  M_\text{CS} +  M_\text{CC} } \right)^2
+\left(\frac{SD_\text{CS}^2}{N_\text{CS}} + \frac{SD_\text{CC}^2}{n_\text{CC}}
+\right)
+$$
+Variance was converted in to variance-covariance (VCV) matrix (see above in 'Data organisation') to control for non-independence in sampling variance from the same studies.
+
 ``` {r}
 #dat <- read_csv(here("Data","Data_processed.csv"))
 
@@ -450,6 +476,9 @@ orchard_plot(mod_E0, mod = "Int", xlab = "lnRR", alpha=0.4) +  # Orchard plot
 **Fig. 3** Orchard plot showing meta-analytic mean and 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.   
 
 ### Meta-regression: uni-moderator {.tabset}
+To explain some of the unexplained variation in the main effect of environmental enrichment model, we conducted a series of uni-moderator analyses. We calculated marginal R2 for each moderator as well as conducted a series of pair-wise contrasts between in moderator category. 
+
+Any moderator categories with k < 5 were removed.
 
 #### Learning vs Memory
 Was the response learning or memory?
@@ -701,6 +730,8 @@ res_table_mod_E6
 ### Publication bias & sensitivity analysis {.tabset}
 
 ####  Multi-moderator model
+We ran a multi-moderator ‘full’ model of all moderators. We ran model selection based on AIC and selected the top top set of models within delta AIC of 6 and calculated the importance of each moderator (i.e., Akaike weights) within this top model set.
+
 ``` {r, eval = FALSE}
 # filter data so that all K < 5 are removed
 dat_Efm <- dat %>%
@@ -709,7 +740,7 @@ dat_Efm <- dat %>%
          EE_social %in% c("Social", "Non-social"), 
          Age_EE_exposure %in% c("Adult", "Adolescent"))
 
-VCV_Efm <- impute_covariance_matrix(vi = dat_Efm$lnRRV_E, cluster = dat_Efm$Study_ID, r = 0.5)
+#VCV_Efm <- impute_covariance_matrix(vi = dat_Efm$lnRRV_E, cluster = dat_Efm$Study_ID, r = 0.5)
                  
 mod_Efm <- rma.mv(yi = lnRR_Sa, V = VCV_Efm, mod = ~Type_assay-1 + Learning_vs_memory + Type_reinforcement + EE_social + EE_exercise + Age_EE_exposure , random =   list(~1|Study_ID,
                                                                                     ~1|ES_ID,
@@ -737,6 +768,7 @@ importance(res_Efm2)
 ```
 
 #### Funnel plot
+We produced funnel plots of effect sizes against the residuals of the full model to visually inspect for funnel asymmetry
 
 Used to produce Fig. 7a
 ``` {r}
@@ -748,11 +780,24 @@ Funnel_E<-funnel(mod_Efm, xlab = "lnRR", ylab = "Standard Error")
 ```
 **Fig.7a** Funnel plot showing the standard error and residuals (lnRR) from the full model.
 
+#### Egger's regression and time-lag bias
+We fitted effective sample size calculated as:
+
+$$
+\sqrt{\frac {1} { \tilde{N} }}  =
+\sqrt{\frac {1} { N_\text{ES}} + \frac{1}{N_\text{EC}} + 
+\frac {1}{N_\text{CS}} + \frac{1}{N_\text{CC}}},
+$$
+
+and year of publication as moderators in the full model to inferentially test for funnel asymmetry and a decrease in effect sizes with publication year
+
 ``` {r}
-#year published was scaled previously  under stress PB
+VCV_Efm <- impute_covariance_matrix(vi = dat_Efm$lnRRV_E, cluster = dat_Efm$Study_ID, r = 0.5)
+dat_Efm$c_Year_published <- as.vector(scale(dat_Efm$Year_published, scale = F))
+
 dat_Efm$sqrt_inv_e_n <- with(dat_Efm, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
 
-PB_MR_E<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  Learning_vs_memory + Year_published + Type_assay + Type_reinforcement + EE_social + EE_exercise + Age_stress_exposure, random = list(~1|Study_ID,
+PB_MR_E<- rma.mv(lnRR_Sa, VCV_Efm, mods = ~1 + sqrt_inv_e_n +  Learning_vs_memory + Year_published + Type_assay + Type_reinforcement + EE_social + EE_exercise + Age_stress_exposure, random = list(~1|Study_ID,
                                                           ~1|ES_ID,
                                                           ~1|Strain), method = "REML", test = "t", 
     data = dat_Efm)
@@ -760,11 +805,11 @@ PB_MR_E<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  Learning_vs_memor
 #PB_MR_E
 
 estimates_PB_MR_E<- estimates.CI(PB_MR_E)
-#estimates_PB_MR_E
+estimates_PB_MR_E
 ```
 
 #### Leave-one-out analysis
-Individually removing studies to distinguish that no singular study is having a disproportionate effect
+We individually removed studies to determine if any singular studies hve a disproportionate effect on the meta-analytic mean and CI.
 
 ``` {r, eval = FALSE}
 dat$Study_ID <- as.factor(dat$Study_ID)
@@ -829,7 +874,7 @@ dat$Study_ID <- as.integer(dat$Study_ID)
 **Fig. S3** Leave-one-group-out analysis showing meta-analytic mean and 95% CI when each individual study is removed from the data set. 
 
 #### Using SMD
-Re-rerunning meta-analytic model using standardised mean difference (SMD) instead of lnRR
+We re-ran the main effect of environmental enrichment meta-analytic model using standardised mean difference (SMD) instead of lnRR
 
 ``` {r}
 
@@ -846,6 +891,31 @@ i2_ml(mod_E0a)
 ## Main effect: stress
 
 ### Meta-analysis
+To quantify differences in individual performance in cognitive assays with stress, we used the logarithm of response ratio (lnRR) calculated as: 
+
+
+$$
+\ln{\text{RR}_\text{stress}} = 
+\ln\left( \frac{ M_\text{ES} +  M_\text{CS}} {2} \right) - 
+\ln\left( \frac {M_\text{EC} +  M_\text{CC}} {2} \right) = \ln \left(
+{\frac {M_\text{ES} + M_\text{CS}} {M_\text{EC} + M_\text{CC}}} 
+ \right),
+$$
+
+Variance was calculated as:
+
+$$
+\text{var}(\ln{\text{RR}_\text{stress}}) =
+\left( 
+\frac{1} { M_\text{ES} + M_\text{CS} } 
+\right)^2
+\left(
+\frac{SD_\text{ES}^2}{N_\text{ES}} + \frac{SD_\text{CS}^2}{N_\text{CS}}
+\right) + \left( \frac {1} {  M_\text{EC} +  M_\text{CC} } \right)^2
+\left(\frac{SD_\text{EC}^2}{N_\text{EC}} + \frac{SD_\text{CC}^2}{N_\text{CC}}
+\right)
+$$
+Variance was converted in to variance-covariance (VCV) matrix (see above in 'Data organisation') to control for non-independence in sampling variance from the same studies.
 
 ``` {r}
 mod_S0 <- rma.mv(yi = lnRR_Sa, V = VCV_S, random = list(~1|Study_ID,
@@ -870,6 +940,9 @@ orchard_plot(mod_S0, mod = "Int", xlab = "lnRR", alpha=0.4) +
 **Fig. 3** Orchard plot showing meta-analytic mean and 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.  
 
 ### Meta-regression: uni-moderator {.tabset}
+To explain some of the unexplained variation in the main effect of stress model, we conducted a series of uni-moderator analyses. We calculated marginal R2 for each moderator as well as conducted a series of pair-wise contrasts between in moderator category. 
+
+Any moderator categories with k < 5 were removed.
 
 #### Learning vs Memory
 Was the response learning or memory?
@@ -1059,7 +1132,9 @@ Duration_S
 **Fig. 5f** Orchard plot showing the group-wise means of the categorical variable 'Stress_duration' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
 ### Publication bias & sensitivity analysis {.tabset}
+
 ####  Multi-moderator model
+We ran a multi-moderator ‘full’ model of all moderators. We ran model selection based on AIC and selected the top top set of models within delta AIC of 6 and calculated the importance of each moderator (i.e., Akaike weights) within this top model set.
 
 ``` {r, eval = FALSE}
 
@@ -1070,7 +1145,7 @@ dat_Sfm <- dat %>%
          Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"),
          Stress_duration %in% c("Chronic", "Acute"))
 
-VCV_Sfm <- impute_covariance_matrix(vi = dat_Sfm$lnRRV_E, cluster = dat_Sfm$Study_ID, r = 0.5)
+#VCV_Sfm <- impute_covariance_matrix(vi = dat_Sfm$lnRRV_E, cluster = dat_Sfm$Study_ID, r = 0.5)
                  
 mod_Sfm <- rma.mv(yi = lnRR_Sa, V = VCV_Sfm, mod = ~ Type_assay -1 + Learning_vs_memory + Type_reinforcement + Type_stress_exposure + Age_stress_exposure + Stress_duration, random =   list(~1|Study_ID,
                                                                                     ~1|ES_ID,
@@ -1098,6 +1173,8 @@ importance(res_Sfm2)
 ```
 
 #### Funnel plot
+We produced funnel plots of effect sizes against the residuals of the full model to visually inspect for funnel asymmetry.
+
 Used to produce Fig. 7b
 
 ``` {r}
@@ -1107,14 +1184,27 @@ Funnel_S
 ```
 **Fig.7b** Funnel plot showing the standard error and residuals (lnRR) from the full model.
 
+#### Egger's regression and time-lag bias
+We fitted effective sample size calculated as:
+
+$$
+\sqrt{\frac {1} { \tilde{N} }}  =
+\sqrt{\frac {1} { N_\text{ES}} + \frac{1}{N_\text{EC}} + 
+\frac {1}{N_\text{CS}} + \frac{1}{N_\text{CC}}},
+$$
+
+and year of publication as moderators in the full model to inferentially test for funnel asymmetry and a decrease in effect sizes with publication year.
+
 ```{r}
 #calculating inv effective sample size for use in full meta-regression
+VCV_Sfm <- impute_covariance_matrix(vi = dat_Sfm$lnRRV_E, cluster = dat_Sfm$Study_ID, r = 0.5)
+
 dat_Sfm$sqrt_inv_e_n <- with(dat_Sfm, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
 
 #time lag bias and eggers regression
 dat_Sfm$c_Year_published <- as.vector(scale(dat_Sfm$Year_published, scale = F))
 
-PB_MR_S<- rma.mv(lnRR_Sa, lnRRV_S, mods = ~1 + sqrt_inv_e_n +  c_Year_published + Type_assay +Learning_vs_memory + Type_reinforcement + Type_stress_exposure + Age_stress_exposure, random = list(~1|Study_ID,
+PB_MR_S<- rma.mv(lnRR_Sa, VCV_Sfm, mods = ~1 + sqrt_inv_e_n +  c_Year_published + Type_assay +Learning_vs_memory + Type_reinforcement + Type_stress_exposure + Age_stress_exposure + Stress_duration, random = list(~1|Study_ID,
                                                           ~1|ES_ID,
                                                           ~1|Strain), 
                  method = "REML", 
@@ -1131,6 +1221,7 @@ estimates_PB_MR_S<- estimates.CI(PB_MR_S)
 
 
 #### Leave-one-out sensitivity analysis
+We individually removed studies to determine if any singular studies hve a disproportionate effect on the meta-analytic mean and CI.
 
 ``` {r, eval = FALSE}
 dat$Study_ID <- as.factor(dat$Study_ID)
@@ -1191,7 +1282,7 @@ dat$Study_ID <- as.integer(dat$Study_ID)
 **Fig. S4** Leave-one-group-out analysis showing meta-analytic mean and 95% CI when each individual study is removed from the data set. 
 
 #### Using SMD
-Re-rerunning meta-analytic model using standardised mean difference (SMD) instead of lnRR
+We re-ran the main effect of stress meta-analytic model using standardised mean difference (SMD) instead of lnRR
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_S0a <- rma.mv(yi = SMD_Sa, V = VCV_Sa, random = list(~1|Study_ID,
@@ -1207,6 +1298,25 @@ i2_ml(mod_S0a)
 ## Interaction: enrichment x stress
 
 ### Meta-analysis
+To quantify differences in individual performance in cognitive assay with the interaction of environmental enrichment and stress, we used the logarithm of response ratio (lnRR) calculated as: 
+
+$$
+\ln{\text{RR}_\text{interaction}} 
+= \left(\ln M_\text{ES} -  \ln M_\text{CS}  \right) - 
+\left( \ln M_\text{EC} -  \ln M_\text{CC} \right)
+= 
+\ln \left( \frac {M_\text{ES} / M_\text{CS} } 
+{M_\text{EC} / \ M_\text{CC}} \right)
+$$
+
+Variance was calculated as:
+
+$$
+\text{var}(\ln{\text{RR}_\text{interaction}}) =
+\frac {SD_\text{ES}^2} { N_\text{ES} M_\text{ES}^2 } + \frac{SD_\text{EC}^2}{N_\text{EC}M_\text{EC}^2} + 
+\frac {SD_\text{CS}^2}{N_\text{CS} M_\text{CS}^2} + \frac{SD_\text{CC}^2}{N_\text{CC} M_\text{CC}^2}.
+$$
+Variance was converted in to variance-covariance (VCV) matrix (see above in 'Data organisation') to control for non-independence in sampling variance from the same studies.
 
 ``` {r}
 mod_ES0 <- rma.mv(yi = lnRR_ESa, V = VCV_ES, random = list(~1|Study_ID,
@@ -1231,6 +1341,9 @@ orchard_plot(mod_ES0, mod = "Int", xlab = "lnRR", alpha=0.4) +
 **Fig. 3** Orchard plot showing meta-analytic mean and 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes. 
 
 ###  Meta-regression: uni-moderator {.tabset}
+To explain some of the unexplained variation in the interaction of environmental enrichment and stress, we conducted a series of uni-moderator analyses. We calculated marginal R2 for each moderator as well as conducted a series of pair-wise contrasts between in moderator category. 
+
+Any moderator categories with k < 5 were removed.
 
 #### Learning vs Memory
 Was the response learning or memory?
@@ -1543,6 +1656,8 @@ Order_ES
 ### Publication bias & sensitivity analysis {.tabset}
 
 ####  Multi-moderator model
+We ran a multi-moderator ‘full’ model of all moderators. We ran model selection based on AIC and selected the top top set of models within delta AIC of 6 and calculated the importance of each moderator (i.e., Akaike weights) within this top model set.
+
 ``` {r, eval = FALSE}
 dat_ESfm <- dat %>%
   filter(Type_assay %in% c("Recognition", "Habituation", "Conditioning"),
@@ -1553,7 +1668,7 @@ dat_ESfm <- dat %>%
          Stress_duration %in% c("Chronic", "Acute"), 
          Age_stress_exposure %in% c("Prenatal", "Early postnatal", "Adult"))
 
-VCV_ESfm <- impute_covariance_matrix(vi = dat_ESfm$lnRRV_ES, cluster = dat_ESfm$Study_ID, r = 0.5)
+#VCV_ESfm <- impute_covariance_matrix(vi = dat_ESfm$lnRRV_ES, cluster = dat_ESfm$Study_ID, r = 0.5)
                  
 mod_ESfm <- rma.mv(yi = lnRR_Sa, V = VCV_ESfm, mod = ~Type_assay-1 + Learning_vs_memory + Type_reinforcement + EE_social + EE_exercise + Age_EE_exposure + Type_stress_exposure + Age_stress_exposure + Stress_duration + Exposure_order, random =   list(~1|Study_ID,
                                                                                     ~1|ES_ID,
@@ -1582,6 +1697,8 @@ importance(res_ESfm2)
 ```
 
 #### Funnel plot
+We produced funnel plots of effect sizes against the residuals of the full model to visually inspect for funnel asymmetry.
+
 Used to produce Fig. 7c
 
 ``` {r}
@@ -1590,7 +1707,45 @@ Funnel_ES
 ```
 **Fig.7c** Funnel plot showing the standard error and residuals (lnRR) from the full model.
 
+#### Egger's regression and time-lag bias
+We fitted effective sample size calculated as:
+
+$$
+\sqrt{\frac {1} { \tilde{N} }}  =
+\sqrt{\frac {1} { N_\text{ES}} + \frac{1}{N_\text{EC}} + 
+\frac {1}{N_\text{CS}} + \frac{1}{N_\text{CC}}},
+$$
+
+and year of publication as moderators in the full model to inferentially test for funnel asymmetry and a decrease in effect sizes with publication year.
+
+
+```{r}
+#calculating inv effective sample size for use in full meta-regression
+dat_ESfm$sqrt_inv_e_n <- with(dat_ESfm, sqrt(1/CC_n + 1/EC_n + 1/ES_n + 1/CS_n))
+dat_ESfm$c_Year_published <- as.vector(scale(dat_ESfm$Year_published, scale = F))
+
+VCV_ESfm <- impute_covariance_matrix(vi = dat_ESfm$lnRRV_ES, cluster = dat_ESfm$Study_ID, r = 0.5)
+              
+
+#time lag bias and eggers regression
+
+PB_MR_ES<- rma.mv(lnRR_ESa, VCV_ESfm, mods = ~1 + sqrt_inv_e_n +  c_Year_published + Type_assay +Learning_vs_memory + Type_reinforcement + Type_stress_exposure + Age_stress_exposure + EE_social + EE_exercise + Stress_duration + Exposure_order, random = list(~1|Study_ID,
+                                                          ~1|ES_ID,
+                                                          ~1|Strain), 
+                 method = "REML", 
+                 test = "t", 
+                 data = dat_ESfm,
+                  control=list(optimizer="optim", optmethod="Nelder-Mead"))
+
+
+estimates_PB_MR_ES<- estimates.CI(PB_MR_ES)
+estimates_PB_MR_ES
+
+```
+
+
 #### Leave-one-out analysis
+We individually removed studies to determine if any singular studies hve a disproportionate effect on the meta-analytic mean and CI.
 
 ``` {r, eval = FALSE}
 dat$Study_ID <- as.factor(dat$Study_ID)
@@ -1650,7 +1805,7 @@ dat$Study_ID <- as.integer(dat$Study_ID)
 **Fig. S5** Leave-one-group-out analysis showing meta-analytic mean and 95% CI when each individual study is removed from the data set. 
 
 #### Using SMD
-Re-rerunning meta-analytic model using standardised mean difference (SMD) instead of lnR
+We re-ran the interaction of environmental enrichment x stress meta-analytic model using standardised mean difference (SMD) instead of lnRR
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_ES0a <- rma.mv(yi = SMD_ESa, V = VCV_ESa, random = list(~1|Study_ID,
@@ -1664,8 +1819,19 @@ i2_ml(mod_ES0a)
 ```
 
 ## 'Pairwise' effect sizes {.tabset}
-
+We conducted five 'meta-analyses on 'pair-wise' comparisons using lnRR between the treatments and control: 
+$$
+\ln{\text{RR}} = \ln (M_{\text{EC}}/M_{\text{CC}}), 
+\ln (M_{\text{CS}}/M_{\text{CC}}), 
+\ln (M_{\text{ES}}/M_{\text{CC}}), 
+\ln (M_{\text{ES}}/M_{\text{CS}})
+\ln (M_{\text{ES}}/M_{\text{EC}}), 
+$$
 ### Enrichment relative to control
+
+$$
+\ln{\text{RR}} = \ln (M_{\text{EC}}/M_{\text{CC}})
+$$
 
 ``` {r, fig.width=10, fig.height=7}
 
@@ -1686,6 +1852,10 @@ orchard_plot(mod_E20, mod = "Int", xlab = "lnRR")
 
 ### Stress relative to control
 
+$$
+\ln{\text{RR}} = \ln (M_{\text{CS}}/M_{\text{CC}})
+$$
+
 ``` {r, fig.width=10, fig.height=7}
 VCV_S20 <- impute_covariance_matrix(vi = dat$lnRRV_S2, cluster = dat$Study_ID, r = 0.5)
 
@@ -1703,6 +1873,10 @@ orchard_plot(mod_S20, mod = "Int", xlab = "lnRR")
 
 ### Enrichment + stress relative to control
 
+$$
+\ln{\text{RR}} = \ln (M_{\text{ES}}/M_{\text{CC}})
+$$
+
 ``` {r, fig.width=10, fig.height=7}
 VCV_ES20 <- impute_covariance_matrix(vi = dat$lnRRV_ES2, cluster = dat$Study_ID, r = 0.5)
 
@@ -1719,6 +1893,10 @@ orchard_plot(mod_ES20, mod = "Int", xlab = "lnRR")
 
 ### Enrichment + stress relative to stress
 
+$$
+\ln{\text{RR}} = \ln (M_{\text{ES}}/M_{\text{CS}})
+$$
+
 ``` {r, fig.width=10, fig.height=7}
 VCV_E30 <- impute_covariance_matrix(vi = dat$lnRRV_E3, cluster = dat$Study_ID, r = 0.5)
 
@@ -1734,9 +1912,13 @@ orchard_plot(mod_E30, mod = "Int", xlab = "lnRR")
 ```
 
 ### Enrichment + stress relative to enrichment
+$$
+\ln{\text{RR}} = \ln (M_{\text{ES}}/M_{\text{EC}})
+$$
 
 ``` {r, fig.width=10, fig.height=7}
-VCV_S30 <- impute_covariance_matrix(vi = dat$lnRRV_S3, cluster = dat$Study_ID, r = 0.5)
+VCV_S30 <- impute_covariance_matrix(vi = dat$lnRRV_S3, cluster =
+                                      dat$Study_ID, r = 0.5)
 
 mod_S30 <- rma.mv(yi = lnRR_S3a, V = VCV_S30, random = list(~1|Study_ID,
                                                              ~ 1|Strain,
