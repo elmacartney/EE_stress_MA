@@ -513,7 +513,7 @@ LvsM_E
 ##### Pairwise comparison 
 ``` {r}
 contra_mod_E1 <- contrast_fun(data = dat, response = lnRR_Ea, moderator = Learning_vs_memory, VCV = VCV_E)
-res_table_mod_E1 <- get_estimate(model = mod_E1, contra = contra_mod_E1, moderator = Type_assay)
+res_table_mod_E1 <- get_estimate(model = mod_E1, contra = contra_mod_E1, moderator = Learning_vs_memory)
 
 res_table_mod_E1
 ```
@@ -974,6 +974,15 @@ LvsM_S
 ```
 **Fig. 5a** Orchard plot showing the group-wise means of the categorical variable 'Learning_vs_memory' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.   
 
+##### Pairwise comparison 
+``` {r}
+contra_mod_S1 <- contrast_fun(data = dat, response = lnRR_Sa, moderator = Learning_vs_memory, VCV = VCV_S)
+res_table_mod_S1 <- get_estimate(model = mod_S1, contra = contra_mod_S1, moderator = Learning_vs_memory)
+
+res_table_mod_S1
+```
+
+
 #### Type of assay
 The broad category of the type of assay used to measure learning or memory 
 
@@ -1007,6 +1016,15 @@ Learning_S <-orchard_plot(mod_S2, mod = "Type_assay", xlab = "lnRR", alpha=0.4) 
 Learning_S
 ```
 **Fig. 5b** Orchard plot showing the group-wise means of the categorical variable 'Type_assay' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
+
+##### Pairwise comparison 
+``` {r}
+contra_mod_S2 <- contrast_fun(data = dat1, response = lnRR_Sa, moderator = Type_assay, VCV = VCV_S1)
+res_table_mod_S2 <- get_estimate(model = mod_S2, contra = contra_mod_S2, moderator = Type_assay)
+
+res_table_mod_S2
+```
+
 
 #### Type of reinforcement
 If conditioning was used, was aversive or appetitive reinforcement used?
