@@ -66,12 +66,11 @@ eval(metafor:::.MuMIn)
 ```
 
 ## Loading data and functions
-This loads the unprocessed datafile and custom functions including
+This loads the unprocessed data file and custom functions including
 
-- calculating 'focal' and 'pair-wise' effect sizes and variance
-- calculating SMD
-- creating VCV of variance
-- calculating pair-wise contrasts between moderators
+- calculating 'focal' effect sizes and variance for lnRR and SMD: `effect_set`
+- calculating 'pairwise' comparisons (lnRR) and variance: `effect_set2`
+- calculating pair-wise contrasts between moderators: `contrast_fun`
 
 ```{r, cache = FALSE}
 dat <- read_csv(here("Data","Data_raw.csv"))
@@ -240,18 +239,18 @@ VCV_ESa <- impute_covariance_matrix(vi = dat$SMDV_ES, cluster = dat$Study_ID, r 
 # Data exploration
 
 ## General
-Number of effect sizes
+Number of effect sizes:
 ``` {r}
 #Number of effect sizes
 length(unique(dat$ES_ID))  
 ```
 
-Number of studies
+Number of studies:
 ``` {r}
 length(unique(dat$Study_ID))
 ```
 
-Publication year range
+Publication year range:
 ``` {r}
 min(dat$Year_published) 
 max(dat$Year_published)
@@ -401,7 +400,7 @@ p4
 **Fig. 2** The combined plot of all alluvial diagrams used to make Fig. 2 in the main text
 
 ## Risk of Bias
-Percent of studies that used randomisation
+Percent of studies that used randomisation:
 ``` {r}
 dat %>% group_by(ROB_randomisation) %>% 
   summarise(n = n_distinct(Study_ID))
@@ -409,7 +408,7 @@ dat %>% group_by(ROB_randomisation) %>%
 15/30
 ```
 
-Percent of studies that used blinding
+Percent of studies that used blinding:
 ``` {r}
 #blinding
 dat %>% group_by(ROB_blinding) %>% 
@@ -1198,7 +1197,7 @@ Used to produce Fig. 7b
 ``` {r}
 # funnel plot
 Funnel_S <- funnel(mod_Sfm, xlab = "lnRR", ylab = "Standard Error")
-Funnel_S
+#Funnel_S
 ```
 **Fig.7b** Funnel plot showing the standard error and residuals (lnRR) from the full model.
 
@@ -1721,7 +1720,7 @@ Used to produce Fig. 7c
 
 ``` {r}
 Funnel_ES<-funnel(mod_ESfm, xlab = "lnRR", ylab = "Standard Error")
-Funnel_ES
+#Funnel_ES
 ```
 **Fig.7c** Funnel plot showing the standard error and residuals (lnRR) from the full model.
 
@@ -1845,6 +1844,7 @@ $$
 \ln (M_{\text{ES}}/M_{\text{CS}})
 \ln (M_{\text{ES}}/M_{\text{EC}}), 
 $$
+
 ### Enrichment relative to control
 
 $$
@@ -2014,7 +2014,7 @@ orchard2 <- orchard_plot(merged2, mod = "Int", xlab = "lnRR", angle = 0) +
 
 ```
 
-``` {r}
+``` {r, fig.width=15, fig.height=7}
 
 p1 <- orchard1 + orchard2 +  plot_annotation(tag_levels = 'A')
 p1
@@ -2027,7 +2027,7 @@ p1
 
 #### Environmental enrichment
 Used to produce Fig. 4
-``` {r, fig.width=10, fig.height=7}
+``` {r, fig.width=15, fig.height=7}
 #Enrichment
 E_mod <- (LvsM_E + Learning_E + Reinforcement_E)/ (Age_E + Exercise_E + Social_E) +  plot_annotation(tag_levels = 'A')
 
@@ -2048,7 +2048,7 @@ S_mod
 
 #### Interaction
 Used to produce Fig. 6
-``` {r, fig.width=10, fig.height=7}
+``` {r, fig.width=15, fig.height=7}
 ES_mod <- plot_grid(LvsM_ES, Learning_ES, Reinforcement_ES, Age_enrichment_ES, Age_stress_ES, Order_ES, Exercise_ES, Social_ES, Stressor_ES, Duration_ES,
   labels = "AUTO", ncol = 5)
 
