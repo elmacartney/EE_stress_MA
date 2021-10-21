@@ -2090,7 +2090,7 @@ E_mod
 
 #### Stress
 Used to produce Fig. 5
-``` {r,  fig.width=10, fig.height=7}
+``` {r,  fig.width=15, fig.height=7}
 S_mod <- (LvsM_S + Learning_S + Reinforcement_S) / (Age_S + Stressor + Duration_S) + plot_annotation(tag_levels = 'A')
 
 S_mod
