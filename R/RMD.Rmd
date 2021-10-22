@@ -887,6 +887,48 @@ i2_ml(mod_E0a)
 
 ```
 
+#### Risk of Bias
+
+Including if the study was randomised as a moderator and conducting a pair-wise contrast
+
+``` {r, results = 'hide'}
+mod_randomised_E<- rma.mv(yi = lnRR_Ea, V = VCV_E, mod = ~ROB_randomisation-1, random = list(~1|Study_ID, 
+                                                                             ~1|ES_ID,
+                                                                             ~1|Strain),
+                test = "t",data = dat)
+
+summary(mod_randomised_E)
+r2_ml(mod_randomised_E) 
+
+```
+
+``` {r}
+contra_mod_randomised_E <- contrast_fun(data = dat, response = lnRR_Ea, moderator = ROB_randomisation, VCV = VCV_E)
+res_table_mod_randomised_E <- get_estimate(model = mod_randomised_E, contra = contra_mod_randomised_E, moderator = ROB_randomisation)
+
+res_table_mod_randomised_E
+```
+
+Including if the study used blinding and conducting a pair-wise contrast
+
+``` {r, results = 'hide'}
+mod_blinding_E<- rma.mv(yi = lnRR_Ea, V = VCV_E, mod = ~ROB_blinding-1, random = list(~1|Study_ID, 
+                                                                             ~1|ES_ID,
+                                                                             ~1|Strain),
+                test = "t",data = dat)
+
+summary(mod_blinding_E)
+r2_ml(mod_blinding_E) 
+
+```
+
+``` {r}
+contra_mod_blinding_E <- contrast_fun(data = dat, response = lnRR_Ea, moderator = ROB_blinding, VCV = VCV_E)
+res_table_mod_blinding_E <- get_estimate(model = mod_blinding_E, contra = contra_mod_blinding_E, moderator = ROB_blinding)
+
+res_table_mod_blinding_E
+```
+
 ## Main effect: stress
 
 ### Meta-analysis
@@ -1267,7 +1309,7 @@ PB_MR_S<- rma.mv(lnRR_Sa, VCV_Sfm, mods = ~1 + sqrt_inv_e_n +  c_Year_published 
 #PB_MR_S
 
 estimates_PB_MR_S<- estimates.CI(PB_MR_S)
-#estimates_PB_MR_S
+estimates_PB_MR_S
 
 ```
 
@@ -1345,6 +1387,48 @@ mod_S0a <- rma.mv(yi = SMD_Sa, V = VCV_Sa, random = list(~1|Study_ID,
 summary(mod_S0a) 
 i2_ml(mod_S0a) 
 
+```
+
+#### Risk of Bias
+
+Including if the study was randomised as a moderator and conducting a pair-wise contrast
+
+``` {r, results = 'hide'}
+mod_randomised_S<- rma.mv(yi = lnRR_Sa, V = VCV_S, mod = ~ROB_randomisation-1, random = list(~1|Study_ID, 
+                                                                             ~1|ES_ID,
+                                                                             ~1|Strain),
+                test = "t",data = dat)
+
+summary(mod_randomised_S)
+r2_ml(mod_randomised_S) 
+
+```
+
+``` {r}
+contra_mod_randomised_S <- contrast_fun(data = dat, response = lnRR_Sa, moderator = ROB_randomisation, VCV = VCV_S)
+res_table_mod_randomised_S <- get_estimate(model = mod_randomised_S, contra = contra_mod_randomised_S, moderator = ROB_randomisation)
+
+res_table_mod_randomised_S
+```
+
+Including if the study used blinding and conducting a pair-wise contrast
+
+``` {r, results = 'hide'}
+mod_blinding_S<- rma.mv(yi = lnRR_Sa, V = VCV_S, mod = ~ROB_blinding-1, random = list(~1|Study_ID, 
+                                                                             ~1|ES_ID,
+                                                                             ~1|Strain),
+                test = "t",data = dat)
+
+summary(mod_blinding_S)
+r2_ml(mod_blinding_S) 
+
+```
+
+``` {r}
+contra_mod_blinding_S <- contrast_fun(data = dat, response = lnRR_Sa, moderator = ROB_blinding, VCV = VCV_S)
+res_table_mod_blinding_S <- get_estimate(model = mod_blinding_S, contra = contra_mod_blinding_S, moderator = ROB_blinding)
+
+res_table_mod_blinding_S
 ```
 
 ## Interaction: enrichment x stress
@@ -1954,6 +2038,50 @@ summary(mod_ES0a)
 i2_ml(mod_ES0a) 
 
 ```
+
+
+#### Risk of Bias
+
+Including if the study was randomised as a moderator and conducting a pair-wise contrast
+
+``` {r, results = 'hide'}
+mod_randomised_ES<- rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~ROB_randomisation-1, random = list(~1|Study_ID, 
+                                                                             ~1|ES_ID,
+                                                                             ~1|Strain),
+                test = "t",data = dat)
+
+summary(mod_randomised_ES)
+r2_ml(mod_randomised_ES) 
+
+```
+
+``` {r}
+contra_mod_randomised_ES <- contrast_fun(data = dat, response = lnRR_ESa, moderator = ROB_randomisation, VCV = VCV_ES)
+res_table_mod_randomised_ES <- get_estimate(model = mod_randomised_ES, contra = contra_mod_randomised_ES, moderator = ROB_randomisation)
+
+res_table_mod_randomised_ES
+```
+
+Including if the study used blinding and conducting a pair-wise contrast
+
+``` {r, results = 'hide'}
+mod_blinding_ES<- rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~ROB_blinding-1, random = list(~1|Study_ID, 
+                                                                             ~1|ES_ID,
+                                                                             ~1|Strain),
+                test = "t",data = dat)
+
+summary(mod_blinding_ES)
+r2_ml(mod_blinding_ES) 
+
+```
+
+``` {r}
+contra_mod_blinding_ES <- contrast_fun(data = dat, response = lnRR_ESa, moderator = ROB_blinding, VCV = VCV_ES)
+res_table_mod_blinding_ES <- get_estimate(model = mod_blinding_ES, contra = contra_mod_blinding_ES, moderator = ROB_blinding)
+
+res_table_mod_blinding_ES
+```
+
 
 ## 'Pairwise' effect sizes {.tabset}
 We conducted five 'meta-analyses on 'pair-wise' comparisons using lnRR between the treatments and control: 
