@@ -50,6 +50,7 @@ pacman::p_load(tidyverse,
                GoodmanKruskal,
                networkD3,
                ggplot2,
+               ggsignif,
                visdat,
                ggalluvial,
                ggthemr, 
@@ -541,6 +542,8 @@ Learning_E <- orchard_plot(mod_E2, mod = "Type_assay", xlab = "lnRR", alpha=0.4)
   scale_fill_manual(values=c("grey34","grey34", "grey34")) +
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
+    geom_signif(comparisons = list(c("Conditioning", "Recognition")),
+              annotations = "*") +
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
         text = element_text(size = 15), # change font sizes
         legend.title = element_text(size = 10),
@@ -583,6 +586,8 @@ Reinforcement_E <-orchard_plot(mod_E3, mod = "Type_reinforcement", xlab = "lnRR"
   scale_fill_manual(values=c("grey34","grey34", "grey34")) +
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
+    geom_signif(comparisons = list(c("Aversive", "Not applicable")),
+              annotations = "*") +
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
         text = element_text(size = 15), # change font sizes
         legend.title = element_text(size = 10),
@@ -1049,6 +1054,8 @@ Learning_S <-orchard_plot(mod_S2, mod = "Type_assay", xlab = "lnRR", alpha=0.4) 
   scale_fill_manual(values=c("grey34","grey34","grey34")) +
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
+    geom_signif(comparisons = list(c("Habituation", "Recognition")),
+              annotations = "***") +
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
         text = element_text(size = 15), # change font sizes
         legend.title = element_text(size = 10),
@@ -1065,7 +1072,6 @@ res_table_mod_S2 <- get_estimate(model = mod_S2, contra = contra_mod_S2, moderat
 
 res_table_mod_S2
 ```
-
 
 #### Type of reinforcement
 If conditioning was used, was aversive or appetitive reinforcement used?
@@ -1126,6 +1132,8 @@ Age_S <- orchard_plot(mod_S4, mod = "Age_stress_exposure", xlab = "lnRR", alpha=
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   scale_colour_manual(values = c("grey34","grey34","grey34", "grey34")) +
   scale_fill_manual(values=c("grey34","grey34","grey34","grey34")) +
+    geom_signif(comparisons = list(c("Adult", "Early postnatal")),
+              annotations = "*") +
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
@@ -1144,7 +1152,6 @@ res_table_mod_S4 <- get_estimate(model = mod_S4, contra = contra_mod_S4, moderat
 
 res_table_mod_S4
 ```
-
 
 #### Type of stress
 The type of stressor used
@@ -1185,7 +1192,6 @@ res_table_mod_S5 <- get_estimate(model = mod_S5, contra = contra_mod_S5, moderat
 res_table_mod_S5
 ```
 
-
 #### Stess duration
 Was the stress acute or chronic?
 
@@ -1207,6 +1213,8 @@ Duration_S <- orchard_plot(mod_S6, mod = "Stress_duration", xlab = "lnRR", alpha
   scale_colour_manual(values = c("grey34","grey34")) +
   scale_fill_manual(values=c("grey34","grey34")) +
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
+    geom_signif(comparisons = list(c("Chronic", "Acute")),
+              annotations = "*") +
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
         text = element_text(size = 15), # change font sizes
@@ -1541,6 +1549,8 @@ Learning_ES <- orchard_plot(mod_ES2, mod = "Type_assay", xlab = "lnRR", alpha=0.
   scale_fill_manual(values=c("grey34","grey34","grey34")) +
   geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
+    geom_signif(comparisons = list(c("Conditioning", "Recognition")),
+              annotations = "*") +
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
         axis.text.x = element_text(size = 10), # change font sizes
         axis.text.y = element_text(size = 10),
@@ -1558,7 +1568,6 @@ res_table_mod_ES2 <- get_estimate(model = mod_ES2, contra = contra_mod_ES2, mode
 
 res_table_mod_ES2
 ```
-
 
 #### Type of reinforcement
 If conditioning was used, was aversive or appetitive reinforcement used?
@@ -1582,6 +1591,8 @@ Reinforcement_ES <- orchard_plot(mod_ES3, mod = "Type_reinforcement", xlab = "ln
   scale_fill_manual(values=c("grey34","grey34","grey34")) +
   geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_size_continuous(range = c(1, 7))+ # change point scaling
+    geom_signif(comparisons = list(c("Aversive", "Not applicable")),
+              annotations = "*") +
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
         axis.text.x = element_text(size = 10), # change font sizes
         axis.text.y = element_text(size = 10),
@@ -1599,7 +1610,6 @@ res_table_mod_ES3 <- get_estimate(model = mod_ES3, contra = contra_mod_ES3, mode
 
 res_table_mod_ES3
 ```
-
 
 #### Age of enrichment
 The age when individuals were exposed to environmental enrichment
@@ -1641,7 +1651,6 @@ res_table_mod_ES4 <- get_estimate(model = mod_ES4, contra = contra_mod_ES4, mode
 res_table_mod_ES4
 ```
 
-
 #### Exercise enrichment
 Did enrichment involve the addition of apparatus for voluntary exercise (e.g., a wheel or treadmill)?
 
@@ -1679,7 +1688,6 @@ res_table_mod_ES5 <- get_estimate(model = mod_ES5, contra = contra_mod_ES5, mode
 
 res_table_mod_ES5
 ```
-
 
 #### Social enrichment
 Did enrichment involve more conspecifics (note that we did not include studies that only provided social enrichment but no other form of abiotic enrichment)?
@@ -1816,6 +1824,8 @@ Duration_ES<- orchard_plot(mod_ES9, mod = "Stress_duration", xlab = "lnRR", alph
   geom_point(aes(fill = name),  size = 3, shape = 21)+ # mean estimate
   scale_colour_manual(values = c("grey34","grey34")) +
   scale_fill_manual(values=c("grey34","grey34")) +
+    geom_signif(comparisons = list(c("Acute", "Chronic")),
+              annotations = "*") +
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
         axis.text.x = element_text(size = 10), # change font sizes
@@ -2301,7 +2311,7 @@ ES_mod <- plot_grid(LvsM_ES, Learning_ES, Reinforcement_ES, Age_enrichment_ES, A
   labels = "AUTO", ncol = 5)
 
 ES_mod
-#saved as 10 x 20 inches
+#saved as 10 x 25 inches
 ```
 **Fig. 6** Orchard plots showing the 10 different meta-regressions of moderators on the interaction between environmental enrichment and stress learning and memory. (A) learning versus memory response, (B) the type of assay, (C) the type of reinforcement used, (D) the age at environmental enrichment, (E) the age at stress, (F) the order of treatment exposure, (G) if enrichment involved a manipulation of exercise, (H) manipulation of the social environment during enrichment, (I) the type of stressor, (F) stress was chronic or acute. 
 
