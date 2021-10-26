@@ -10,15 +10,6 @@ output:
       toc_depth: 4
 editor_options: 
   chunk_output_type: console
-  # output:
-#   html_document:
-#     code_folding: hide
-#     df_print: kable
-#     toc: TRUE
-#     toc_float: TRUE
-#     toc_depth: 4
-#     collapsed: FALSE
-#     YAML: rmdformats::robobook
 ---
 
 ```{r, include = FALSE}
@@ -831,14 +822,11 @@ for(i in 1:length(levels(dat$Study_ID))){
                                         method = "REML", data = dat[dat$Study_ID
                                                                     != levels(dat$Study_ID)[i], ])}
 
-#TODO Shinichi to check
-
 # writing function for extracting est, ci.lb, and ci.ub from all models
 est.func <- function(mod_E0){
   df <- data.frame(est = mod_E0$b, lower = mod_E0$ci.lb, upper = mod_E0$ci.ub)
   return(df)
 }
-
 
 
 #using dplyr to form data frame
