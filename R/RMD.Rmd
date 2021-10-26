@@ -1,7 +1,7 @@
 ---
 title: "The relative benefits of environmental enrichment on learning and memory are greater when stressed: a meta-analysis of interactions in rodents"
 authors: "Erin L Macartney, Malgorzata Lagisz, Shinichi Nakagawa"
-subtitle: Supplementary Material S2
+subtitle: Supplementary Material S3
 output: 
     
     rmdformats::readthedown:
@@ -502,7 +502,7 @@ LvsM_E
 ```
 **Fig. 4a** Orchard plot showing the group-wise means of the categorical variable 'Learning_vs_memory' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.   
 
-##### Pairwise comparison 
+##### Contrasts
 ``` {r}
 contra_mod_E1 <- contrast_fun(data = dat, response = lnRR_Ea, moderator = Learning_vs_memory, VCV = VCV_E)
 res_table_mod_E1 <- get_estimate(model = mod_E1, contra = contra_mod_E1, moderator = Learning_vs_memory)
@@ -1009,7 +1009,7 @@ LvsM_S
 ```
 **Fig. 5a** Orchard plot showing the group-wise means of the categorical variable 'Learning_vs_memory' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.   
 
-##### Pairwise comparison 
+##### Contrasts
 ``` {r}
 contra_mod_S1 <- contrast_fun(data = dat, response = lnRR_Sa, moderator = Learning_vs_memory, VCV = VCV_S)
 res_table_mod_S1 <- get_estimate(model = mod_S1, contra = contra_mod_S1, moderator = Learning_vs_memory)
@@ -1054,7 +1054,7 @@ Learning_S
 ```
 **Fig. 5b** Orchard plot showing the group-wise means of the categorical variable 'Type_assay' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
-##### Pairwise comparison 
+##### Contrasts
 ``` {r}
 contra_mod_S2 <- contrast_fun(data = dat1, response = lnRR_Sa, moderator = Type_assay, VCV = VCV_S1)
 res_table_mod_S2 <- get_estimate(model = mod_S2, contra = contra_mod_S2, moderator = Type_assay)
@@ -1094,7 +1094,7 @@ Reinforcement_S
 ````
 **Fig. 5c** Orchard plot showing the group-wise means of the categorical variable 'Type_reinforcement' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
-##### Pairwise comparison 
+##### Contrasts
 ``` {r}
 contra_mod_S3 <- contrast_fun(data = dat2, response = lnRR_Sa, moderator = Type_reinforcement, VCV = VCV_S2)
 res_table_mod_S3 <- get_estimate(model = mod_S3, contra = contra_mod_S3, moderator = Type_reinforcement)
@@ -1134,7 +1134,7 @@ Age_S
 ```
 **Fig. 5d** Orchard plot showing the group-wise means of the categorical variable 'Age_stress_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
-##### Pairwise comparison 
+##### Contrasts
 ``` {r}
 contra_mod_S4 <- contrast_fun(data = dat, response = lnRR_Sa, moderator = Age_stress_exposure, VCV = VCV_S)
 res_table_mod_S4 <- get_estimate(model = mod_S4, contra = contra_mod_S4, moderator = Age_stress_exposure)
@@ -1173,7 +1173,7 @@ Stressor
 ````
 **Fig. 5e** Orchard plot showing the group-wise means of the categorical variable 'Type_stress_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
-##### Pairwise comparison 
+##### Contrasts
 ``` {r}
 contra_mod_S5 <- contrast_fun(data = dat5, response = lnRR_Sa, moderator =Type_stress_exposure, VCV = VCV_S3)
 res_table_mod_S5 <- get_estimate(model = mod_S5, contra = contra_mod_S5, moderator = Type_stress_exposure)
@@ -1214,7 +1214,7 @@ Duration_S
 ```
 **Fig. 5f** Orchard plot showing the group-wise means of the categorical variable 'Stress_duration' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
-##### Pairwise comparison 
+##### Contrasts
 ``` {r}
 contra_mod_S6 <- contrast_fun(data = dat6, response = lnRR_Sa, moderator =Stress_duration, VCV = VCV_S4)
 res_table_mod_S6 <- get_estimate(model = mod_S6, contra = contra_mod_S6, moderator = Stress_duration)
@@ -1508,7 +1508,7 @@ LvsM_ES
 ```
 **Fig. 6a** Orchard plot showing the group-wise means of the categorical variable 'Learning_vs_memory' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes. 
 
-##### Pairwise comparison 
+##### Contrasts
 ``` {r}
 contra_mod_ES1 <- contrast_fun(data = dat, response = lnRR_ESa, moderator =Learning_vs_memory, VCV = VCV_ES)
 res_table_mod_ES1 <- get_estimate(model = mod_ES1, contra = contra_mod_ES1, moderator = Learning_vs_memory)
@@ -1550,7 +1550,7 @@ Learning_ES
 ```
 **Fig. 6b** Orchard plot showing the group-wise means of the categorical variable 'Type_assay' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
-##### Pairwise comparison 
+##### Contrasts
 ``` {r}
 contra_mod_ES2 <- contrast_fun(data = dat1, response = lnRR_ESa, moderator =Type_assay, VCV = VCV_ES1)
 res_table_mod_ES2 <- get_estimate(model = mod_ES2, contra = contra_mod_ES2, moderator = Type_assay)
@@ -1592,7 +1592,7 @@ Reinforcement_ES
 ````
 **Fig. 6c** Orchard plot showing the group-wise means of the categorical variable 'Type_reinforcement' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
-##### Pairwise comparison 
+##### Contrasts
 ``` {r}
 contra_mod_ES3 <- contrast_fun(data = dat2, response = lnRR_ESa, moderator =Type_reinforcement, VCV = VCV_ES2)
 res_table_mod_ES3 <- get_estimate(model = mod_ES3, contra = contra_mod_ES3, moderator = Type_reinforcement)
@@ -1632,7 +1632,7 @@ Age_enrichment_ES
 ```
 **Fig. 6d** Orchard plot showing the group-wise means of the categorical variable 'Age_EE_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
-##### Pairwise comparison 
+##### Contrasts
 ``` {r}
 contra_mod_ES4 <- contrast_fun(data = dat3, response = lnRR_ESa, moderator =Age_EE_exposure, VCV = VCV_ES3)
 res_table_mod_ES4 <- get_estimate(model = mod_ES4, contra = contra_mod_ES4, moderator = Age_EE_exposure)
@@ -1670,7 +1670,7 @@ Exercise_ES
 ```
 **Fig. 6d** Orchard plot showing the group-wise means of the categorical variable 'EE_exercise' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
-##### Pairwise comparison 
+##### Contrasts
 ``` {r}
 contra_mod_ES5 <- contrast_fun(data = dat, response = lnRR_ESa, moderator =EE_exercise, VCV = VCV_ES)
 res_table_mod_ES5 <- get_estimate(model = mod_ES5, contra = contra_mod_ES5, moderator = EE_exercise)
@@ -1709,7 +1709,7 @@ Social_ES
 ```
 **Fig. 6e** Orchard plot showing the group-wise means of the categorical variable 'EE_social' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
-##### Pairwise comparison 
+##### Contrasts
 ``` {r}
 contra_mod_ES6 <- contrast_fun(data = dat4, response = lnRR_ESa, moderator =EE_social, VCV = VCV_ES4)
 res_table_mod_ES6 <- get_estimate(model = mod_ES6, contra = contra_mod_ES6, moderator = EE_social)
@@ -1746,7 +1746,7 @@ Age_stress_ES
 ```
 **Fig. 6d** Orchard plot showing the group-wise means of the categorical variable 'Age_stress_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
-##### Pairwise comparison 
+##### Contrasts
 ``` {r}
 contra_mod_ES7 <- contrast_fun(data = dat, response = lnRR_ESa, moderator =Age_stress_exposure, VCV = VCV_ES)
 res_table_mod_ES7 <- get_estimate(model = mod_ES7, contra = contra_mod_ES7, moderator = Age_stress_exposure)
@@ -1784,7 +1784,7 @@ Stressor_ES
 ````
 **Fig. 6e** Orchard plot showing the group-wise means of the categorical variable 'Type_stress_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
-##### Pairwise comparison 
+##### Contrasts
 ``` {r}
 contra_mod_ES8 <- contrast_fun(data = dat5, response = lnRR_ESa, moderator =Type_stress_exposure, VCV = VCV_ES5)
 res_table_mod_ES8 <- get_estimate(model = mod_ES8, contra = contra_mod_ES8, moderator = Type_stress_exposure)
@@ -1826,7 +1826,7 @@ Duration_ES
 ```
 **Fig. 6f** Orchard plot showing the group-wise means of the categorical variable 'Stress_duration' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
-##### Pairwise comparison 
+##### Contrasts
 ``` {r}
 contra_mod_ES9 <- contrast_fun(data = dat6, response = lnRR_ESa, moderator =Stress_duration, VCV = VCV_ES6)
 res_table_mod_ES9 <- get_estimate(model = mod_ES9, contra = contra_mod_ES9, moderator = Stress_duration)
@@ -1864,7 +1864,7 @@ Order_ES
 ```
 **Fig. 6g** Orchard plot showing the group-wise means of the categorical variable 'Exposure_order' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
-##### Pairwise comparison 
+##### Contrasts
 ``` {r}
 contra_mod_ES10 <- contrast_fun(data = dat, response = lnRR_ESa, moderator =Exposure_order, VCV = VCV_ES)
 res_table_mod_ES10 <- get_estimate(model = mod_ES10, contra = contra_mod_ES10, moderator = Exposure_order)
