@@ -14,7 +14,6 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
   lnRR_E <- log(0.5*(ES_mean + EC_mean)) - 
                          log(0.5*(CS_mean+ CC_mean))
   
-  # TODO this needs to be double checked
   lnRRV_E <-  (1/(ES_mean + EC_mean))^2*(ES_SD^2 / ES_n + EC_SD^2 / EC_n) + 
     (1/(CS_mean + CC_mean))^2*(CS_SD^2 / CS_n + CC_SD^2 / CC_n)
   
@@ -103,7 +102,6 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
     lnRR_E <- log(0.5*(ES_mean + EC_mean)) - 
                            log(0.5*(CS_mean+ CC_mean))
     
-    # TODO this needs to be double checked
     lnRRV_E <-  (1/(ES_mean + EC_mean))^2*(ES_SD^2 / ES_n + EC_SD^2 / EC_n) +  
                              (1/(CS_mean + CC_mean))^2*(CS_SD^2 /CS_n + CC_SD^2 / CC_n) 
     

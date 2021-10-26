@@ -7,6 +7,7 @@ output:
     rmdformats::readthedown:
       code_folding: hide
       code_download: true
+      toc_depth: 4
 editor_options: 
   chunk_output_type: console
   # output:
@@ -15,7 +16,7 @@ editor_options:
 #     df_print: kable
 #     toc: TRUE
 #     toc_float: TRUE
-     toc_depth: 4
+#     toc_depth: 4
 #     collapsed: FALSE
 #     YAML: rmdformats::robobook
 ---
@@ -734,7 +735,7 @@ res_table_mod_E6
 ### Publication bias & sensitivity analysis {.tabset}
 
 ####  Multi-moderator model
-We ran a multi-moderator ‘full’ model of all moderators. We ran model selection based on AIC and selected the top top set of models within delta AIC of 6 and calculated the importance of each moderator (i.e., Akaike weights) within this top model set.
+We ran a multi-moderator ‘full’ model of all moderators. We ran model selection based on AIC and selected the top set of models within delta AIC of 6 and calculated the importance of each moderator (i.e., Akaike weights) within this top model set.
 
 ``` {r, eval = FALSE}
 # filter data so that all K < 5 are removed
@@ -1236,7 +1237,7 @@ res_table_mod_S6
 ### Publication bias & sensitivity analysis {.tabset}
 
 ####  Multi-moderator model
-We ran a multi-moderator ‘full’ model of all moderators. We ran model selection based on AIC and selected the top top set of models within delta AIC of 6 and calculated the importance of each moderator (i.e., Akaike weights) within this top model set.
+We ran a multi-moderator ‘full’ model of all moderators. We ran model selection based on AIC and selected the top set of models within delta AIC of 6 and calculated the importance of each moderator (i.e., Akaike weights) within this top model set.
 
 ``` {r, eval = FALSE}
 
@@ -1887,7 +1888,7 @@ res_table_mod_ES10
 ### Publication bias & sensitivity analysis {.tabset}
 
 ####  Multi-moderator model
-We ran a multi-moderator ‘full’ model of all moderators. We ran model selection based on AIC and selected the top top set of models within delta AIC of 6 and calculated the importance of each moderator (i.e., Akaike weights) within this top model set.
+We ran a multi-moderator ‘full’ model of all moderators. We ran model selection based on AIC and selected the top set of models within delta AIC of 6 and calculated the importance of each moderator (i.e., Akaike weights) within this top model set.
 
 ``` {r, eval = FALSE}
 dat_ESfm <- dat %>%
