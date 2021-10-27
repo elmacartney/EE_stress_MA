@@ -545,7 +545,7 @@ Learning_E
 ```
 **Fig. 4b** Orchard plot showing the group-wise means of the categorical variable 'Type_assay' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.   
 
-##### Pairwise comparisons
+##### Contrasts
 
 ``` {r}
 contra_mod_E2 <- contrast_fun(data = dat1, response = lnRR_Ea, moderator = Type_assay, VCV = VCV_E1)
@@ -589,7 +589,7 @@ Reinforcement_E
 ````
 **Fig. 4c** Orchard plot showing the group-wise means of the categorical variable 'Type_reinforcement' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
-##### Pairwise comparisons
+##### Contrasts
 
 ``` {r}
 contra_mod_E3 <- contrast_fun(data = dat2, response = lnRR_Ea, moderator = Type_reinforcement, VCV = VCV_E2)
@@ -632,7 +632,7 @@ Age_E
 ```
 **Fig. 4d** Orchard plot showing the group-wise means of the categorical variable 'Age_EE_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
-##### Pairwise comparisons
+##### Contrasts
 
 ``` {r}
 contra_mod_E4 <- contrast_fun(data = dat3, response = lnRR_Ea, moderator = Age_EE_exposure, VCV = VCV_E3)
@@ -672,7 +672,7 @@ Exercise_E
 ```
 **Fig. 4d** Orchard plot showing the group-wise means of the categorical variable 'EE_exercise' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
-##### Pairwise comparisons
+##### Contrasts
 
 ``` {r}
 contra_mod_E5 <- contrast_fun(data = dat, response = lnRR_Ea, moderator = EE_exercise, VCV = VCV_E)
@@ -713,7 +713,7 @@ Social_E
 ```
 **Fig. 4e** Orchard plot showing the group-wise means of the categorical variable 'EE_social' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
 
-##### Pairwise comparisons
+##### Contrasts
 
 ``` {r}
 contra_mod_E6 <- contrast_fun(data = dat4, response = lnRR_Ea, moderator = EE_social, VCV = VCV_E4)
