@@ -254,7 +254,12 @@ max(dat$Year_published)
 
 ```{r, results = 'hide'}
 
-plot_missing <- vis_miss(dat) +
+#only selecting the columns used in the analysis
+
+dat_missing <- dat %>%
+  select(c(Study_ID, Year_published, Common_species, Strain, Sex, Age_EE_exposure, Age_stress_exposure, Age_assay, EE_exercise, EE_social, Type_stress_exposure, Stress_duration, Exposure_order, Learning_vs_memory, Type_assay, Type_reinforcement, lnRR_E, lnRRV_E, lnRR_S, lnRRV_S, lnRR_ES, lnRRV_ES, lnRR_E2, lnRRV_E2, lnRR_S2, lnRRV_S2, lnRR_ES2, lnRRV_ES2, SMD_E, SMDV_E, SMD_S, SMDV_S, SMD_ES, SMDV_ES))
+
+plot_missing <- vis_miss(dat_missing) +
   theme(plot.title = element_text(hjust = 0.5, vjust = 3),
         plot.margin = margin(t = 0.5, r = 3, b = 1, l = 1, unit = "cm")) +
   ggtitle("Missing data in the selected predictors") #no missing values
@@ -271,8 +276,7 @@ plot_missing
 # table(dat$Type_stress_exposure, dat$Age_assay)
 # table(dat$Type_stress_exposure, dat$Stress_duration)
 ```
-Visual of missing data for each column. Note that most missing data are for different descriptive statistics as papers are often report results using different types of descriptive statistics (i.e., SD, SE, mean, median etc).
-*Cannot reduce text size in this figure*
+Visual of missing data for each column. No missing data for moderators, random effects, or effect sizes.
 
 ## Alluvial diagrams {.tabset}
 Shows the relationship/nestedness of different data elements (used to produce Fig. 2)
