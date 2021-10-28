@@ -61,9 +61,9 @@ eval(metafor:::.MuMIn)
 ## Loading data and functions
 This loads the unprocessed data file and custom functions including
 
-- calculating 'focal' effect sizes and variance for lnRR and SMD: `effect_set`
-- calculating 'pairwise' comparisons (lnRR) and variance: `effect_set2`
-- calculating pair-wise contrasts between moderators: `contrast_fun`
+- functions for calculating 'focal' effect sizes and variance for lnRR and SMD: `effect_set`
+- functions for calculating 'pairwise' comparisons (lnRR) and variance: `effect_set2`
+- functions for calculating pair-wise contrasts between moderators: `contrast_fun`
 
 ```{r, cache = FALSE}
 dat <- read_csv(here("Data","Data_raw.csv"))
@@ -72,11 +72,12 @@ source(here("R/Functions.R"))
 ```
 
 ## Data organisation
-- removing study (Wang et al_2020) with negative values as lnRR cannot be calculated with negative values
-- rounding down sample sizes that are reported as decimals due to averaging n across treatments
-- getting effect sizes from function
-- 'flipping' effect sizes so that all effect sizes are higher values = individuals do better in cognitive assays
-- assigning human readable terms, and creating VCV of variance 
+- removing one study (Wang et al_2020) with negative values as lnRR cannot be calculated with negative values
+- rounding down sample sizes that are coded as decimals due to averaging sample sizes across treatments
+- calculating effect sizes using custom functions
+- 'flipping' effect sizes so that all effect sizes that are higher values can be interpreted as individuals performing better in cognitive assays
+- assigning human readable terms to moderators initially coded as numbers
+- creating a variance-covariance matrix (VCV) 
 
 ```{r}
 
@@ -327,7 +328,7 @@ p2 <- ggplot(data = freq_B,
 
 p2
 ```
-**Fig. 2b** Relationship/nestedness between the age of enrichment exposure, if enrichment involved a manipulation of exercise and social environment
+**Fig. 2b** Relationship/nestedness between the age at enrichment exposure, if enrichment involved a manipulation of exercise and social environment
 
 ### Stress info: age-duration-type stress
 
@@ -353,7 +354,7 @@ p3 <- ggplot(data = freq_C,
 
 p3
 ```
-**Fig. 2c** Relationship/nestedess between the age of stress exposure, the duration of the stres, and the type of stress
+**Fig. 2c** Relationship/nestedess between the age at stress exposure, the duration of the stres, and the type of stress
 
 ### Assay info: LvsM-type-reinforcement
 
@@ -393,21 +394,21 @@ p4
 **Fig. 2** The combined plot of all alluvial diagrams used to make Fig. 2 in the main text
 
 ## Risk of Bias
-Percent of studies that used randomisation:
+Number of studies that used randomisation:
 ``` {r}
 dat %>% group_by(ROB_randomisation) %>% 
   summarise(n = n_distinct(Study_ID))
 
-15/30
+    15/30 #proportion
 ```
 
-Percent of studies that used blinding:
+number of studies that used blinding:
 ``` {r}
 #blinding
 dat %>% group_by(ROB_blinding) %>% 
   summarise(n = n_distinct(Study_ID))
 
-6/30
+6/30 #proportion
 ```
 
 # Modelling with lnRR
@@ -439,7 +440,7 @@ $$
 \left(\frac{SD_\text{CS}^2}{N_\text{CS}} + \frac{SD_\text{CC}^2}{n_\text{CC}}
 \right)
 $$
-Variance was converted in to variance-covariance (VCV) matrix (see above in 'Data organisation') to control for non-independence in sampling variance from the same studies.
+Variance was converted in to variance-covariance (VCV) matrix (see above in 'Data organisation') to control for non-independence in sampling variances from the same studies.
 
 ``` {r}
 #dat <- read_csv(here("Data","Data_processed.csv"))
@@ -465,15 +466,15 @@ orchard_plot(mod_E0, mod = "Int", xlab = "lnRR", alpha=0.4) +  # Orchard plot
         legend.text = element_text(size = 13)) 
 
 ```
-**Fig. 3** Orchard plot showing meta-analytic mean and 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.   
+**Fig. 3** Orchard plot showing meta-analytic mean,  95% confidence interval (think black line), and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.      
 
 ### Meta-regression: uni-moderator {.tabset}
-To explain some of the unexplained variation in the main effect of environmental enrichment model, we conducted a series of uni-moderator analyses. We calculated marginal R2 for each moderator as well as conducted a series of pair-wise contrasts between in moderator category. 
+To explain some of the unexplained variation in the main effect of environmental enrichment meta-analytic model, we conducted a series of uni-moderator analyses. We calculated marginal R^2 for each moderator, as well as conducted a series of pair-wise contrasts between moderator categories.  
 
 Any moderator categories with k < 5 were removed.
 
 #### Learning vs Memory
-Was the response learning or memory?
+Was the measured response interpreted as learning or memory?   
 
 ``` {r, fig.width=10, fig.height=7}
 mod_E1 <-  rma.mv(yi = lnRR_Ea, V = VCV_E, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID,
@@ -485,7 +486,7 @@ mod_E1 <-  rma.mv(yi = lnRR_Ea, V = VCV_E, mod = ~Learning_vs_memory-1, random =
 summary(mod_E1) 
 r2_ml(mod_E1) 
 
-LvsM_E<- orchard_plot(mod_E1, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) + 
+LvsM_E <- orchard_plot(mod_E1, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   xlim(-0.5, 2) + 
@@ -500,7 +501,7 @@ LvsM_E<- orchard_plot(mod_E1, mod = "Learning_vs_memory", xlab = "lnRR", alpha=0
 
 LvsM_E
 ```
-**Fig. 4a** Orchard plot showing the group-wise means of the categorical variable 'Learning_vs_memory' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.   
+**Fig. 4a** Orchard plot showing the group-wise means of the categorical variable 'Learning_vs_memory' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.      
 
 ##### Contrasts
 ``` {r}
@@ -511,7 +512,7 @@ res_table_mod_E1
 ```
 
 #### Type of assay
-The broad category of the type of assay used to measure learning or memory 
+The broad category of the type of assay used to measure learning or memory.   
 
 ``` {r, fig.width=10, fig.height=7}
 dat1 <- filter(dat, Type_assay %in% c("Recognition", "Habituation", "Conditioning"))
@@ -543,7 +544,7 @@ Learning_E <- orchard_plot(mod_E2, mod = "Type_assay", xlab = "lnRR", alpha=0.4)
 
 Learning_E
 ```
-**Fig. 4b** Orchard plot showing the group-wise means of the categorical variable 'Type_assay' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.   
+**Fig. 4b** Orchard plot showing the group-wise means of the categorical variable 'Type_assay' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.      
 
 ##### Contrasts
 
@@ -554,8 +555,8 @@ res_table_mod_E2 <- get_estimate(model = mod_E2, contra = contra_mod_E2, moderat
 res_table_mod_E2
 ```
  
-#### Type of reinforcement 
-If conditioning was used, was aversive or appetitive reinforcement used?
+#### Type of reinforcement  
+If conditioning was used, was aversive or appetitive reinforcement used?   
 
 ``` {r, fig.width=10, fig.height=7}
 
@@ -587,7 +588,7 @@ Reinforcement_E <-orchard_plot(mod_E3, mod = "Type_reinforcement", xlab = "lnRR"
 
 Reinforcement_E
 ````
-**Fig. 4c** Orchard plot showing the group-wise means of the categorical variable 'Type_reinforcement' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
+**Fig. 4c** Orchard plot showing the group-wise means of the categorical variable 'Type_reinforcement' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.   
 
 ##### Contrasts
 
@@ -598,8 +599,8 @@ res_table_mod_E3 <- get_estimate(model = mod_E3, contra = contra_mod_E3, moderat
 res_table_mod_E3
 ```
 
-#### Age of enrichment
-The age when individuals were exposed to environmental enrichment
+#### Age at enrichment
+The effect of age when individuals were exposed to environmental enrichment.
 
 ``` {r, fig.width=10, fig.height=7}
 dat3 <- filter(dat, Age_EE_exposure %in% c("Adult", "Adolescent"))
@@ -630,7 +631,7 @@ Age_E<- orchard_plot(mod_E4, mod = "Age_EE_exposure", xlab = "lnRR", alpha=0.4) 
 
 Age_E
 ```
-**Fig. 4d** Orchard plot showing the group-wise means of the categorical variable 'Age_EE_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
+**Fig. 4d** Orchard plot showing the group-wise means of the categorical variable 'Age_EE_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.   
 
 ##### Contrasts
 
@@ -646,7 +647,7 @@ res_table_mod_E4
 Did enrichment involve the addition of apparatus for voluntary exercise (e.g., a wheel or treadmill)?
 
 ``` {r, fig.width=10, fig.height=7}
-mod_E5<- rma.mv(yi = lnRR_Ea, V = VCV_E, mod = ~EE_exercise-1, random = list(~1|Study_ID,
+mod_E5 <- rma.mv(yi = lnRR_Ea, V = VCV_E, mod = ~EE_exercise-1, random = list(~1|Study_ID,
                                                                                ~1|ES_ID,
                                                                                ~1|Strain),
                 test = "t",
@@ -670,7 +671,7 @@ Exercise_E <-orchard_plot(mod_E5, mod = "EE_exercise", xlab = "lnRR", alpha=0.4)
 
 Exercise_E
 ```
-**Fig. 4d** Orchard plot showing the group-wise means of the categorical variable 'EE_exercise' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
+**Fig. 4d** Orchard plot showing the group-wise means of the categorical variable 'EE_exercise' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.   
 
 ##### Contrasts
 
@@ -682,7 +683,7 @@ res_table_mod_E5
 ```
 
 #### Social enrichment
-Did enrichment involve more conspecifics (note that we did not include studies that only provided social enrichment but no other form of abiotic enrichment)?
+Did enrichment involve adding more conspecifics in the cage? (Note that we did not include studies that only provided social enrichment but no abiotic enrichment.)  
 
 ``` {r,  fig.width=10, fig.height=7}
 dat4 <- filter(dat, EE_social %in% c("Social", "Non-social"))
@@ -711,7 +712,7 @@ Social_E <-orchard_plot(mod_E6, mod = "EE_social", xlab = "lnRR", alpha=0.4) +
 
 Social_E 
 ```
-**Fig. 4e** Orchard plot showing the group-wise means of the categorical variable 'EE_social' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
+**Fig. 4e** Orchard plot showing the group-wise means of the categorical variable 'EE_social' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.   
 
 ##### Contrasts
 
@@ -759,12 +760,12 @@ The akaike weights for the top set of models with AIC < 6
 dat_Efm <- readRDS(file = here("Rdata", "dat_Efm.rds"))
 mod_Efm <- readRDS(file = here("Rdata", "mod_Efm.rds"))
 res_Efm <- readRDS(file = here("Rdata", "res_Efm.rds"))
-res_Efm2<- subset(res_Efm, delta <= 6, recalc.weights=FALSE)
+res_Efm2 <- subset(res_Efm, delta <= 6, recalc.weights=FALSE)
 importance(res_Efm2)
 ```
 
 #### Funnel plot
-We produced funnel plots of effect sizes against the residuals of the full model to visually inspect for funnel asymmetry
+We used funnel plots of effect sizes against the residuals of the full model to visually inspect for funnel asymmetry.  
 
 Used to produce Fig. 7a
 ``` {r}
@@ -785,7 +786,7 @@ $$
 \frac {1}{N_\text{CS}} + \frac{1}{N_\text{CC}}},
 $$
 
-and year of publication as moderators in the full model to inferentially test for funnel asymmetry and a decrease in effect sizes with publication year
+and year of publication as moderators in the full model to inferentially test for funnel asymmetry and a decrease in effect sizes with publication year.  
 
 ``` {r}
 VCV_Efm <- impute_covariance_matrix(vi = dat_Efm$lnRRV_E, cluster = dat_Efm$Study_ID, r = 0.5)
@@ -800,12 +801,12 @@ PB_MR_E<- rma.mv(lnRR_Sa, VCV_Efm, mods = ~1 + sqrt_inv_e_n +  Learning_vs_memor
 
 #PB_MR_E
 
-estimates_PB_MR_E<- estimates.CI(PB_MR_E)
+estimates_PB_MR_E <- estimates.CI(PB_MR_E)
 estimates_PB_MR_E
 ```
 
 #### Leave-one-out analysis
-We individually removed studies to determine if any singular studies hve a disproportionate effect on the meta-analytic mean and CI.
+We individually removed studies to determine if any singular studies have a disproportionate effect on the meta-analytic mean and CI.
 
 ``` {r, eval = FALSE}
 dat$Study_ID <- as.factor(dat$Study_ID)
@@ -836,13 +837,14 @@ MA_CVR_E <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows
 saveRDS(MA_CVR_E,file = here("Rdata", "MA_CVR_E.rds"))
 ```
 
-Used to produce Fig. S3
+Used to produce Fig. S3  
+
 ``` {r}
 #telling ggplot to stop reordering factors
 MA_CVR_E <- readRDS(file = here("Rdata", "MA_CVR_E.rds"))
 
-MA_CVR_E$left_out<- as.factor(MA_CVR_E$left_out)
-MA_CVR_E$left_out<-factor(MA_CVR_E$left_out, levels = MA_CVR_E$left_out)
+MA_CVR_E$left_out <- as.factor(MA_CVR_E$left_out)
+MA_CVR_E$left_out <- factor(MA_CVR_E$left_out, levels = MA_CVR_E$left_out)
 
 
 #plotting
@@ -864,10 +866,10 @@ leaveoneout_E
 
 dat$Study_ID <- as.integer(dat$Study_ID)
 ```
-**Fig. S3** Leave-one-group-out analysis showing meta-analytic mean and 95% CI when each individual study is removed from the data set. 
+**Fig. S3** Leave-one-group-out analysis showing meta-analytic mean and 95% CI when each individual study is removed from the data set.  
 
 #### Using SMD
-We re-ran the main effect of environmental enrichment meta-analytic model using standardised mean difference (SMD) instead of lnRR
+We re-ran the main effect of environmental enrichment meta-analytic model using standardised mean difference (SMD) instead of lnRR.  
 
 ``` {r}
 
@@ -883,10 +885,10 @@ i2_ml(mod_E0a)
 
 #### Risk of Bias
 
-Including if the study was randomised as a moderator and conducting a pair-wise contrast
+Testing a model including if the study was randomised as a moderator and conducting a pair-wise contrast analysis.  
 
 ``` {r, results = 'hide'}
-mod_randomised_E<- rma.mv(yi = lnRR_Ea, V = VCV_E, mod = ~ROB_randomisation-1, random = list(~1|Study_ID, 
+mod_randomised_E <- rma.mv(yi = lnRR_Ea, V = VCV_E, mod = ~ROB_randomisation-1, random = list(~1|Study_ID, 
                                                                              ~1|ES_ID,
                                                                              ~1|Strain),
                 test = "t",data = dat)
@@ -903,10 +905,10 @@ res_table_mod_randomised_E <- get_estimate(model = mod_randomised_E, contra = co
 res_table_mod_randomised_E
 ```
 
-Including if the study used blinding and conducting a pair-wise contrast
+Testing a model including if the study used blinding as a moderator and conducting a pair-wise contrast analysis.  
 
 ``` {r, results = 'hide'}
-mod_blinding_E<- rma.mv(yi = lnRR_Ea, V = VCV_E, mod = ~ROB_blinding-1, random = list(~1|Study_ID, 
+mod_blinding_E <- rma.mv(yi = lnRR_Ea, V = VCV_E, mod = ~ROB_blinding-1, random = list(~1|Study_ID, 
                                                                              ~1|ES_ID,
                                                                              ~1|Strain),
                 test = "t",data = dat)
@@ -926,7 +928,7 @@ res_table_mod_blinding_E
 ## Main effect: stress
 
 ### Meta-analysis
-To quantify differences in individual performance in cognitive assays with stress, we used the logarithm of response ratio (lnRR) calculated as: 
+To quantify differences in individual performance in cognitive assays with stress, we used the logarithm of response ratio (lnRR) calculated as:  
 
 
 $$
@@ -950,7 +952,7 @@ $$
 \left(\frac{SD_\text{EC}^2}{N_\text{EC}} + \frac{SD_\text{CC}^2}{N_\text{CC}}
 \right)
 $$
-Variance was converted in to variance-covariance (VCV) matrix (see above in 'Data organisation') to control for non-independence in sampling variance from the same studies.
+Variance was converted in to variance-covariance (VCV) matrix (see above in 'Data organisation') to control for non-independence in sampling variance from the same studies.  
 
 ``` {r}
 mod_S0 <- rma.mv(yi = lnRR_Sa, V = VCV_S, random = list(~1|Study_ID,
@@ -972,15 +974,15 @@ orchard_plot(mod_S0, mod = "Int", xlab = "lnRR", alpha=0.4) +
         legend.title = element_text(size = 15),
         legend.text = element_text(size = 13)) 
 ```
-**Fig. 3** Orchard plot showing meta-analytic mean and 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.  
+**Fig. 3** Orchard plot showing meta-analytic mean and 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision.   
 
-### Meta-regression: uni-moderator {.tabset}
-To explain some of the unexplained variation in the main effect of stress model, we conducted a series of uni-moderator analyses. We calculated marginal R2 for each moderator as well as conducted a series of pair-wise contrasts between in moderator category. 
+### Meta-regression: uni-moderator {.tabset}.  
+To explain some of the unexplained variation in the main effect of stress model, we conducted a series of uni-moderator analyses. We calculated marginal R^2 for each moderator as well as conducted a series of pair-wise contrasts between moderator categories.   
 
-Any moderator categories with k < 5 were removed.
+Any moderator categories with k < 5 were removed.  
 
-#### Learning vs Memory
-Was the response learning or memory?
+#### Learning vs Memory. 
+Was the measured response interpreted as learning or memory?  
 
 ``` {r, fig.width=10, fig.height=7}
 
@@ -1007,7 +1009,7 @@ LvsM_S <- orchard_plot(mod_S1, mod = "Learning_vs_memory", xlab = "lnRR", alpha=
 
 LvsM_S 
 ```
-**Fig. 5a** Orchard plot showing the group-wise means of the categorical variable 'Learning_vs_memory' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.   
+**Fig. 5a** Orchard plot showing the group-wise means of the categorical variable 'Learning_vs_memory' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.      
 
 ##### Contrasts
 ``` {r}
@@ -1018,8 +1020,8 @@ res_table_mod_S1
 ```
 
 
-#### Type of assay
-The broad category of the type of assay used to measure learning or memory 
+#### Type of assay. 
+The broad category of the type of assay used to measure learning or memory.   
 
 ``` {r, fig.width=10, fig.height=7}
 dat$Type_assay<-as.factor(dat$Type_assay)
@@ -1036,7 +1038,7 @@ mod_S2 <- rma.mv(yi = lnRR_Sa, V = VCV_S1, mod = ~Type_assay-1, random =   list(
 summary(mod_S2)
 r2_ml(mod_S2) 
 
-Learning_S <-orchard_plot(mod_S2, mod = "Type_assay", xlab = "lnRR", alpha=0.4) + 
+Learning_S <- orchard_plot(mod_S2, mod = "Type_assay", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   scale_colour_manual(values = c("grey34","grey34","grey34")) +
@@ -1052,9 +1054,9 @@ Learning_S <-orchard_plot(mod_S2, mod = "Type_assay", xlab = "lnRR", alpha=0.4) 
 
 Learning_S
 ```
-**Fig. 5b** Orchard plot showing the group-wise means of the categorical variable 'Type_assay' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
+**Fig. 5b** Orchard plot showing the group-wise means of the categorical variable 'Type_assay' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.    
 
-##### Contrasts
+##### Contrasts. 
 ``` {r}
 contra_mod_S2 <- contrast_fun(data = dat1, response = lnRR_Sa, moderator = Type_assay, VCV = VCV_S1)
 res_table_mod_S2 <- get_estimate(model = mod_S2, contra = contra_mod_S2, moderator = Type_assay)
@@ -1062,8 +1064,8 @@ res_table_mod_S2 <- get_estimate(model = mod_S2, contra = contra_mod_S2, moderat
 res_table_mod_S2
 ```
 
-#### Type of reinforcement
-If conditioning was used, was aversive or appetitive reinforcement used?
+#### Type of reinforcement.  
+If conditioning was used, was aversive or appetitive reinforcement used?  
 
 ``` {r, fig.width=10, fig.height=7}
 
@@ -1078,7 +1080,7 @@ mod_S3 <- rma.mv(yi = lnRR_Sa, V = VCV_S2, mod = ~ Type_reinforcement-1, random 
 summary(mod_S3)
 r2_ml(mod_S3) 
 
-Reinforcement_S <-orchard_plot(mod_S3, mod = "Type_reinforcement", xlab = "lnRR", alpha=0.4) + 
+Reinforcement_S <- orchard_plot(mod_S3, mod = "Type_reinforcement", xlab = "lnRR", alpha=0.4) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals
   scale_colour_manual(values = c("grey34","grey34","grey34")) +
@@ -1092,9 +1094,9 @@ Reinforcement_S <-orchard_plot(mod_S3, mod = "Type_reinforcement", xlab = "lnRR"
 
 Reinforcement_S
 ````
-**Fig. 5c** Orchard plot showing the group-wise means of the categorical variable 'Type_reinforcement' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
+**Fig. 5c** Orchard plot showing the group-wise means of the categorical variable 'Type_reinforcement' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.  
 
-##### Contrasts
+##### Contrasts   
 ``` {r}
 contra_mod_S3 <- contrast_fun(data = dat2, response = lnRR_Sa, moderator = Type_reinforcement, VCV = VCV_S2)
 res_table_mod_S3 <- get_estimate(model = mod_S3, contra = contra_mod_S3, moderator = Type_reinforcement)
@@ -1103,8 +1105,8 @@ res_table_mod_S3
 ```
 
 
-#### Age of stress
-The age when individuals were exposed to stress
+#### Age at stress  
+The age when individuals were exposed to stress. 
 
 ``` {r, fig.width=10, fig.height=7}
 
@@ -1132,9 +1134,9 @@ Age_S <- orchard_plot(mod_S4, mod = "Age_stress_exposure", xlab = "lnRR", alpha=
 
 Age_S 
 ```
-**Fig. 5d** Orchard plot showing the group-wise means of the categorical variable 'Age_stress_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
+**Fig. 5d** Orchard plot showing the group-wise means of the categorical variable 'Age_stress_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.  
 
-##### Contrasts
+##### Contrasts 
 ``` {r}
 contra_mod_S4 <- contrast_fun(data = dat, response = lnRR_Sa, moderator = Age_stress_exposure, VCV = VCV_S)
 res_table_mod_S4 <- get_estimate(model = mod_S4, contra = contra_mod_S4, moderator = Age_stress_exposure)
@@ -1142,8 +1144,8 @@ res_table_mod_S4 <- get_estimate(model = mod_S4, contra = contra_mod_S4, moderat
 res_table_mod_S4
 ```
 
-#### Type of stress
-The type of stressor used
+#### Type of stress 
+The type of stressor used. 
 
 ``` {r, fig.width=10, fig.height=7}
 dat5 <- filter(dat, Type_stress_exposure %in% c("Restraint", "Noise", "MS", "Combination"))
@@ -1171,17 +1173,17 @@ Stressor<- orchard_plot(mod_S5, mod = "Type_stress_exposure", xlab = "lnRR", alp
 
 Stressor
 ````
-**Fig. 5e** Orchard plot showing the group-wise means of the categorical variable 'Type_stress_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
+**Fig. 5e** Orchard plot showing the group-wise means of the categorical variable 'Type_stress_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.  
 
-##### Contrasts
+##### Contrasts  
 ``` {r}
-contra_mod_S5 <- contrast_fun(data = dat5, response = lnRR_Sa, moderator =Type_stress_exposure, VCV = VCV_S3)
+contra_mod_S5 <- contrast_fun(data = dat5, response = lnRR_Sa, moderator = Type_stress_exposure, VCV = VCV_S3)
 res_table_mod_S5 <- get_estimate(model = mod_S5, contra = contra_mod_S5, moderator = Type_stress_exposure)
 
 res_table_mod_S5
 ```
 
-#### Stess duration
+#### Stess duration  
 Was the stress acute or chronic?
 
 ``` {r,  fig.width=10, fig.height=7}
@@ -1212,9 +1214,9 @@ Duration_S <- orchard_plot(mod_S6, mod = "Stress_duration", xlab = "lnRR", alpha
 
 Duration_S 
 ```
-**Fig. 5f** Orchard plot showing the group-wise means of the categorical variable 'Stress_duration' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
+**Fig. 5f** Orchard plot showing the group-wise means of the categorical variable 'Stress_duration' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.  
 
-##### Contrasts
+##### Contrasts  
 ``` {r}
 contra_mod_S6 <- contrast_fun(data = dat6, response = lnRR_Sa, moderator =Stress_duration, VCV = VCV_S4)
 res_table_mod_S6 <- get_estimate(model = mod_S6, contra = contra_mod_S6, moderator = Stress_duration)
@@ -1222,10 +1224,10 @@ res_table_mod_S6 <- get_estimate(model = mod_S6, contra = contra_mod_S6, moderat
 res_table_mod_S6
 ```
 
-### Publication bias & sensitivity analysis {.tabset}
+### Publication bias & sensitivity analysis {.tabset}   
 
-####  Multi-moderator model
-We ran a multi-moderator ‘full’ model of all moderators. We ran model selection based on AIC and selected the top set of models within delta AIC of 6 and calculated the importance of each moderator (i.e., Akaike weights) within this top model set.
+####  Multi-moderator model  
+We ran a multi-moderator ‘full’ model of all moderators. We ran model selection based on AIC and selected the top set of models within delta AIC of 6 and calculated the importance of each moderator (i.e., Akaike weights) within this top model set.  
 
 ``` {r, eval = FALSE}
 
@@ -1263,20 +1265,20 @@ res_Sfm2<- subset(res_Sfm, delta <= 6, recalc.weights=FALSE)
 importance(res_Sfm2) 
 ```
 
-#### Funnel plot
-We produced funnel plots of effect sizes against the residuals of the full model to visually inspect for funnel asymmetry.
+#### Funnel plot  
+We used funnel plots of effect sizes against the residuals of the full model to visually inspect for funnel asymmetry.  
 
-Used to produce Fig. 7b
+Used to produce Fig. 7b.  
 
 ``` {r}
 # funnel plot
 Funnel_S <- funnel(mod_Sfm, xlab = "lnRR", ylab = "Standard Error")
 #Funnel_S
 ```
-**Fig.7b** Funnel plot showing the standard error and residuals (lnRR) from the full model.
+**Fig.7b** Funnel plot showing the standard error and residuals (lnRR) from the full model.   
 
-#### Egger's regression and time-lag bias
-We fitted effective sample size calculated as:
+#### Egger's regression and time-lag bias  
+We fitted effective sample size calculated as:   
 
 $$
 \sqrt{\frac {1} { \tilde{N} }}  =
@@ -1284,7 +1286,7 @@ $$
 \frac {1}{N_\text{CS}} + \frac{1}{N_\text{CC}}},
 $$
 
-and year of publication as moderators in the full model to inferentially test for funnel asymmetry and a decrease in effect sizes with publication year.
+and year of publication as moderators in the full model to inferentially test for funnel asymmetry and a decrease in effect sizes with publication year.   
 
 ```{r}
 #calculating inv effective sample size for use in full meta-regression
@@ -1311,8 +1313,8 @@ estimates_PB_MR_S
 ```
 
 
-#### Leave-one-out sensitivity analysis
-We individually removed studies to determine if any singular studies hve a disproportionate effect on the meta-analytic mean and CI.
+#### Leave-one-out sensitivity analysis  
+We individually removed studies to determine if any singular studies have a disproportionate effect on the meta-analytic mean and CI.   
 
 ``` {r, eval = FALSE}
 dat$Study_ID <- as.factor(dat$Study_ID)
@@ -1370,10 +1372,10 @@ leaveoneout_S
 
 dat$Study_ID <- as.integer(dat$Study_ID)
 ```
-**Fig. S4** Leave-one-group-out analysis showing meta-analytic mean and 95% CI when each individual study is removed from the data set. 
+**Fig. S4** Leave-one-study-out analysis showing meta-analytic mean and 95% CI when each individual study is removed from the data set.  
 
-#### Using SMD
-We re-ran the main effect of stress meta-analytic model using standardised mean difference (SMD) instead of lnRR
+#### Using SMD   
+We re-ran the main effect of stress meta-analytic model using standardised mean difference (SMD) instead of lnRR.  
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_S0a <- rma.mv(yi = SMD_Sa, V = VCV_Sa, random = list(~1|Study_ID,
@@ -1386,9 +1388,9 @@ i2_ml(mod_S0a)
 
 ```
 
-#### Risk of Bias
+#### Risk of Bias   
 
-Including if the study was randomised as a moderator and conducting a pair-wise contrast
+Including if the study was randomised as a moderator and conducting a pair-wise contrast.   
 
 ``` {r, results = 'hide'}
 mod_randomised_S<- rma.mv(yi = lnRR_Sa, V = VCV_S, mod = ~ROB_randomisation-1, random = list(~1|Study_ID, 
@@ -1408,7 +1410,7 @@ res_table_mod_randomised_S <- get_estimate(model = mod_randomised_S, contra = co
 res_table_mod_randomised_S
 ```
 
-Including if the study used blinding and conducting a pair-wise contrast
+Including if the study used blinding and conducting a pair-wise contrast.  
 
 ``` {r, results = 'hide'}
 mod_blinding_S<- rma.mv(yi = lnRR_Sa, V = VCV_S, mod = ~ROB_blinding-1, random = list(~1|Study_ID, 
@@ -1428,10 +1430,10 @@ res_table_mod_blinding_S <- get_estimate(model = mod_blinding_S, contra = contra
 res_table_mod_blinding_S
 ```
 
-## Interaction: enrichment x stress
+## Interaction: enrichment x stress   
 
-### Meta-analysis
-To quantify differences in individual performance in cognitive assay with the interaction of environmental enrichment and stress, we used the logarithm of response ratio (lnRR) calculated as: 
+### Meta-analysis   
+To quantify differences in individual performance in cognitive assay with the interaction of environmental enrichment and stress, we used the logarithm of response ratio (lnRR) calculated as:   
 
 $$
 \ln{\text{RR}_\text{interaction}} 
@@ -1442,14 +1444,15 @@ $$
 {M_\text{EC} / \ M_\text{CC}} \right)
 $$
 
-Variance was calculated as:
+Variance was calculated as:   
 
 $$
 \text{var}(\ln{\text{RR}_\text{interaction}}) =
 \frac {SD_\text{ES}^2} { N_\text{ES} M_\text{ES}^2 } + \frac{SD_\text{EC}^2}{N_\text{EC}M_\text{EC}^2} + 
 \frac {SD_\text{CS}^2}{N_\text{CS} M_\text{CS}^2} + \frac{SD_\text{CC}^2}{N_\text{CC} M_\text{CC}^2}.
 $$
-Variance was converted in to variance-covariance (VCV) matrix (see above in 'Data organisation') to control for non-independence in sampling variance from the same studies.
+
+Variance was converted into variance-covariance (VCV) matrix (see above in 'Data organisation') to control for non-independence in sampling variance from the same studies.    
 
 ``` {r}
 mod_ES0 <- rma.mv(yi = lnRR_ESa, V = VCV_ES, random = list(~1|Study_ID,
@@ -1471,15 +1474,15 @@ orchard_plot(mod_ES0, mod = "Int", xlab = "lnRR", alpha=0.4) +
         legend.title = element_text(size = 15),
         legend.text = element_text(size = 13)) 
 ````
-**Fig. 3** Orchard plot showing meta-analytic mean and 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes. 
+**Fig. 3** Orchard plot showing meta-analytic mean and 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.   
 
-###  Meta-regression: uni-moderator {.tabset}
-To explain some of the unexplained variation in the interaction of environmental enrichment and stress, we conducted a series of uni-moderator analyses. We calculated marginal R2 for each moderator as well as conducted a series of pair-wise contrasts between in moderator category. 
+###  Meta-regression: uni-moderator {.tabset}. 
+To explain some of the unexplained variation in the interaction of environmental enrichment and stress, we conducted a series of uni-moderator analyses. We calculated marginal R^2 for each moderator as well as conducted a series of pair-wise contrasts between moderator categories.     
 
-Any moderator categories with k < 5 were removed.
+Any moderator categories with k < 5 were removed.   
 
-#### Learning vs Memory
-Was the response learning or memory?
+#### Learning vs Memory   
+Was the response interpreted as learning or memory?   
 
 ``` {r, fig.width=10, fig.height=7}
 mod_ES1 <-  rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~Learning_vs_memory-1, random = list(~1|Study_ID, 
@@ -1506,9 +1509,9 @@ LvsM_ES <- orchard_plot(mod_ES1, mod = "Learning_vs_memory", xlab = "lnRR", alph
 
 LvsM_ES 
 ```
-**Fig. 6a** Orchard plot showing the group-wise means of the categorical variable 'Learning_vs_memory' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes. 
+**Fig. 6a** Orchard plot showing the group-wise means of the categorical variable 'Learning_vs_memory' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.   
 
-##### Contrasts
+##### Contrasts  
 ``` {r}
 contra_mod_ES1 <- contrast_fun(data = dat, response = lnRR_ESa, moderator =Learning_vs_memory, VCV = VCV_ES)
 res_table_mod_ES1 <- get_estimate(model = mod_ES1, contra = contra_mod_ES1, moderator = Learning_vs_memory)
@@ -1516,8 +1519,8 @@ res_table_mod_ES1 <- get_estimate(model = mod_ES1, contra = contra_mod_ES1, mode
 res_table_mod_ES1
 ```
 
-#### Type of assay
-The broad category of the type of assay used to measure learning or memory 
+#### Type of assay  
+The broad category of the type of assay used to measure learning or memory.   
 
 ``` {r, fig.width=10, fig.height=7}
 VCV_ES1 <- impute_covariance_matrix(vi = dat1$lnRRV_ES, cluster = dat$Study_ID, r = 0.5)
@@ -1548,7 +1551,7 @@ Learning_ES <- orchard_plot(mod_ES2, mod = "Type_assay", xlab = "lnRR", alpha=0.
 
 Learning_ES
 ```
-**Fig. 6b** Orchard plot showing the group-wise means of the categorical variable 'Type_assay' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
+**Fig. 6b** Orchard plot showing the group-wise means of the categorical variable 'Type_assay' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.  
 
 ##### Contrasts
 ``` {r}
@@ -1590,9 +1593,9 @@ Reinforcement_ES <- orchard_plot(mod_ES3, mod = "Type_reinforcement", xlab = "ln
 
 Reinforcement_ES 
 ````
-**Fig. 6c** Orchard plot showing the group-wise means of the categorical variable 'Type_reinforcement' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
+**Fig. 6c** Orchard plot showing the group-wise means of the categorical variable 'Type_reinforcement' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.  
 
-##### Contrasts
+##### Contrasts  
 ``` {r}
 contra_mod_ES3 <- contrast_fun(data = dat2, response = lnRR_ESa, moderator =Type_reinforcement, VCV = VCV_ES2)
 res_table_mod_ES3 <- get_estimate(model = mod_ES3, contra = contra_mod_ES3, moderator = Type_reinforcement)
@@ -1600,8 +1603,8 @@ res_table_mod_ES3 <- get_estimate(model = mod_ES3, contra = contra_mod_ES3, mode
 res_table_mod_ES3
 ```
 
-#### Age of enrichment
-The age when individuals were exposed to environmental enrichment
+#### Age at enrichment   
+The age when individuals were exposed to environmental enrichment.   
 
 ``` {r, fig.width=10, fig.height=7}
 VCV_ES3 <- impute_covariance_matrix(vi = dat3$lnRRV_ES, cluster = dat3$Study_ID, r = 0.5)
@@ -1630,9 +1633,9 @@ Age_enrichment_ES <- orchard_plot(mod_ES4, mod = "Age_EE_exposure", xlab = "lnRR
 
 Age_enrichment_ES
 ```
-**Fig. 6d** Orchard plot showing the group-wise means of the categorical variable 'Age_EE_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
+**Fig. 6d** Orchard plot showing the group-wise means of the categorical variable 'Age_EE_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.  
 
-##### Contrasts
+##### Contrasts   
 ``` {r}
 contra_mod_ES4 <- contrast_fun(data = dat3, response = lnRR_ESa, moderator =Age_EE_exposure, VCV = VCV_ES3)
 res_table_mod_ES4 <- get_estimate(model = mod_ES4, contra = contra_mod_ES4, moderator = Age_EE_exposure)
@@ -1640,8 +1643,8 @@ res_table_mod_ES4 <- get_estimate(model = mod_ES4, contra = contra_mod_ES4, mode
 res_table_mod_ES4
 ```
 
-#### Exercise enrichment
-Did enrichment involve the addition of apparatus for voluntary exercise (e.g., a wheel or treadmill)?
+#### Exercise enrichment   
+Did enrichment involve the addition of apparatus for voluntary exercise in the cage (e.g., a wheel or treadmill)?
 
 ``` {r, fig.width=10, fig.height=7}
 mod_ES5<- rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~EE_exercise-1, random = list(~1|Study_ID, 
@@ -1668,9 +1671,9 @@ Exercise_ES <- orchard_plot(mod_ES5, mod = "EE_exercise", xlab = "lnRR", alpha=0
 
 Exercise_ES
 ```
-**Fig. 6d** Orchard plot showing the group-wise means of the categorical variable 'EE_exercise' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
+**Fig. 6d** Orchard plot showing the group-wise means of the categorical variable 'EE_exercise' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.  
 
-##### Contrasts
+##### Contrasts  
 ``` {r}
 contra_mod_ES5 <- contrast_fun(data = dat, response = lnRR_ESa, moderator =EE_exercise, VCV = VCV_ES)
 res_table_mod_ES5 <- get_estimate(model = mod_ES5, contra = contra_mod_ES5, moderator = EE_exercise)
@@ -1678,8 +1681,8 @@ res_table_mod_ES5 <- get_estimate(model = mod_ES5, contra = contra_mod_ES5, mode
 res_table_mod_ES5
 ```
 
-#### Social enrichment
-Did enrichment involve more conspecifics (note that we did not include studies that only provided social enrichment but no other form of abiotic enrichment)?
+#### Social enrichment   
+Did enrichment involve adding more conspecifics in the cage? (Note that we did not include studies that only provided social enrichment but no other form of abiotic enrichment.)   
 
 ``` {r, fig.width=10, fig.height=7}
 VCV_ES4 <- impute_covariance_matrix(vi = dat4$lnRRV_ES, cluster = dat4$Study_ID, r = 0.5)
@@ -1707,9 +1710,9 @@ Social_ES <- orchard_plot(mod_ES6, mod = "EE_social", xlab = "lnRR", alpha=0.4) 
 
 Social_ES
 ```
-**Fig. 6e** Orchard plot showing the group-wise means of the categorical variable 'EE_social' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
+**Fig. 6e** Orchard plot showing the group-wise means of the categorical variable 'EE_social' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.  .
 
-##### Contrasts
+##### Contrasts   
 ``` {r}
 contra_mod_ES6 <- contrast_fun(data = dat4, response = lnRR_ESa, moderator =EE_social, VCV = VCV_ES4)
 res_table_mod_ES6 <- get_estimate(model = mod_ES6, contra = contra_mod_ES6, moderator = EE_social)
@@ -1717,8 +1720,8 @@ res_table_mod_ES6 <- get_estimate(model = mod_ES6, contra = contra_mod_ES6, mode
 res_table_mod_ES6
 ```
 
-#### Age of stress
-The age when individuals were exposed to stress
+#### Age at stress   
+The age when individuals were exposed to stress.   
 
 ``` {r, fig.width=10, fig.height=7}
 mod_ES7 <-rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~Age_stress_exposure-1, random = list(~1|Study_ID,
@@ -1744,7 +1747,7 @@ Age_stress_ES<-orchard_plot(mod_ES7, mod = "Age_stress_exposure", xlab = "lnRR",
 
 Age_stress_ES
 ```
-**Fig. 6d** Orchard plot showing the group-wise means of the categorical variable 'Age_stress_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
+**Fig. 6d** Orchard plot showing the group-wise means of the categorical variable 'Age_stress_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.  
 
 ##### Contrasts
 ``` {r}
@@ -1755,7 +1758,7 @@ res_table_mod_ES7
 ```
 
 #### Type of stress
-The type of stressor used
+The type of stressor used.   
 
 ``` {r}
 VCV_ES5 <- impute_covariance_matrix(vi = dat5$lnRRV_ES, cluster = dat5$Study_ID, r = 0.5)
@@ -1782,7 +1785,7 @@ Stressor_ES <- orchard_plot(mod_ES8, mod = "Type_stress_exposure", xlab = "lnRR"
 
 Stressor_ES 
 ````
-**Fig. 6e** Orchard plot showing the group-wise means of the categorical variable 'Type_stress_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
+**Fig. 6e** Orchard plot showing the group-wise means of the categorical variable 'Type_stress_exposure' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.  
 
 ##### Contrasts
 ``` {r}
@@ -1793,7 +1796,7 @@ res_table_mod_ES8
 ```
 
 #### Stress duration
-Was the stress acute or chronic?
+Was the stress acute or chronic?   
 
 ``` {r, fig.width=10, fig.height=7}
 VCV_ES6 <- impute_covariance_matrix(vi = dat6$lnRRV_ES, cluster = dat6$Study_ID, r = 0.5)
@@ -1824,7 +1827,7 @@ Duration_ES<- orchard_plot(mod_ES9, mod = "Stress_duration", xlab = "lnRR", alph
 
 Duration_ES
 ```
-**Fig. 6f** Orchard plot showing the group-wise means of the categorical variable 'Stress_duration' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
+**Fig. 6f** Orchard plot showing the group-wise means of the categorical variable 'Stress_duration' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.  
 
 ##### Contrasts
 ``` {r}
@@ -1835,7 +1838,7 @@ res_table_mod_ES9
 ```
 
 #### Order to treatment exposure
-The order in which individuals were exposed to enrichment and stress
+The order in which individuals were exposed to enrichment and stress.   
 
 ``` {r, fig.width=10, fig.height=7}
 mod_ES10 <- rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~Exposure_order -1, random = list(~1|Study_ID, 
@@ -1862,7 +1865,7 @@ Order_ES <- orchard_plot(mod_ES10, mod = "Exposure_order", xlab = "lnRR", alpha=
 
 Order_ES 
 ```
-**Fig. 6g** Orchard plot showing the group-wise means of the categorical variable 'Exposure_order' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individuals points show observed effect sizes and sample sizes.
+**Fig. 6g** Orchard plot showing the group-wise means of the categorical variable 'Exposure_order' with their 95% confidence interval (think black line) and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.  
 
 ##### Contrasts
 ``` {r}
@@ -1876,7 +1879,7 @@ res_table_mod_ES10
 ### Publication bias & sensitivity analysis {.tabset}
 
 ####  Multi-moderator model
-We ran a multi-moderator ‘full’ model of all moderators. We ran model selection based on AIC and selected the top set of models within delta AIC of 6 and calculated the importance of each moderator (i.e., Akaike weights) within this top model set.
+We ran a multi-moderator ‘full’ model of all moderators. We ran model selection based on AIC and selected the top set of models within delta AIC of 6 and calculated the importance of each moderator (i.e., Akaike weights) within this top model set.  
 
 ``` {r, eval = FALSE}
 dat_ESfm <- dat %>%
@@ -1906,7 +1909,7 @@ saveRDS(mod_ESfm, file = here("Rdata", "mod_ESfm.rds"))
 saveRDS(dat_ESfm, file = here("Rdata", "dat_ESfm.rds"))
 ```
 
-The akaike weights for the top set of models with AIC < 6
+The akaike weights for the top set of models with AIC < 6 
 
 ```{r}
 dat_ESfm <- readRDS(file = here("Rdata", "dat_ESfm.rds"))
@@ -1917,15 +1920,15 @@ importance(res_ESfm2)
 ```
 
 #### Funnel plot
-We produced funnel plots of effect sizes against the residuals of the full model to visually inspect for funnel asymmetry.
+We used funnel plots of effect sizes against the residuals of the full model to visually inspect for funnel asymmetry.    
 
-Used to produce Fig. 7c
+Used to produce Fig. 7c  
 
 ``` {r}
 Funnel_ES<-funnel(mod_ESfm, xlab = "lnRR", ylab = "Standard Error")
 #Funnel_ES
 ```
-**Fig.7c** Funnel plot showing the standard error and residuals (lnRR) from the full model.
+**Fig.7c** Funnel plot showing the standard error and residuals (lnRR) from the full model.   
 
 #### Egger's regression and time-lag bias
 We fitted effective sample size calculated as:
@@ -1936,7 +1939,7 @@ $$
 \frac {1}{N_\text{CS}} + \frac{1}{N_\text{CC}}},
 $$
 
-and year of publication as moderators in the full model to inferentially test for funnel asymmetry and a decrease in effect sizes with publication year.
+and year of publication as moderators in the full model to inferentially test for funnel asymmetry and a decrease in effect sizes with publication year.   
 
 
 ```{r}
@@ -1947,7 +1950,7 @@ dat_ESfm$c_Year_published <- as.vector(scale(dat_ESfm$Year_published, scale = F)
 VCV_ESfm <- impute_covariance_matrix(vi = dat_ESfm$lnRRV_ES, cluster = dat_ESfm$Study_ID, r = 0.5)
               
 
-#time lag bias and eggers regression
+#time lag bias and Egger's regression.  
 
 PB_MR_ES<- rma.mv(lnRR_ESa, VCV_ESfm, mods = ~1 + sqrt_inv_e_n +  c_Year_published + Type_assay +Learning_vs_memory + Type_reinforcement + Type_stress_exposure + Age_stress_exposure + EE_social + EE_exercise + Stress_duration + Exposure_order, random = list(~1|Study_ID,
                                                           ~1|ES_ID,
@@ -1964,8 +1967,8 @@ estimates_PB_MR_ES
 ```
 
 
-#### Leave-one-out analysis
-We individually removed studies to determine if any singular studies hve a disproportionate effect on the meta-analytic mean and CI.
+#### Leave-one-out analysis   
+We individually removed studies to determine if any singular studies hve a disproportionate effect on the meta-analytic mean and CI.   
 
 ``` {r, eval = FALSE}
 dat$Study_ID <- as.factor(dat$Study_ID)
@@ -1994,7 +1997,7 @@ MA_CVR_ES <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_row
 saveRDS(MA_CVR_ES, ,file = here("Rdata", "MA_CVR_ES.rds"))
 
 ```
-Used to produce Fig. S5
+Used to produce Fig. S5   
 
 ``` {r}
 MA_CVR_ES<- readRDS(here("Rdata", "MA_CVR_ES.rds"))
@@ -2022,10 +2025,10 @@ leaveoneout_ES
 
 dat$Study_ID <- as.integer(dat$Study_ID)
 ```
-**Fig. S5** Leave-one-group-out analysis showing meta-analytic mean and 95% CI when each individual study is removed from the data set. 
+**Fig. S5** Leave-one-group-out analysis showing meta-analytic mean and 95% CI when each individual study is removed from the data set.    
 
 #### Using SMD
-We re-ran the interaction of environmental enrichment x stress meta-analytic model using standardised mean difference (SMD) instead of lnRR
+We re-ran the interaction of environmental enrichment x stress meta-analytic model using standardised mean difference (SMD) instead of lnRR.   
 
 ``` {r, message = FALSE, warning = FALSE}
 mod_ES0a <- rma.mv(yi = SMD_ESa, V = VCV_ESa, random = list(~1|Study_ID,
@@ -2039,9 +2042,9 @@ i2_ml(mod_ES0a)
 ```
 
 
-#### Risk of Bias
+#### Risk of Bias   
 
-Including if the study was randomised as a moderator and conducting a pair-wise contrast
+Including if the study was randomised as a moderator and conducting a pair-wise contrast.   
 
 ``` {r, results = 'hide'}
 mod_randomised_ES<- rma.mv(yi = lnRR_ESa, V = VCV_ES, mod = ~ROB_randomisation-1, random = list(~1|Study_ID, 
@@ -2082,8 +2085,8 @@ res_table_mod_blinding_ES
 ```
 
 
-## 'Pairwise' effect sizes {.tabset}
-We conducted five 'meta-analyses on 'pair-wise' comparisons using lnRR between the treatments and control: 
+## 'Pairwise' effect sizes {.tabset}   
+We conducted five 'meta-analyses on 'pair-wise' comparisons using lnRR between the treatments and control:    
 $$
 \ln{\text{RR}} = \ln (M_{\text{EC}}/M_{\text{CC}}), 
 \ln (M_{\text{CS}}/M_{\text{CC}}), 
@@ -2092,7 +2095,7 @@ $$
 \ln (M_{\text{ES}}/M_{\text{EC}}), 
 $$
 
-### Enrichment relative to control
+### Enrichment relative to control    
 
 $$
 \ln{\text{RR}} = \ln (M_{\text{EC}}/M_{\text{CC}})
@@ -2115,7 +2118,7 @@ i2_ml(mod_E20)
 orchard_plot(mod_E20, mod = "Int", xlab = "lnRR")
 ```
 
-### Stress relative to control
+### Stress relative to control   
 
 $$
 \ln{\text{RR}} = \ln (M_{\text{CS}}/M_{\text{CC}})
@@ -2136,7 +2139,7 @@ i2_ml(mod_S20)
 orchard_plot(mod_S20, mod = "Int", xlab = "lnRR")
 ```
 
-### Enrichment + stress relative to control
+### Enrichment + stress relative to control    
 
 $$
 \ln{\text{RR}} = \ln (M_{\text{ES}}/M_{\text{CC}})
@@ -2156,7 +2159,7 @@ i2_ml(mod_ES20)
 orchard_plot(mod_ES20, mod = "Int", xlab = "lnRR")
 ```
 
-### Enrichment + stress relative to stress
+### Enrichment + stress relative to stress    
 
 $$
 \ln{\text{RR}} = \ln (M_{\text{ES}}/M_{\text{CS}})
@@ -2197,9 +2200,11 @@ i2_ml(mod_S30)
 orchard_plot(mod_S30, mod = "Int", xlab = "lnRR")
 ```
 
-## Figures
-### Panel of 'focal' ES and 'pairwise' ES orchard plots
-Used to produce Fig. 3
+## Figures   
+### Panel of 'focal' ES and 'pairwise' ES orchard plots     
+
+Used to produce Fig. 3    
+
 ``` {r}
 mod_list1 <- list(mod_E0, mod_S0, mod_ES0)
 
@@ -2214,7 +2219,7 @@ merged1$data$moderator <- factor(merged1$data$moderator, levels = c("Intrcpt1",
     "Intrcpt2", "Intrcpt3"), 
     labels = rev(c("Enrichment ME", "Stress ME", "Interaction")))
 
-orchard1<- orchard_plot(merged1, mod = "Int", xlab = "lnRR", angle = 0) + 
+orchard1 <- orchard_plot(merged1, mod = "Int", xlab = "lnRR", angle = 0) + 
   geom_errorbarh(aes(xmin = lowerPR, xmax = upperPR), height = 0, show.legend = FALSE, size = 1.1, alpha = 0.5) + # prediction intervals
   geom_errorbarh(aes(xmin = lowerCL, xmax = upperCL), height = 0.05, show.legend = FALSE, size = 2) + # confidence intervals 
   xlim(-2,4.5) +
@@ -2266,14 +2271,16 @@ orchard2 <- orchard_plot(merged2, mod = "Int", xlab = "lnRR", angle = 0) +
 p1 <- orchard1 + orchard2 +  plot_annotation(tag_levels = 'A')
 p1
 
-#saved as PDF: 6 x 15 inches
+#saved as PDF: 6 x 15 inches.  
+
 ```
-**Fig. 3** Orchard plots showing the eight meta-analytic models. (A) main effects of enrichment and stress, and interaction of environmental enrichment and stress, (B) ‘pairwise’ comparisons between treatments and controls. Thick black lines = 95% CI, thin black lines = 95 % PI. 
+**Fig. 3** Orchard plots showing the eight meta-analytic models. (A) main effects of enrichment and stress, and interaction of environmental enrichment and stress, (B) ‘pairwise’ comparisons between treatments and controls. Thick black lines = 95% CI, thin black lines = 95 % PI. Individual efect sizes are shown as circles scaled proportionately to their precision. k is number of effect sizes.  
 
 ### Panel of meta-regressions {.tabset}
 
-#### Environmental enrichment
-Used to produce Fig. 4
+#### Environmental enrichment   
+Used to produce Fig. 4.   
+
 ``` {r, fig.width=15, fig.height=7}
 #Enrichment
 E_mod <- (LvsM_E + Learning_E + Reinforcement_E)/ (Age_E + Exercise_E + Social_E) +  plot_annotation(tag_levels = 'A')
@@ -2281,20 +2288,24 @@ E_mod <- (LvsM_E + Learning_E + Reinforcement_E)/ (Age_E + Exercise_E + Social_E
 E_mod
 #saved as pdf 10 x 15 inches
 ```
-**Fig. 4** Orchard plots showing the six different meta-regressions on the main effect of environmental enrichment on learning and memory. (A)  learning versus memory response, (B) the type of assay, (C) the type of reinforcement, (D) the age at environmental enrichment, (E) type of manipulation of exercise during enrichment, (F) manipulation of the social environment during enrichment.  
+**Fig. 4** Orchard plots showing the six different meta-regressions on the main effect of environmental enrichment on learning and memory. (A)  learning versus memory response, (B) the type of assay, (C) the type of reinforcement, (D) the age at environmental enrichment, (E) type of manipulation of exercise during enrichment, (F) manipulation of the social environment during enrichment. Individual efect sizes are shown as circles scaled proportionately to their precision. k is number of effect sizes.   
 
-#### Stress
-Used to produce Fig. 5
+#### Stress   
+
+Used to produce Fig. 5  
+
 ``` {r,  fig.width=15, fig.height=7}
 S_mod <- (LvsM_S + Learning_S + Reinforcement_S) / (Age_S + Stressor + Duration_S) + plot_annotation(tag_levels = 'A')
 
 S_mod
 #saved as pdf 10 x 15 inches
 ```
-**Fig. 5** Orchard plots showing the six different meta-regressions on the main effect of stress on learning and memory. (A) learning versus memory response, (B) the type of assay, (C) the type of reinforcement, (D) the age at stress, (E) the type of stressor (MS = maternal separation), (F) chronic or acute stress. 
+**Fig. 5** Orchard plots showing the six different meta-regressions on the main effect of stress on learning and memory. (A) learning versus memory response, (B) the type of assay, (C) the type of reinforcement, (D) the age at stress, (E) the type of stressor (MS = maternal separation), (F) chronic or acute stress. Individual efect sizes are shown as circles scaled proportionately to their precision. k is number of effect sizes.  
 
 #### Interaction
-Used to produce Fig. 6
+
+Used to produce Fig. 6  
+
 ``` {r, fig.width=15, fig.height=7}
 ES_mod <- plot_grid(LvsM_ES, Learning_ES, Reinforcement_ES, Age_enrichment_ES, Age_stress_ES, Order_ES, Exercise_ES, Social_ES, Stressor_ES, Duration_ES,
   labels = "AUTO", ncol = 5)
@@ -2302,10 +2313,12 @@ ES_mod <- plot_grid(LvsM_ES, Learning_ES, Reinforcement_ES, Age_enrichment_ES, A
 ES_mod
 #saved as 10 x 25 inches
 ```
-**Fig. 6** Orchard plots showing the 10 different meta-regressions of moderators on the interaction between environmental enrichment and stress learning and memory. (A) learning versus memory response, (B) the type of assay, (C) the type of reinforcement used, (D) the age at environmental enrichment, (E) the age at stress, (F) the order of treatment exposure, (G) if enrichment involved a manipulation of exercise, (H) manipulation of the social environment during enrichment, (I) the type of stressor, (F) stress was chronic or acute. 
+**Fig. 6** Orchard plots showing the 10 different meta-regressions of moderators on the interaction between environmental enrichment and stress learning and memory. (A) learning versus memory response, (B) the type of assay, (C) the type of reinforcement used, (D) the age at environmental enrichment, (E) the age at stress, (F) the order of treatment exposure, (G) if enrichment involved a manipulation of exercise, (H) manipulation of the social environment during enrichment, (I) the type of stressor, (F) stress was chronic or acute. Individual efect sizes are shown as circles scaled proportionately to their precision. k is number of effect sizes.  
 
-### Panel of funnel plots
-Used to produce Fig. 7
+### Panel of funnel plots  
+
+Used to produce Fig. 7  
+
 ``` {r, eval = FALSE}
 # EE
 
@@ -2351,9 +2364,9 @@ ggdraw(A) + ggdraw(B) + ggdraw(C) + plot_annotation(tag_levels = 'A')
 knitr::include_graphics(here("figs", "funnels.png"))
 ```
 
-**Fig. 7** Funnel plots of the standard error and residuals (lnRR) from the full models. (A) environmental enrichment main effect, (B) stress main effect, (C) environmental enrichment x stress interaction.
+**Fig. 7** Funnel plots of the standard error and residuals (lnRR) from the full models. (A) environmental enrichment main effect, (B) stress main effect, (C) environmental enrichment x stress interaction.   
 
-# Software and package versions
+# Software and package versions  
 
 ```{r}
 sessionInfo() %>% pander()
