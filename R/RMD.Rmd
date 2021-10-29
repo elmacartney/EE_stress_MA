@@ -487,6 +487,7 @@ orchard_plot(mod_E0, mod = "Int", xlab = "lnRR", alpha=0.4) +  # Orchard plot
 **Fig. S3** Orchard plot showing meta-analytic mean,  95% confidence interval (thick black line), and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.      
 
 ### Meta-regression: uni-moderator {.tabset}
+
 To explain some of the unexplained variation in the main effect of environmental enrichment meta-analytic model, we conducted a series of uni-moderator analyses. We calculated marginal R^2 for each moderator, as well as conducted a series of pair-wise contrasts between moderator categories.  
 
 Any moderator categories with k < 5 were removed.
@@ -1023,12 +1024,13 @@ orchard_plot(mod_S0, mod = "Int", xlab = "lnRR", alpha=0.4) +
 ```
 **Fig. S7** Orchard plot showing meta-analytic mean and 95% confidence interval (thick black line) and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision.   
 
-### Meta-regression: uni-moderator {.tabset}.  
+### Meta-regression: uni-moderator {.tabset}  
+
 To explain some of the unexplained variation in the main effect of stress model, we conducted a series of uni-moderator analyses. We calculated marginal R^2 for each moderator as well as conducted a series of pair-wise contrasts between moderator categories.   
 
 Any moderator categories with k < 5 were removed.  
 
-#### Learning vs Memory. 
+#### Learning vs Memory 
 Was the measured response interpreted as learning or memory?  
 
 ``` {r}
@@ -1071,7 +1073,7 @@ res_table_mod_S1
 ```
 
 
-#### Type of assay. 
+#### Type of assay 
 The broad category of the type of assay used to measure learning or memory.   
 
 ``` {r}
@@ -1111,7 +1113,7 @@ Learning_S
 ```
 **Fig. S8b** Orchard plot showing the group-wise means of the categorical variable 'Type_assay' with their 95% confidence interval (thick black line) and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.    
 
-##### Contrasts. 
+##### Contrasts
 ``` {r}
 contra_mod_S2 <- contrast_fun(data = dat1, response = lnRR_Sa, moderator = Type_assay, VCV = VCV_S1)
 res_table_mod_S2 <- get_estimate(model = mod_S2, contra = contra_mod_S2, moderator = Type_assay)
@@ -1119,7 +1121,7 @@ res_table_mod_S2 <- get_estimate(model = mod_S2, contra = contra_mod_S2, moderat
 res_table_mod_S2
 ```
 
-#### Type of reinforcement.  
+#### Type of reinforcement 
 If conditioning was used, was aversive or appetitive reinforcement used?  
 
 ``` {r}
@@ -1554,7 +1556,7 @@ orchard_plot(mod_ES0, mod = "Int", xlab = "lnRR", alpha=0.4) +
 
 **Fig. S11** Orchard plot showing meta-analytic mean and 95% confidence interval (thick black line) and 95% prediction interval (thin black line). Individual points show observed effect sizes scaled proportionately to their precision. k is number of effect sizes.   
 
-###  Meta-regression: uni-moderator {.tabset}. 
+###  Meta-regression: uni-moderator {.tabset} 
 To explain some of the unexplained variation in the interaction of environmental enrichment and stress, we conducted a series of uni-moderator analyses. We calculated marginal R^2 for each moderator as well as conducted a series of pair-wise contrasts between moderator categories.     
 
 Any moderator categories with k < 5 were removed.   
