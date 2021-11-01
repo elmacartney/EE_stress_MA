@@ -1278,8 +1278,6 @@ Duration_S <- orchard_plot(mod_S6, mod = "Stress_duration", xlab = "lnRR", alpha
   scale_colour_manual(values = c("grey34","grey34")) +
   scale_fill_manual(values=c("grey34","grey34")) +
   geom_point(aes(fill = name),  size = 5, shape = 21)+ # mean estimate
-    geom_signif(comparisons = list(c("Chronic", "Acute")),
-              annotations = "*") +
   scale_size_continuous(range = c(1, 7))+ # change point scaling
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1.3), # border around the plot
         text = element_text(size = 15), # change font sizes
