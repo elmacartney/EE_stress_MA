@@ -885,7 +885,7 @@ estimates_PB_MR_E
 
 We individually removed studies to determine if any singular studies have a disproportionate effect on the meta-analytic mean and CI.
 
-```{r, eval = FALSE}
+```{r}
 dat$Study_ID <- as.factor(dat$Study_ID)
 
 LeaveOneOut_effectsize <- list()
@@ -911,17 +911,18 @@ est.func <- function(mod_E0){
 MA_CVR_E <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$Study_ID))
 
 
-saveRDS(MA_CVR_E,file = here("Rdata", "MA_CVR_E.rds"))
+#saveRDS(MA_CVR_E,file = here("Rdata", "MA_CVR_E.rds"))
 ```
 
 Figure corresponds to Fig. S3 in Supplementary material S2.
 
-```{r}
-#telling ggplot to stop reordering factors
-MA_CVR_E <- readRDS(file = here("Rdata", "MA_CVR_E.rds"))
+```{r, eval = FALSE}
 
-MA_CVR_E$left_out <- as.factor(MA_CVR_E$left_out)
-MA_CVR_E$left_out <- factor(MA_CVR_E$left_out, levels = MA_CVR_E$left_out)
+# MA_CVR_E <- readRDS(file = here("Rdata", "MA_CVR_E.rds"))
+
+#telling ggplot to stop reordering factors
+ MA_CVR_E$left_out <- as.factor(MA_CVR_E$left_out)
+ MA_CVR_E$left_out <- factor(MA_CVR_E$left_out, levels = MA_CVR_E$left_out)
 
 
 #plotting
@@ -1443,7 +1444,7 @@ estimates_PB_MR_S
 
 We individually removed studies to determine if any singular studies have a disproportionate effect on the meta-analytic mean and CI.
 
-```{r, eval = FALSE}
+```{r}
 dat$Study_ID <- as.factor(dat$Study_ID)
 
 LeaveOneOut_effectsize <- list()
@@ -1468,14 +1469,14 @@ est.func <- function(mod_S0){
 #using dplyr to form data frame
 MA_CVR_S <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$Study_ID))
 
-saveRDS(MA_CVR_S,file = here("Rdata", "MA_CVR_S.rds"))
+#saveRDS(MA_CVR_S,file = here("Rdata", "MA_CVR_S.rds"))
 
 ```
 
 Figure corresponds to Fig. S4 in Supplementary material S2
 
 ```{r}
-MA_CVR_S <- readRDS(file = here("Rdata", "MA_CVR_S.rds"))
+#MA_CVR_S <- readRDS(file = here("Rdata", "MA_CVR_S.rds"))
 
 #telling ggplot to stop reordering factors
 MA_CVR_S$left_out<- as.factor(MA_CVR_S$left_out)
@@ -2177,7 +2178,7 @@ estimates_PB_MR_ES
 
 We individually removed studies to determine if any singular studies have a disproportionate effect on the meta-analytic mean and CI.
 
-```{r, eval = FALSE}
+```{r}
 dat$Study_ID <- as.factor(dat$Study_ID)
 
 LeaveOneOut_effectsize <- list()
@@ -2201,14 +2202,14 @@ est.func <- function(mod_ES0){
 #using dplyr to form data frame
 MA_CVR_ES <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$Study_ID))
 
-saveRDS(MA_CVR_ES, ,file = here("Rdata", "MA_CVR_ES.rds"))
+#saveRDS(MA_CVR_ES, ,file = here("Rdata", "MA_CVR_ES.rds"))
 
 ```
 
 Figure corresponds to Fig. S5 in Supplementary material S2
 
 ```{r}
-MA_CVR_ES<- readRDS(here("Rdata", "MA_CVR_ES.rds"))
+#MA_CVR_ES<- readRDS(here("Rdata", "MA_CVR_ES.rds"))
 
 #telling ggplot to stop reordering factors
 MA_CVR_ES$left_out<- as.factor(MA_CVR_ES$left_out)
