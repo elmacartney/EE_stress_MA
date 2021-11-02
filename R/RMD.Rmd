@@ -285,7 +285,7 @@ plot_missing
 
 **Fig. S1** Visual of missing data for each column. No missing data for moderators, random effects, or effect sizes.
 
-## Alluvial diagraMaternal separation {.tabset}
+## Alluvial diagrams {.tabset}
 
 Shows the relationship/nestedness of different data elements (used to produce Fig. 2)
 

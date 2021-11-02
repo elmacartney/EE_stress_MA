@@ -10,6 +10,6 @@ Instructions for data and code:
 
 3) Data_processed.csv is the data cleaned up data with effect sizes (after running "Data organisation chunk")
 
-4) Functions.R has all functions used in the RMD file including fucntions used to calculate effect sizes
+4) Functions.R has all functions used in the RMD file including functions used to calculate effect sizes
 
 5) Formula.RMD has all formulas used to this analysis
