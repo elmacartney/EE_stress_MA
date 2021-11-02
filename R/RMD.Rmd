@@ -916,7 +916,7 @@ MA_CVR_E <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows
 
 Figure corresponds to Fig. S3 in Supplementary material S2.
 
-```{r, eval = FALSE}
+```{r}
 
 # MA_CVR_E <- readRDS(file = here("Rdata", "MA_CVR_E.rds"))
 
