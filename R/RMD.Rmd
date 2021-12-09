@@ -80,6 +80,7 @@ source(here("R/Functions.R"))
 -   'flipping' effect sizes so that all effect sizes that are higher values can be interpreted as individuals performing better in cognitive assays
 -   assigning human readable terms to moderators initially coded as numbers
 -   creating a variance-covariance matrix (VCV)
+-   adding column of author and year for leave-one-group-out analysis
 
 ```{r}
 
@@ -228,6 +229,13 @@ VCV_ES <- impute_covariance_matrix(vi = dat$lnRRV_ES, cluster = dat$Study_ID, r 
 VCV_Ea <- impute_covariance_matrix(vi = dat$SMDV_E, cluster = dat$Study_ID, r = 0.5)
 VCV_Sa <- impute_covariance_matrix(vi = dat$SMDV_S, cluster = dat$Study_ID, r = 0.5)
 VCV_ESa <- impute_covariance_matrix(vi = dat$SMDV_ES, cluster = dat$Study_ID, r = 0.5)
+
+dat$Year_published <- as.factor(dat$Year_published)
+dat$Study_ID <- as.factor(dat$Study_ID)
+
+dat<- dat %>% mutate(leave_out = paste(First_author, Year_published, sep = "_"))
+dat$leave_out<- as.factor(dat$leave_out)
+dat$Year_published <- as.integer(dat$Year_published)
 
 #write.csv(dat, file = here("Data", 'Data_processed.csv'), row.names = TRUE)
 ```
@@ -886,19 +894,18 @@ estimates_PB_MR_E
 We individually removed studies to determine if any singular studies have a disproportionate effect on the meta-analytic mean and CI.
 
 ```{r}
-dat$Study_ID <- as.factor(dat$Study_ID)
-
 LeaveOneOut_effectsize <- list()
-for(i in 1:length(levels(dat$Study_ID))){
+for(i in 1:length(levels(dat$leave_out))){
   
-  d <- dat %>% filter(Study_ID != levels(dat$Study_ID)[i])
+  d <- dat %>% filter(leave_out != levels(dat$leave_out)[i])
   
   VCV_Eb <- impute_covariance_matrix(vi = d$lnRRV_E, cluster = d$Study_ID, r = 0.5)
   
   LeaveOneOut_effectsize[[i]] <- rma.mv(yi = lnRR_Ea, V = VCV_Eb, 
                                         random = list(~1 | Study_ID,~1| ES_ID, ~1 | Strain), 
-                                        method = "REML", data = dat[dat$Study_ID
-                                                                    != levels(dat$Study_ID)[i], ])}
+                                        method = "REML", data = dat[dat$leave_out
+                                                                    != levels(dat$leave_out)[i], ])}
+
 
 # writing function for extracting est, ci.lb, and ci.ub from all models
 est.func <- function(mod_E0){
@@ -908,7 +915,7 @@ est.func <- function(mod_E0){
 
 
 #using dplyr to form data frame
-MA_CVR_E <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$Study_ID))
+MA_CVR_E <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$leave_out))
 
 
 #saveRDS(MA_CVR_E,file = here("Rdata", "MA_CVR_E.rds"))
@@ -942,7 +949,8 @@ leaveoneout_E <- ggplot(MA_CVR_E) +
 
 leaveoneout_E
 
-dat$Study_ID <- as.integer(dat$Study_ID)
+# ggsave("leaveoneout_E.tiff", leaveoneout_E, dpi = 300) 
+
 ```
 
 **Fig. S6** Leave-one-group-out analysis showing meta-analytic mean and 95% CI when each individual study is removed from the data set.
@@ -1445,18 +1453,18 @@ estimates_PB_MR_S
 We individually removed studies to determine if any singular studies have a disproportionate effect on the meta-analytic mean and CI.
 
 ```{r}
-dat$Study_ID <- as.factor(dat$Study_ID)
+# dat$Study_ID <- as.factor(dat$Study_ID)
 
 LeaveOneOut_effectsize <- list()
-for(i in 1:length(levels(dat$Study_ID))){
-  d <- dat %>% filter(Study_ID != levels(dat$Study_ID)[i])
+for(i in 1:length(levels(dat$leave_out))){
+  d <- dat %>% filter(leave_out != levels(dat$leave_out)[i])
   
   VCV_Sb <- impute_covariance_matrix(vi = d$lnRRV_E, cluster = d$Study_ID, r = 0.5)
   
   LeaveOneOut_effectsize[[i]] <- rma.mv(yi = lnRR_Sa, V = VCV_Sb, 
                                         random = list(~1 | Study_ID,~1| ES_ID, ~1 | Strain), 
-                                        method = "REML", data = dat[dat$Study_ID
-                                                                    != levels(dat$Study_ID)[i], ])}
+                                        method = "REML", data = dat[dat$leave_out
+                                                                    != levels(dat$leave_out)[i], ])}
 
 
 # writing function for extracting est, ci.lb, and ci.ub from all models
@@ -1467,7 +1475,7 @@ est.func <- function(mod_S0){
 
 
 #using dplyr to form data frame
-MA_CVR_S <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$Study_ID))
+MA_CVR_S <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$leave_out))
 
 #saveRDS(MA_CVR_S,file = here("Rdata", "MA_CVR_S.rds"))
 
@@ -1499,7 +1507,8 @@ leaveoneout_S <- ggplot(MA_CVR_S) +
 
 leaveoneout_S
 
-dat$Study_ID <- as.integer(dat$Study_ID)
+#ggsave("leaveoneout_S.tiff", leaveoneout_S, dpi = 300) 
+
 ```
 
 **Fig. S10** Leave-one-study-out analysis showing meta-analytic mean and 95% CI when each individual study is removed from the data set.
@@ -2179,17 +2188,15 @@ estimates_PB_MR_ES
 We individually removed studies to determine if any singular studies have a disproportionate effect on the meta-analytic mean and CI.
 
 ```{r}
-dat$Study_ID <- as.factor(dat$Study_ID)
-
 LeaveOneOut_effectsize <- list()
-for(i in 1:length(levels(dat$Study_ID))){
-  d <- dat %>% filter(Study_ID != levels(dat$Study_ID)[i])
+for(i in 1:length(levels(dat$leave_out))){
+  d <- dat %>% filter(leave_out != levels(dat$leave_out)[i])
   
   VCV_ESb <- impute_covariance_matrix(vi = d$lnRRV_ES, cluster = d$Study_ID, r = 0.5)
   LeaveOneOut_effectsize[[i]] <- rma.mv(yi = lnRR_ESa, V = VCV_ESb, 
                                         random = list(~1 | Study_ID,~1| ES_ID, ~1 | Strain), 
-                                        method = "REML", data = dat[dat$Study_ID
-                                                                    != levels(dat$Study_ID)[i], ])}
+                                        method = "REML", data = dat[dat$leave_out
+                                                                    != levels(dat$leave_out)[i], ])}
 
 
 # writing function for extracting est, ci.lb, and ci.ub from all models
@@ -2200,7 +2207,7 @@ est.func <- function(mod_ES0){
 
 
 #using dplyr to form data frame
-MA_CVR_ES <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$Study_ID))
+MA_CVR_ES <- lapply(LeaveOneOut_effectsize, function(x) est.func(x))%>% bind_rows %>% mutate(left_out = levels(dat$leave_out))
 
 #saveRDS(MA_CVR_ES, ,file = here("Rdata", "MA_CVR_ES.rds"))
 
@@ -2232,7 +2239,8 @@ leaveoneout_ES <- ggplot(MA_CVR_ES) +
 
 leaveoneout_ES
 
-dat$Study_ID <- as.integer(dat$Study_ID)
+#ggsave("leaveoneout_ES.tiff", leaveoneout_ES, dpi = 300) 
+
 ```
 
 **Fig. S14** Leave-one-group-out analysis showing meta-analytic mean and 95% CI when each individual study is removed from the data set.
