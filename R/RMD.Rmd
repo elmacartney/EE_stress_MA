@@ -129,29 +129,51 @@ effect_size <- map_dfr(effect_size, I)
                       SIMPLIFY = FALSE))
 effect_size2 <- map_dfr(effect_size2, I)
 
+#without transformation of percent data for sensitivity analysis
+
+ effect_sizeb <- with(dat, mapply(effect_setb, 
+                      CC_n ,
+                      CC_mean, 
+                      CC_SD,
+                      EC_n, 
+                      EC_mean, 
+                      EC_SD,
+                      CS_n, 
+                      CS_mean, 
+                      CS_SD,
+                      ES_n, 
+                      ES_mean, 
+                      ES_SD,
+                      SIMPLIFY = FALSE))
+effect_sizeb <- map_dfr(effect_sizeb, I)
+
 full_info <- which(complete.cases(effect_size) == TRUE)
 
 # adding effect sizes as column
-dat <- bind_cols(dat, effect_size, effect_size2)
+dat <- bind_cols(dat, effect_size, effect_size2, effect_sizeb)
 dat <- dat[full_info, ]
 
 #Flipping 'lower is better' to 'higher is better' effect sizes
 #flipping lnRR for values where higher = worse
 dat$lnRR_Ea <- ifelse(dat$Response_direction == 2, dat$lnRR_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E))
-# currently NAswhich causes error
-dat$lnRR_Sa  <- ifelse(dat$Response_direction == 2, dat$lnRR_S*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_S)) # currently NAswhich causes error
-dat$lnRR_ESa <-  ifelse(dat$Response_direction == 2, dat$lnRR_ES*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_ES)) # currently NAswhich causes error
+dat$lnRR_Sa  <- ifelse(dat$Response_direction == 2, dat$lnRR_S*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_S)) 
+dat$lnRR_ESa <-  ifelse(dat$Response_direction == 2, dat$lnRR_ES*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_ES)) 
 #flipping 'pure effect sizes'
-dat$lnRR_E2a <- ifelse(dat$Response_direction == 2, dat$lnRR_E2*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E2)) # currently NAswhich causes error
-dat$lnRR_S2a  <- ifelse(dat$Response_direction == 2, dat$lnRR_S2*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_S2)) # currently NAswhich causes error
-dat$lnRR_ES2a <-  ifelse(dat$Response_direction == 2, dat$lnRR_ES2*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_ES2)) # currently NAswhich causes error
-dat$lnRR_E3a <-  ifelse(dat$Response_direction == 2, dat$lnRR_E3*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E3)) # currently NAswhich causes error
-dat$lnRR_S3a <-  ifelse(dat$Response_direction == 2, dat$lnRR_S3*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_S3)) # currently NAswhich causes error
+dat$lnRR_E2a <- ifelse(dat$Response_direction == 2, dat$lnRR_E2*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E2)) 
+dat$lnRR_S2a  <- ifelse(dat$Response_direction == 2, dat$lnRR_S2*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_S2)) 
+dat$lnRR_ES2a <-  ifelse(dat$Response_direction == 2, dat$lnRR_ES2*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_ES2)) 
+dat$lnRR_E3a <-  ifelse(dat$Response_direction == 2, dat$lnRR_E3*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_E3)) 
+dat$lnRR_S3a <-  ifelse(dat$Response_direction == 2, dat$lnRR_S3*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_S3))
 
 #flipping SMD
-dat$SMD_Ea <- ifelse(dat$Response_direction == 2, dat$SMD_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_E)) # currently NAswhich causes error
-dat$SMD_Sa  <- ifelse(dat$Response_direction == 2, dat$SMD_S*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_S)) # currently NAswhich causes error
+dat$SMD_Ea <- ifelse(dat$Response_direction == 2, dat$SMD_E*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_E)) 
+dat$SMD_Sa  <- ifelse(dat$Response_direction == 2, dat$SMD_S*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_S)) 
 dat$SMD_ESa <-  ifelse(dat$Response_direction == 2, dat$SMD_ES*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$SMD_ES))
+
+#flipping non-transformed percent
+dat$lnRR_E_b <- ifelse(dat$Response_direction == 2, dat$lnRR_Eb*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_Eb)) 
+dat$lnRR_S_b <- ifelse(dat$Response_direction == 2, dat$lnRR_Sb*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_Sb)) 
+dat$lnRR_ES_b <-  ifelse(dat$Response_direction == 2, dat$lnRR_ESb*-1,ifelse(is.na(dat$Response_direction) == TRUE, NA, dat$lnRR_ESb))
 
 # assigning human readable term
 dat <- dat %>% mutate(Type_assay = case_when(Type_assay == 1 ~ "Habituation",
@@ -229,6 +251,10 @@ VCV_ES <- impute_covariance_matrix(vi = dat$lnRRV_ES, cluster = dat$Study_ID, r 
 VCV_Ea <- impute_covariance_matrix(vi = dat$SMDV_E, cluster = dat$Study_ID, r = 0.5)
 VCV_Sa <- impute_covariance_matrix(vi = dat$SMDV_S, cluster = dat$Study_ID, r = 0.5)
 VCV_ESa <- impute_covariance_matrix(vi = dat$SMDV_ES, cluster = dat$Study_ID, r = 0.5)
+
+VCV_Eb <- impute_covariance_matrix(vi = dat$lnRRV_Eb, cluster = dat$Study_ID, r = 0.5)
+VCV_Sb <- impute_covariance_matrix(vi = dat$lnRRV_Sb, cluster = dat$Study_ID, r = 0.5)
+VCV_ESb <- impute_covariance_matrix(vi = dat$lnRRV_ESb, cluster = dat$Study_ID, r = 0.5)
 
 dat$Year_published <- as.factor(dat$Year_published)
 dat$Study_ID <- as.factor(dat$Study_ID)
@@ -955,6 +981,18 @@ leaveoneout_E
 
 **Fig. S6** Leave-one-group-out analysis showing meta-analytic mean and 95% CI when each individual study is removed from the data set.
 
+#### Using untransformed percent data
+
+```{r}
+mod_E0b <- rma.mv(yi = lnRR_E_b, V = VCV_Eb, random = list(~1|Study_ID,
+                                                         ~1|ES_ID, 
+                                                         ~1|Strain),
+                 test = "t",
+                 data = dat)
+summary(mod_E0b)
+i2_ml(mod_E0b)
+```
+
 #### Using SMD
 
 We re-ran the main effect of environmental enrichment meta-analytic model using standardised mean difference (SMD) instead of lnRR.
@@ -1512,6 +1550,17 @@ leaveoneout_S
 ```
 
 **Fig. S10** Leave-one-study-out analysis showing meta-analytic mean and 95% CI when each individual study is removed from the data set.
+
+#### Using untransformed percent data
+```{r}
+mod_S0b <- rma.mv(yi = lnRR_S_b, V = VCV_Sb, random = list(~1|Study_ID,
+                                                         ~1|ES_ID, 
+                                                         ~1|Strain),
+                 test = "t",
+                 data = dat)
+summary(mod_S0b)
+i2_ml(mod_S0b)
+```
 
 #### Using SMD
 
@@ -2244,6 +2293,18 @@ leaveoneout_ES
 ```
 
 **Fig. S14** Leave-one-group-out analysis showing meta-analytic mean and 95% CI when each individual study is removed from the data set.
+
+#### Using untransformed percent data
+
+```{r}
+mod_ES0b <- rma.mv(yi = lnRR_ES_b, V = VCV_ESb, random = list(~1|Study_ID,
+                                                         ~1|ES_ID, 
+                                                         ~1|Strain),
+                 test = "t",
+                 data = dat)
+summary(mod_ES0b)
+i2_ml(mod_ES0b)
+```
 
 #### Using SMD
 

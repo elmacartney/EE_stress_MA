@@ -1,6 +1,6 @@
 # CUSTOM FUNCTIONS
 
-# Effect size (lnRR and SMD) for 2 main effects and interaction effect 
+# Effect size (lnRR and SMD) for 2 main effects and interaction effect ----
 effect_set <- function(CC_n, CC_mean, CC_SD,
                        EC_n, EC_mean, EC_SD,
                        CS_n, CS_mean, CS_SD,
@@ -17,7 +17,7 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
   lnRRV_E <-  (1/(ES_mean + EC_mean))^2*(ES_SD^2 / ES_n + EC_SD^2 / EC_n) + 
     (1/(CS_mean + CC_mean))^2*(CS_SD^2 / CS_n + CC_SD^2 / CC_n)
   
-  # main effect Stress
+  # main effect Stress----
   lnRR_S <- log(0.5*(ES_mean + CS_mean)) - 
                          log(0.5*(EC_mean+ CC_mean))
   
@@ -168,7 +168,53 @@ effect_set <- function(CC_n, CC_mean, CC_SD,
 }
 
 
-# pairwise comparisons lnRR (not for SMD)
+# Removing asin_trans for sensitivity analysis----
+
+effect_setb <- function(CC_n, CC_mean, CC_SD,
+                        EC_n, EC_mean, EC_SD,
+                        CS_n, CS_mean, CS_SD,
+                        ES_n, ES_mean, ES_SD)
+  {
+    # lnRR----
+    # main effect Environmental enrichment----
+    lnRR_Eb <- log(0.5*(ES_mean + EC_mean)) - 
+      log(0.5*(CS_mean+ CC_mean))
+    
+    lnRRV_Eb <-  (1/(ES_mean + EC_mean))^2*(ES_SD^2 / ES_n + EC_SD^2 / EC_n) + 
+      (1/(CS_mean + CC_mean))^2*(CS_SD^2 / CS_n + CC_SD^2 / CC_n)
+    
+    # main effect Stress----
+    lnRR_Sb <- log(0.5*(ES_mean + CS_mean)) - 
+      log(0.5*(EC_mean+ CC_mean))
+    
+    lnRRV_Sb <- lnRRV_Eb
+    
+    # interaction----
+    
+    lnRR_ESb <-   (log(ES_mean) - log(CS_mean)) - 
+      (log(EC_mean) - log(CC_mean))
+    
+    
+    lnRRV_ESb <- 
+      (((ES_SD)^2 / ((ES_mean)^2*ES_n)) + 
+         ((EC_SD)^2 / ((EC_mean)^2*EC_n)) + 
+         ((CS_SD)^2 / ((CS_mean)^2*CS_n)) +
+         ((CC_SD)^2 / ((CC_mean)^2*CC_n)))
+
+    effectb <- tibble(
+      # lnRR
+      lnRR_Eb = lnRR_Eb,
+      lnRRV_Eb = lnRRV_Eb, 
+      lnRR_Sb = lnRR_Sb, 
+      lnRRV_Sb = lnRRV_Sb,
+      lnRR_ESb =lnRR_ESb, 
+      lnRRV_ESb = lnRRV_ESb
+    )
+    effectb
+}
+
+
+# Pairwise comparisons lnRR (not for SMD) -----
 
 effect_set2 <- function(CC_n, CC_mean, CC_SD,
                         EC_n, EC_mean, EC_SD,
