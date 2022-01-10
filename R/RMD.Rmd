@@ -2645,7 +2645,7 @@ ES_mod
 
 Figure corresponds to Fig. 7 in main text
 
-```{r, eval = FALSE}
+```{r, fig.show = 'hide'}
 # EE
 
 pdf(NULL)
@@ -2677,17 +2677,10 @@ C <- funnel(mod_ESfm, xlab = "Residuals (lnRR)", ylab = "Standard Error",
         ylim = c(0,1.05))
 C <- recordPlot()
 invisible(dev.off())
-
-# putting together
-ggdraw(A) + ggdraw(B) + ggdraw(C) + plot_annotation(tag_levels = 'A')
-
-# png(file = here("figs", "Fig7_Funnels.png"))
-  
-# dev.off()
 ```
 
-```{r, out.height="120%"}
-knitr::include_graphics(here("figs", "funnels.png"))
+```{r}
+ggdraw(A) + ggdraw(B) + ggdraw(C) + plot_annotation(tag_levels = 'A')
 ```
 
 **Fig. S20** Funnel plots of the standard error and residuals (lnRR) from the full models. (A) environmental enrichment main effect, (B) stress main effect, (C) environmental enrichment x stress interaction.
