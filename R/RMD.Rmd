@@ -2651,7 +2651,7 @@ Figure corresponds to Fig. 7 in main text
 pdf(NULL)
 dev.control(displaylist="enable")
 par(mar=c(4,4,0.1,0))
-A <- funnel(mod_Sfm, xlab = "Residuals (lnRR)", ylab = "Standard Error",
+A <- funnel(mod_Efm, xlab = "Residuals (lnRR)", ylab = "Standard Error",
         xlim = c(-2,2),
         ylim = c(0,1.05))
 A <- recordPlot()
@@ -2681,9 +2681,9 @@ invisible(dev.off())
 # putting together
 ggdraw(A) + ggdraw(B) + ggdraw(C) + plot_annotation(tag_levels = 'A')
 
-#png(file = here("figs", "Fig7_Funnels.png"))
- 
-#dev.off()
+# png(file = here("figs", "Fig7_Funnels.png"))
+  
+# dev.off()
 ```
 
 ```{r, out.height="120%"}
