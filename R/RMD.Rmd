@@ -16,7 +16,7 @@ editor_options:
 knitr::opts_chunk$set(
 message = FALSE,
 warning = FALSE,
-cache = TRUE, 
+#cache = TRUE, 
 tidy = TRUE, 
 echo = TRUE
 )
